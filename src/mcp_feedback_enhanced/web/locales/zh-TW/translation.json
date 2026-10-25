@@ -3,7 +3,7 @@
         "title": "MCP Feedback Enhanced",
         "subtitle": "AI 輔助開發回饋收集器",
         "version": "v2.2.5",
-        "description": "一個 MCP 伺服器，建立回饋導向的開發工作流程，提供 Web UI 和桌面應用程式雙重選擇。透過引導 AI 與用戶確認而非進行推測性操作，在長任務中插入人工檢查點，降低 AI 跑偏與返工。",
+        "description": "一個 MCP 伺服器，建立回饋導向的開發工作流程，提供 Web UI 和桌面應用程式雙重選擇。透過引導 AI 與使用者確認而非進行推測性操作，在長任務中插入人工檢查點，降低 AI 跑偏與返工。",
         "author": "作者：Fábio Ferreira (原作者) / Minidoracat (增強版)",
         "authorLink": "GitHub: Minidoracat",
         "credits": "⭐ 如果這個專案對您有幫助，請在 GitHub 上給我們一個星星！\n\n本增強版本由 Minidoracat 開發和維護，大幅擴展了專案功能，新增了 Web UI 介面、圖片支援、多語言能力以及許多其他改進功能。\n\n同時感謝 sanshao85 的 mcp-feedback-collector 專案提供的 UI 設計靈感。\n\n開源協作讓技術變得更美好！",
@@ -46,7 +46,7 @@
         "submitSuccess": "回饋提交成功！",
         "submittedWaiting": "已送出反饋，等待下次 MCP 調用...",
         "completed": "會話已完成",
-        "waitingForUser": "等待用戶回饋...",
+        "waitingForUser": "等待使用者回饋...",
         "alreadySubmitted": "回饋已提交，請等待下次 MCP 調用",
         "processingFeedback": "正在處理中，請稍候",
         "connectingMessage": "WebSocket 連接中，回饋將在連接就緒後自動提交...",
@@ -237,7 +237,7 @@
         },
         "noSummary": "無摘要",
         "copySessionContent": "複製會話內容",
-        "copyUserContent": "複製用戶內容",
+        "copyUserContent": "複製使用者內容",
         "exportSession": "匯出此會話"
     },
     "sessionHistory": {
@@ -268,8 +268,8 @@
             "custom": "自訂"
         },
         "userMessages": {
-            "title": "用戶訊息記錄",
-            "description": "控制是否記錄用戶提交的回饋訊息到會話歷史中",
+            "title": "使用者訊息記錄",
+            "description": "控制是否記錄使用者提交的回饋訊息到會話歷史中",
             "recordingEnabled": "啟用訊息記錄",
             "privacyLevel": "隱私等級",
             "privacyLevels": {
@@ -280,7 +280,7 @@
             "privacyDescription": {
                 "full": "記錄完整的訊息內容和圖片資訊",
                 "basic": "僅記錄訊息長度、圖片數量等統計資訊",
-                "disabled": "不記錄任何用戶訊息內容"
+                "disabled": "不記錄任何使用者訊息內容"
             },
             "messageCount": "訊息數量",
             "submissionMethod": "提交方式",
@@ -290,24 +290,24 @@
             "imageCount": "圖片數量",
             "timestamp": "時間戳記",
             "clearAll": "清空訊息記錄",
-            "clearAllTitle": "清空所有會話的用戶訊息記錄",
-            "confirmClearAll": "確定要清空所有會話的用戶訊息記錄嗎？此操作無法復原。",
-            "clearSuccess": "用戶訊息記錄已清空"
+            "clearAllTitle": "清空所有會話的使用者訊息記錄",
+            "confirmClearAll": "確定要清空所有會話的使用者訊息記錄嗎？此操作無法復原。",
+            "clearSuccess": "使用者訊息記錄已清空"
         },
         "noActiveSession": "目前沒有活躍的會話數據",
         "sessionNotFound": "找不到會話資料",
         "currentSession": {
             "noData": "沒有當前會話數據",
-            "noUserMessages": "當前會話沒有用戶消息記錄",
+            "noUserMessages": "當前會話沒有使用者消息記錄",
             "copyFailed": "複製失敗，請重試",
             "dataManagerNotInit": "數據管理器未初始化",
             "copySuccess": "當前會話內容已複製到剪貼板",
-            "userContentCopySuccess": "當前用戶內容已複製到剪貼板",
+            "userContentCopySuccess": "當前使用者內容已複製到剪貼板",
             "copyFailedManual": "複製失敗，請手動複製"
         },
         "copyContent": {
             "sessionTitle": "MCP Feedback Enhanced - 當前會話內容",
-            "userTitle": "MCP Feedback Enhanced - 用戶發送內容",
+            "userTitle": "MCP Feedback Enhanced - 使用者發送內容",
             "message": "訊息 {index}",
             "hasContent": "有內容",
             "yes": "是",
@@ -403,7 +403,7 @@
     },
     "about": {
         "title": "ℹ️ 關於",
-        "description": "一個 MCP 伺服器，建立回饋導向的開發工作流程，提供 Web UI 和桌面應用程式雙重選擇。透過引導 AI 與用戶確認而非進行推測性操作，在長任務中插入人工檢查點，降低 AI 跑偏與返工。",
+        "description": "一個 MCP 伺服器，建立回饋導向的開發工作流程，提供 Web UI 和桌面應用程式雙重選擇。透過引導 AI 與使用者確認而非進行推測性操作，在長任務中插入人工檢查點，降低 AI 跑偏與返工。",
         "appInfo": "應用程式資訊",
         "version": "版本",
         "projectLinks": "專案連結",
@@ -554,7 +554,7 @@
         "timeout": "會話已超時",
         "cleaned": "會話已清理",
         "feedbackSubmitted": "反饋已成功提交",
-        "userMessageRecorded": "用戶消息已記錄",
+        "userMessageRecorded": "使用者消息已記錄",
         "historySaved": "會話歷史已保存（{count} 個會話）",
         "historyLoaded": "會話歷史已載入"
     },
@@ -594,7 +594,7 @@
         "timeout": "操作超時",
         "invalidInput": "輸入無效",
         "operationFailed": "操作失敗",
-        "userMessageFailed": "添加用戶消息失敗",
+        "userMessageFailed": "添加使用者消息失敗",
         "getSessionsFailed": "獲取會話列表失敗",
         "getLogLevelFailed": "獲取日誌等級失敗",
         "command": "命令執行錯誤",
