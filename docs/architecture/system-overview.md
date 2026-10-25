@@ -41,97 +41,109 @@ MCP Feedback Enhanced 採用**單一活躍會話 + 持久化 Web UI**的創新�
 ```mermaid
 graph TB
     subgraph "AI 助手環境"
-        AI[AI 助手<br/>Cursor/Claude/Windsurf/Augment]
+        AI["AI 助手<br/>Cursor/Claude/Windsurf/Augment"]
     end
 
     subgraph "MCP Feedback Enhanced - 四層架構"
         subgraph "第一層：MCP 服務層"
-            SERVER[server.py<br/>MCP 服務器]
-            TOOL[interactive_feedback<br/>核心工具]
-            I18N[i18n.py<br/>國際化支援]
-            DEBUG[debug.py<br/>統一調試]
+            SERVER["server.py<br/>FastMCP 服務器，stdio"]
+            TOOL["MCP 工具<br/>interactive_feedback、get_system_info"]
+            I18N["i18n.py<br/>後端錯誤訊息翻譯"]
+            DEBUG["debug.py<br/>除錯日誌與 user_notice"]
         end
 
         subgraph "第二層：Web UI 管理層"
-            MANAGER[WebUIManager<br/>單例管理器]
-            SESSION[WebFeedbackSession<br/>會話模型]
-            MODELS[數據模型<br/>FeedbackResult/SessionStatus]
+            MANAGER["WebUIManager<br/>get_web_ui_manager 全域實例"]
+            SESSION["WebFeedbackSession<br/>會話模型"]
+            MODELS["狀態列舉<br/>SessionStatus、CleanupReason"]
         end
 
         subgraph "第三層：Web 服務層"
-            FASTAPI[FastAPI 應用<br/>main.py]
-            ROUTES[路由處理<br/>main_routes.py]
-            WS[WebSocket 通信<br/>實時雙向通信]
+            FASTAPI["FastAPI 應用<br/>uvicorn，背景執行緒"]
+            ROUTES["main_routes.py<br/>頁面與 HTTP API"]
+            WS["main_routes.py<br/>WebSocket 端點"]
         end
 
         subgraph "第四層：前端交互層"
-            HTML[HTML 模板<br/>feedback.html/index.html]
-            JS[JavaScript 模組<br/>app.js + 功能模組]
-            CSS[樣式系統<br/>響應式設計]
-            PROMPT[提示詞管理<br/>PromptManager + UI 組件]
-            SESSION_MGR[會話管理<br/>SessionManager + 歷史追蹤<br/>v2.4.3 重構增強]
-            AUTO_SUBMIT[自動提交<br/>AutoSubmitManager + 倒數計時]
-            AUDIO_MGR[音效通知系統<br/>AudioManager + 自訂音效<br/>v2.4.3 新增]
-            MEMORY_MGR[智能記憶功能<br/>高度管理 + 一鍵複製<br/>v2.4.3 新增]
+            HTML["HTML 模板<br/>feedback.html、index.html"]
+            JS["app.js<br/>FeedbackApp"]
+            CSS["樣式系統<br/>響應式設計"]
+            SETTINGS["SettingsManager<br/>設定讀寫"]
+            PROMPT["提示詞管理<br/>PromptManager + UI 組件"]
+            SESSION_MGR["會話管理<br/>SessionManager、SessionDataManager"]
+            AUTO_SUBMIT["自動提交<br/>app.js 的 autoSubmitManager"]
+            AUDIO_MGR["音效通知<br/>AudioManager + 自訂音效"]
+            MEMORY_MGR["輸入框高度<br/>TextareaHeightManager"]
         end
 
         subgraph "工具層"
-            UTILS[工具模組<br/>error_handler/memory_monitor]
-            BROWSER[瀏覽器控制<br/>智能開啟]
-            NETWORK[網路工具<br/>埠管理]
-            CLEANUP[資源管理<br/>會話清理]
+            UTILS["error_handler.py、memory_monitor.py<br/>錯誤處理與記憶體監控"]
+            RES["resource_manager.py<br/>暫存檔管理"]
+            BROWSER["web/utils/browser.py<br/>開啟瀏覽器"]
+            NETWORK["web/utils/port_manager.py<br/>埠管理"]
         end
     end
 
-    subgraph "用戶環境"
-        BROWSER_UI[Web 瀏覽器]
-        USER[用戶互動<br/>文字/圖片/命令]
+    subgraph "使用者環境"
+        BROWSER_UI["Web 瀏覽器"]
+        DESKTOP["Tauri 桌面殼<br/>MCP_DESKTOP_MODE=true"]
+        USER["使用者<br/>文字與圖片回饋"]
     end
 
     subgraph "運行環境"
-        LOCAL[本地環境]
-        SSH[SSH Remote]
-        WSL[WSL 環境]
+        LOCAL["本地環境"]
+        SSH["SSH Remote"]
+        WSL["WSL 環境"]
     end
 
     AI -->|MCP 協議| SERVER
     SERVER --> TOOL
-    TOOL --> MANAGER
+    TOOL -->|launch_web_feedback_ui| MANAGER
     MANAGER --> SESSION
+    MODELS --> SESSION
     MANAGER --> FASTAPI
     FASTAPI --> ROUTES
+    FASTAPI --> WS
+    WS -->|submit_feedback| SESSION
+
+    MANAGER -->|smart_open_browser| BROWSER
+    MANAGER -->|launch_desktop_app| DESKTOP
+    BROWSER --> BROWSER_UI
+    BROWSER_UI -->|載入頁面| ROUTES
+    DESKTOP -->|載入頁面| ROUTES
     ROUTES --> HTML
     HTML --> JS
-    JS --> WS
-    WS -->|HTTP/WebSocket| BROWSER_UI
-    BROWSER_UI --> USER
+    HTML --> CSS
+    USER --> BROWSER_UI
+    USER --> DESKTOP
 
-    %% 新功能模組連接
+    JS -->|WebSocket| WS
     JS --> PROMPT
     JS --> SESSION_MGR
     JS --> AUTO_SUBMIT
     JS --> AUDIO_MGR
     JS --> MEMORY_MGR
-    PROMPT --> WS
-    SESSION_MGR --> WS
-    AUTO_SUBMIT --> WS
-    AUDIO_MGR --> WS
-    MEMORY_MGR --> WS
+    PROMPT --> SETTINGS
+    AUTO_SUBMIT --> SETTINGS
+    AUDIO_MGR --> SETTINGS
+    MEMORY_MGR --> SETTINGS
+    SETTINGS -->|HTTP 設定 API| ROUTES
+    SESSION_MGR -->|HTTP 會話歷史 API| ROUTES
 
-    I18N --> ROUTES
     DEBUG --> SERVER
+    I18N --> UTILS
+    UTILS --> SERVER
     UTILS --> MANAGER
-    BROWSER --> FASTAPI
-    NETWORK --> FASTAPI
-    CLEANUP --> SESSION
+    RES --> SERVER
+    RES --> SESSION
+    NETWORK --> MANAGER
 
-    LOCAL -.->|環境檢測| MANAGER
-    SSH -.->|環境檢測| MANAGER
-    WSL -.->|環境檢測| MANAGER
-
-    USER -->|回饋提交| WS
-    MODELS --> SESSION
+    LOCAL -.->|webbrowser.open| BROWSER
+    WSL -.->|改開 Windows 瀏覽器| BROWSER
+    SSH -.->|需手動埠轉發| BROWSER_UI
 ```
+
+圖中的連線依據：`server.py` 以 `mcp.run()` 啟動並經 `launch_web_feedback_ui()` 交給 `WebUIManager`；`WebUIManager` 在建構時以 `PortManager` 決定埠、掛上 `memory_monitor`，並以背景執行緒跑 uvicorn；`/ws` 端點與 HTTP API 都在 `web/routes/main_routes.py`；提示詞、音效、自動提交與輸入框高度都經 `SettingsManager` 存到 `/api/save-settings`，會話歷史經 `/api/load-session-history`、`/api/save-session-history` 讀寫；`i18n.py` 在後端只有 `error_handler.py` 使用，介面翻譯由前端從 `/api/translations` 載入；`resource_manager.py` 提供儲存回饋 JSON 用的暫存檔。
 
 ## 🎯 核心設計理念
 
@@ -237,23 +249,21 @@ flowchart TD
 
 ## 🔧 技術亮點
 
-### 1. 創新的會話管理架構
+### 1. 單一活躍會話架構
 
-**單一活躍會話設計**：
+**WebUIManager 的會話欄位**（`web/main.py`）：
 ```python
-# 傳統多會話設計 (已棄用)
-self.sessions: Dict[str, WebFeedbackSession] = {}
-
-# 創新單一活躍會話設計
-self.current_session: Optional[WebFeedbackSession] = None
-self.global_active_tabs: Dict[str, dict] = {}  # 全局標籤頁狀態
+self.current_session: WebFeedbackSession | None = None
+self.sessions: dict[str, WebFeedbackSession] = {}  # 保留用於向後兼容
 ```
 
+`current_session` 是唯一的活躍會話。每次 AI 調用都由 `create_session()` 建立新會話並取代它；舊會話留在 `sessions`，供 `/api/all-sessions` 查詢，直到被過期清理或記憶體壓力清理移除。
+
 **會話生命週期管理**：
-- 自動會話創建和清理
-- 超時檢測和資源回收
-- 狀態持久化和恢復
-- 併發安全的會話操作
+- 每次調用建立新會話；舊會話若已提交回饋，推進為已完成
+- 逾時、使用者設定的會話超時、斷線寬限到期都會經 `_cleanup_resources_enhanced()` 清理資源；過期會話另由會話的自動清理定時器與 `cleanup_expired_sessions()` 清除
+- 伺服器不保存會話狀態；會話歷史由前端存到 `session_history.json`
+- 提交與逾時的判定以 `_outcome_lock` 保護，同一會話重複提交會被忽略
 
 ### 2. 智能環境檢測與適配
 
@@ -270,16 +280,14 @@ self.global_active_tabs: Dict[str, dict] = {}  # 全局標籤頁狀態
 ### 3. 高性能實時通信
 
 **WebSocket 雙向通信**：
-- 前後端狀態實時同步
-- 低延遲消息傳遞
-- 自動重連機制
-- 心跳檢測保持連接
+- 單一 `/ws` 連線，訊息是以 `type` 區分的 JSON
+- 前端每 60 秒送一次心跳
+- 斷線後以指數退避自動重連，最多 5 次
 
-**狀態管理優化**：
-- **會話更新通知**: 立即推送會話變更
-- **增量更新**: 只傳輸變更的數據
-- **狀態快照**: 支援狀態回滾和恢復
-- **錯誤處理**: 連接斷線自動重連
+**狀態同步**：
+- **會話更新通知**: 新會話建立時，有連線就立即送 `session_updated`，沒有連線就等新連線建立後補送
+- **完整快照**: `status_update` 每次送出完整的 `status_info`；前端收到新會話後以 `GET /api/current-session` 重新取得內容，沒有增量更新或狀態回滾
+- **前端防抖**: `status_update`、`session_updated` 依類型各自防抖 50 毫秒，其他訊息直接處理
 
 ### 4. 模組化前端架構
 
@@ -558,16 +566,15 @@ graph LR
 ### 維護特性
 
 **自動化維護**：
-- 自動日誌輪轉
-- 定期資源清理
-- 健康狀態檢查
-- 性能指標收集
+- 不寫日誌檔，因此沒有日誌輪轉
+- 定期資源清理：`ResourceManager` 每 300 秒清理最後修改超過 1 小時的已登記暫存檔，並檢查已登記的行程
+- 記憶體監控：`MemoryMonitor` 每 30 秒取樣系統記憶體，使用率達 90% 時清理過期會話，達 95% 時強制清理會話
+- 沒有健康檢查端點；記憶體、資源與壓縮統計只在程式內部累計，沒有端點或報表輸出
 
 **監控與診斷**：
-- 詳細的調試日誌
-- 性能指標追蹤
-- 錯誤統計分析
-- 系統資源監控
+- 除錯日誌：設定 `MCP_DEBUG=true` 時寫到 stderr
+- 錯誤記錄：`ErrorHandler.log_error_with_context()` 為每個錯誤產生錯誤 ID，並把類型、上下文與堆疊寫進除錯日誌；不累計錯誤統計
+- 系統資源監控：以 `psutil` 取得系統與本行程的記憶體使用量
 
 ---
 
