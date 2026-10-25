@@ -131,6 +131,8 @@ class WebUIManager:
         }
 
         self.server_thread: threading.Thread | None = None
+        # 目前這次嘗試的 uvicorn 伺服器；設 should_exit 可讓伺服器執行緒結束
+        self.server: uvicorn.Server | None = None
         self.server_process = None
         self.desktop_app_instance: Any = None  # 桌面應用實例引用
 
@@ -488,6 +490,7 @@ class WebUIManager:
                     )
 
                     server_instance = uvicorn.Server(config)
+                    self.server = server_instance
 
                     # 創建事件循環並啟動服務器
                     async def serve_with_async_init(server=server_instance):

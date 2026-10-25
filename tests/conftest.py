@@ -109,10 +109,11 @@ def web_ui_manager() -> Generator["WebUIManager", None, None]:
         else:
             os.environ.pop("MCP_WEB_PORT", None)
 
-        # 清理
-        if manager.server_thread and manager.server_thread.is_alive():
-            # 這裡可以添加服務器停止邏輯
-            pass
+        # 停掉測試啟動的 uvicorn 伺服器，避免伺服器執行緒留到之後的測試
+        if manager.server is not None:
+            manager.server.should_exit = True
+        if manager.server_thread is not None:
+            manager.server_thread.join(timeout=10)
 
 
 @pytest.fixture
