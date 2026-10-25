@@ -31,7 +31,7 @@ async def interactive_feedback(
 MCP 內容列表：
 - 有回饋時：第一項是彙整文字回饋與圖片資訊的 `TextContent`，之後每張圖片一個 `ImageContent`
 - 等待逾時或用戶關閉介面：一個 `TextContent`，說明使用者未回應並要求 AI 結束任務、不要再呼叫本工具
-- 用戶送出空白回饋：`TextContent("用戶未提供任何回饋內容。")`
+- 使用者送出空白回饋：`TextContent("使用者未提供任何回饋內容。")`
 
 #### 使用示例
 ```python
@@ -248,7 +248,7 @@ ws://127.0.0.1:{port}/ws
     "type": "status_update",
     "status_info": {
         "status": "waiting",
-        "message": "等待用戶回饋",
+        "message": "等待使用者回饋",
         "feedback_completed": false,
         "has_websocket": true,
         "created_at": 1703123456.789,

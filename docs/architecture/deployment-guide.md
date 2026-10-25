@@ -180,7 +180,6 @@ mcp-feedback-enhanced [server | test (--web | --desktop) | version]
 | （無）或 `server` | 啟動 MCP 伺服器（stdio） |
 | `test --web` | 啟動 Web UI 測試並持續運行 |
 | `test --desktop` | 啟動桌面應用程式 |
-| `test --timeout N` | 可接受（預設 60），但目前沒有被使用 |
 | `version` | 顯示版本資訊 |
 
 `test` 不帶 `--web` 或 `--desktop` 時只印出說明並以狀態碼 1 結束。主機、埠、除錯模式沒有命令行參數，一律用下方環境變數設定。
@@ -195,6 +194,7 @@ mcp-feedback-enhanced [server | test (--web | --desktop) | version]
 | `MCP_DESKTOP_MODE` | `true` 時改用桌面應用程式 | 關閉 |
 | `MCP_LANGUAGE` | 強制指定介面語言（`zh-TW`、`zh-CN`、`en`） | 自動偵測 |
 | `MCP_GZIP_MIN_SIZE` | 回應超過此位元組數才 Gzip 壓縮 | `1000` |
+| `MCP_GZIP_LEVEL` | Gzip 壓縮等級 | `6` |
 | `MCP_STATIC_CACHE_AGE` | `/static/` 的快取秒數 | `3600` |
 | `MCP_API_CACHE_AGE` | `/api/` 的快取秒數，`0` 表示不加快取標頭 | `0` |
 
@@ -301,7 +301,7 @@ curl http://127.0.0.1:8765/api/session-status
 
 ### 性能調優
 
-會話清理與 WebSocket 連線沒有可調整的設定；可用環境變數調整的只有 Gzip 門檻與快取時間（`MCP_GZIP_MIN_SIZE`、`MCP_STATIC_CACHE_AGE`、`MCP_API_CACHE_AGE`，見上方環境變數表）。
+會話清理與 WebSocket 連線沒有可調整的設定；可用環境變數調整的只有 Gzip 門檻、Gzip 壓縮等級與快取時間（`MCP_GZIP_MIN_SIZE`、`MCP_GZIP_LEVEL`、`MCP_STATIC_CACHE_AGE`、`MCP_API_CACHE_AGE`，見上方環境變數表）。
 
 ### 故障排除
 

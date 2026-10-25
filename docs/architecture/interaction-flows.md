@@ -316,13 +316,15 @@ sequenceDiagram
             ASM->>UI: updateCountdownDisplay(remaining)
         end
         ASM->>UI: 時間到 performAutoSubmit()
-        UI->>UI: 填入提示詞到輸入框並 submitFeedback()
+        UI->>UI: 填入提示詞到輸入框並 submitFeedback('auto')
         UI->>WS: submit_feedback
         UI->>PM: usePrompt(promptId)
     else 條件不滿足
         UI->>ASM: stop()
     end
 ```
+
+會話歷史裡每則使用者訊息的提交方式（`submission_method`）看這次提交是誰觸發的：只有倒數到期由 `performAutoSubmit()` 送出時記為 `auto`；倒數期間使用者自己按送出或按 Ctrl+Enter，記為 `manual`（`FeedbackApp.collectFeedbackData()`、`recordUserMessage()`）。
 
 ### 提示詞管理流程
 
@@ -564,15 +566,15 @@ stateDiagram-v2
   - `4004`（沒有活躍會話）：顯示斷線，不重連
   - `1000`（正常關閉，例如伺服器清理會話時以 `reason="會話清理"` 關閉）：不重連
   - 瀏覽器回報離線（`offline` 事件）：不重連；恢復上線（`online` 事件）時把重連次數歸零，1 秒後重新連線
-  - 其他關閉碼：重連，直到 `MAX_RECONNECT_ATTEMPTS`（5 次）用完，之後提示「請刷新頁面重試」
+  - 其他關閉碼：重連，直到 `MAX_RECONNECT_ATTEMPTS`（5 次）用完，之後提示「WebSocket 連線失敗，請重新整理頁面重試」
 - **延遲**：指數退避，`DEFAULT_RECONNECT_DELAY`（1000 毫秒）× 2^(第 N 次 − 1)，加上 0–1 秒隨機抖動，最多 30 秒
 - **連線成功**（`handleOpen()`）：重連次數與延遲歸零，啟動心跳並送出 `get_status` 取得目前狀態
 - **心跳**：連線期間每 `DEFAULT_HEARTBEAT_FREQUENCY`（60000 毫秒）送一次 `{type: 'heartbeat', timestamp}`；收到 `heartbeat_response` 時，`ConnectionMonitor` 以送出到收到的時間差計算延遲
 - **前端回饋狀態**：斷線時若正處於 `FEEDBACK_PROCESSING`，`FeedbackApp.handleWebSocketClose()` 把它設回 `FEEDBACK_WAITING`，避免卡在送出中
 
 **連線狀態顯示**（`ConnectionMonitor`）：
-- 右上角狀態文字「重連中... (第N次)」的 N 是這次斷線後的重連次數（`reconnectAttempt`），恢復連線時歸零
-- 統計面板的「重連」是整頁累計的重連次數（`reconnectCount`），只有重新載入頁面才歸零
+- 右上角狀態文字「重新連線中... (第N次)」的 N 是這次斷線後的重連次數（`reconnectAttempt`），恢復連線時歸零
+- 統計面板的「重新連線」是整頁累計的重連次數（`reconnectCount`），只有重新載入頁面才歸零
 - 「連線時間」在連線期間每秒更新；斷線時停止並顯示 `--:--`，重連成功後從 0 起算
 
 伺服器端另有斷線寬限：連線中斷後若在 `CLIENT_DISCONNECT_GRACE_SECONDS`（75 秒）內沒有重新連上，視為使用者關閉介面並結束等待（`WebFeedbackSession.on_client_disconnected()`）。
