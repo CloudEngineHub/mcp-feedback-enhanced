@@ -205,30 +205,6 @@ class WebFeedbackSession:
         )
         return True
 
-    def set_error(self, message: str = "會話發生錯誤") -> bool:
-        """設置錯誤狀態（特殊方法，可從任何狀態進入）"""
-        old_status = self.status
-        self.status = SessionStatus.ERROR
-        self.status_message = message
-        self.last_activity = time.time()
-
-        debug_log(
-            f"❌ 會話 {self.session_id} 設置為錯誤狀態: {old_status.value} → {self.status.value} - {message}"
-        )
-        return True
-
-    def set_expired(self, message: str = "會話已過期") -> bool:
-        """設置過期狀態（特殊方法，可從任何狀態進入）"""
-        old_status = self.status
-        self.status = SessionStatus.EXPIRED
-        self.status_message = message
-        self.last_activity = time.time()
-
-        debug_log(
-            f"⏰ 會話 {self.session_id} 設置為過期狀態: {old_status.value} → {self.status.value} - {message}"
-        )
-        return True
-
     def can_proceed(self) -> bool:
         """檢查是否可以進入下一步"""
         return self.status in [SessionStatus.WAITING, SessionStatus.FEEDBACK_SUBMITTED]

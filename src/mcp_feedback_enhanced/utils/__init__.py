@@ -12,7 +12,6 @@ from .resource_manager import (
     create_temp_dir,
     create_temp_file,
     get_resource_manager,
-    register_process,
 )
 
 
@@ -24,5 +23,4 @@ __all__ = [
     "create_temp_dir",
     "create_temp_file",
     "get_resource_manager",
-    "register_process",
 ]

@@ -3,18 +3,14 @@
 
 測試 ResourceManager 類的各項功能，包括：
 - 臨時文件和目錄管理
-- 進程註冊和清理
 - 自動清理機制
 - 資源統計和監控
 """
 
 import os
-import subprocess
-import sys
 import time
 from unittest.mock import patch
 
-import psutil
 import pytest
 
 # 移除手動路徑操作，讓 mypy 和 pytest 使用正確的模組解析
@@ -39,20 +35,6 @@ class TestResourceManager:
         import mcp_feedback_enhanced.utils.resource_manager as rm_module
 
         rm_module._resource_manager = None
-
-    def teardown_method(self):
-        """每個測試後清空進程登記：ResourceManager 以 atexit 註冊 cleanup_all，
-        留下的 PID 會在 pytest 結束時被終止（PID 也可能已被系統重用）"""
-        if ResourceManager._instance is not None:
-            ResourceManager._instance.processes.clear()
-
-    @pytest.fixture
-    def child_pid(self):
-        """測試專用的短命子行程，取代 pytest 自己的 PID"""
-        child = subprocess.Popen([sys.executable, "-c", "import time; time.sleep(60)"])
-        yield child.pid
-        child.kill()
-        child.wait()
 
     def test_singleton_pattern(self):
         """測試單例模式"""
@@ -115,40 +97,6 @@ class TestResourceManager:
         os.remove(temp_file)
         os.rmdir(temp_dir)
 
-    def test_register_process_with_popen(self):
-        """測試註冊 Popen 進程"""
-        rm = get_resource_manager()
-
-        # 創建一個簡單的進程
-        process = subprocess.Popen(
-            [sys.executable, "-c", "import time; time.sleep(0.1)"],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-        )
-
-        # 註冊進程
-        pid = rm.register_process(process, description="測試進程")
-
-        assert pid == process.pid
-        assert pid in rm.processes
-        assert rm.processes[pid]["description"] == "測試進程"
-        assert rm.processes[pid]["process"] is process
-
-        # 等待進程結束
-        process.wait()
-
-    def test_register_process_with_pid(self, child_pid):
-        """測試註冊 PID"""
-        rm = get_resource_manager()
-
-        # 註冊 PID
-        registered_pid = rm.register_process(child_pid, description="子進程")
-
-        assert registered_pid == child_pid
-        assert child_pid in rm.processes
-        assert rm.processes[child_pid]["description"] == "子進程"
-        assert rm.processes[child_pid]["process"] is None
-
     def test_unregister_temp_file(self):
         """測試取消臨時文件追蹤"""
         rm = get_resource_manager()
@@ -169,23 +117,6 @@ class TestResourceManager:
         # 清理
         if os.path.exists(temp_file):
             os.remove(temp_file)
-
-    def test_unregister_process(self, child_pid):
-        """測試取消進程追蹤"""
-        rm = get_resource_manager()
-
-        # 註冊進程
-        rm.register_process(child_pid, description="測試進程")
-        assert child_pid in rm.processes
-
-        # 取消追蹤
-        result = rm.unregister_process(child_pid)
-        assert result is True
-        assert child_pid not in rm.processes
-
-        # 再次取消追蹤（應該返回 False）
-        result = rm.unregister_process(child_pid)
-        assert result is False
 
     def test_cleanup_temp_files(self):
         """測試清理臨時文件"""
@@ -236,16 +167,13 @@ class TestResourceManager:
             assert not os.path.exists(temp_dir)
             assert temp_dir not in rm.temp_dirs
 
-    def test_cleanup_all(self, child_pid):
+    def test_cleanup_all(self):
         """測試全面清理"""
         rm = get_resource_manager()
 
         # 創建各種資源
         temp_file = rm.create_temp_file(prefix="cleanup_all_")
         temp_dir = rm.create_temp_dir(prefix="cleanup_all_")
-
-        # 註冊進程
-        rm.register_process(child_pid, description="測試進程", auto_cleanup=False)
 
         # 等待一小段時間讓文件有年齡
         time.sleep(0.1)
@@ -256,7 +184,6 @@ class TestResourceManager:
         assert isinstance(results, dict)
         assert "temp_files" in results
         assert "temp_dirs" in results
-        assert "processes" in results
         assert "file_handles" in results
 
         # 檢查文件和目錄是否被清理
@@ -265,18 +192,13 @@ class TestResourceManager:
         assert temp_file not in rm.temp_files
         assert temp_dir not in rm.temp_dirs
 
-        # 進程不應該被清理（auto_cleanup=False）
-        assert child_pid in rm.processes
-        assert psutil.pid_exists(child_pid)
-
-    def test_get_resource_stats(self, child_pid):
+    def test_get_resource_stats(self):
         """測試獲取資源統計"""
         rm = get_resource_manager()
 
         # 創建一些資源
         temp_file = rm.create_temp_file()
         temp_dir = rm.create_temp_dir()
-        rm.register_process(child_pid, description="統計測試")
 
         # 獲取統計
         stats = rm.get_resource_stats()
@@ -284,26 +206,23 @@ class TestResourceManager:
         assert isinstance(stats, dict)
         assert "current_temp_files" in stats
         assert "current_temp_dirs" in stats
-        assert "current_processes" in stats
         assert "temp_files_created" in stats
         assert "temp_dirs_created" in stats
         assert "auto_cleanup_enabled" in stats
 
         assert stats["current_temp_files"] >= 1
         assert stats["current_temp_dirs"] >= 1
-        assert stats["current_processes"] >= 1
 
         # 清理
         os.remove(temp_file)
         os.rmdir(temp_dir)
 
-    def test_get_detailed_info(self, child_pid):
+    def test_get_detailed_info(self):
         """測試獲取詳細信息"""
         rm = get_resource_manager()
 
         # 創建一些資源
         temp_file = rm.create_temp_file(prefix="detail_test_")
-        rm.register_process(child_pid, description="詳細信息測試")
 
         # 獲取詳細信息
         info = rm.get_detailed_info()
@@ -311,12 +230,9 @@ class TestResourceManager:
         assert isinstance(info, dict)
         assert "temp_files" in info
         assert "temp_dirs" in info
-        assert "processes" in info
         assert "stats" in info
 
         assert temp_file in info["temp_files"]
-        assert child_pid in info["processes"]
-        assert info["processes"][child_pid]["description"] == "詳細信息測試"
 
         # 清理
         os.remove(temp_file)

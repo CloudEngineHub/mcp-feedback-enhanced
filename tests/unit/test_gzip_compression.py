@@ -24,10 +24,6 @@ from mcp_feedback_enhanced.web.utils.compression_config import (
     CompressionManager,
     get_compression_manager,
 )
-from mcp_feedback_enhanced.web.utils.compression_monitor import (
-    CompressionMonitor,
-    get_compression_monitor,
-)
 
 
 class TestCompressionConfig:
@@ -146,84 +142,6 @@ class TestCompressionManager:
         assert stats["requests_total"] == 0
         assert stats["requests_compressed"] == 0
         assert stats["compression_ratio"] == 0.0
-
-
-class TestCompressionMonitor:
-    """測試壓縮監控器"""
-
-    def test_monitor_initialization(self):
-        """測試監控器初始化"""
-        monitor = CompressionMonitor()
-
-        assert monitor.max_metrics == 1000
-        assert len(monitor.metrics) == 0
-        assert len(monitor.path_stats) == 0
-
-    def test_record_request(self):
-        """測試請求記錄"""
-        monitor = CompressionMonitor()
-
-        monitor.record_request(
-            path="/static/css/style.css",
-            original_size=2000,
-            compressed_size=1200,
-            response_time=0.05,
-            content_type="text/css",
-            was_compressed=True,
-        )
-
-        assert len(monitor.metrics) == 1
-        metric = monitor.metrics[0]
-        assert metric.path == "/static/css/style.css"
-        assert metric.compression_ratio == 40.0  # (2000-1200)/2000 * 100
-
-        # 檢查路徑統計
-        path_stats = monitor.get_path_stats()
-        assert "/static/css/style.css" in path_stats
-        assert path_stats["/static/css/style.css"]["requests"] == 1
-        assert path_stats["/static/css/style.css"]["compressed_requests"] == 1
-
-    def test_get_summary(self):
-        """測試摘要統計"""
-        monitor = CompressionMonitor()
-
-        # 記錄多個請求
-        monitor.record_request(
-            "/static/css/style.css", 2000, 1200, 0.05, "text/css", True
-        )
-        monitor.record_request(
-            "/static/js/app.js", 3000, 1800, 0.08, "application/javascript", True
-        )
-        monitor.record_request(
-            "/api/feedback", 500, 500, 0.02, "application/json", False
-        )
-
-        summary = monitor.get_summary()
-
-        assert summary.total_requests == 3
-        assert summary.compressed_requests == 2
-        assert abs(summary.compression_percentage - 66.67) < 0.01  # 2/3 * 100 (約)
-        assert (
-            summary.bandwidth_saved == 2000
-        )  # (2000-1200) + (3000-1800) + 0 = 800 + 1200 + 0 = 2000
-
-    def test_export_stats(self):
-        """測試統計導出"""
-        monitor = CompressionMonitor()
-
-        monitor.record_request(
-            "/static/css/style.css", 2000, 1200, 0.05, "text/css", True
-        )
-
-        exported = monitor.export_stats()
-
-        assert "summary" in exported
-        assert "top_compressed_paths" in exported
-        assert "path_stats" in exported
-        assert "content_type_stats" in exported
-
-        assert exported["summary"]["total_requests"] == 1
-        assert exported["summary"]["compressed_requests"] == 1
 
 
 class TestGzipIntegration:
@@ -352,11 +270,6 @@ def test_global_instances():
     manager1 = get_compression_manager()
     manager2 = get_compression_manager()
     assert manager1 is manager2
-
-    # 測試壓縮監控器全域實例
-    monitor1 = get_compression_monitor()
-    monitor2 = get_compression_monitor()
-    assert monitor1 is monitor2
 
 
 if __name__ == "__main__":
