@@ -2,7 +2,7 @@
 
 This document records all version updates for **MCP Feedback Enhanced**.
 
-## [v2.8.4] - Unreleased - Session History Retention and Message Handling Fixes
+## [v2.8.4] - 2026-10-25 - Session History Retention and Message Handling Fixes
 
 ### 🌟 Highlights
 - Session history keeps earlier sessions after the MCP server restarts (#177); sessions a previous process left waiting for feedback show as "Disconnected".
