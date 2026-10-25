@@ -34,11 +34,13 @@ repos:
         args: [--fix=lf]
 
   # Ruff - Python linting 和 formatting
+  # 版本與 uv.lock 的開發環境一致（uv run ruff、CI 用的都是 uv.lock 裡的版本），
+  # 升級 uv.lock 的 ruff 時一併改這裡
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.11.12
+    rev: v0.17.2
     hooks:
       # Ruff linter with auto-fix
-      - id: ruff
+      - id: ruff-check
         args: [--fix]
         types_or: [python, pyi]
       # Ruff formatter
