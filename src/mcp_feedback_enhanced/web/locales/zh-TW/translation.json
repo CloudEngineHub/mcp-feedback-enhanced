@@ -113,6 +113,9 @@
         "auto": "自動"
     },
     "timeUnits": {
+        "second": "秒",
+        "minute": "分鐘",
+        "hour": "小時",
         "seconds": "秒",
         "minutes": "分鐘",
         "hours": "小時",

@@ -107,6 +107,9 @@
         "auto": "Auto"
     },
     "timeUnits": {
+        "second": "second",
+        "minute": "minute",
+        "hour": "hour",
         "seconds": "seconds",
         "minutes": "minutes",
         "hours": "hours",

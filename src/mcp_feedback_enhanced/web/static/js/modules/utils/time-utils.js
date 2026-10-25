@@ -64,28 +64,26 @@
 
         /**
          * 格式化持續時間（秒）- 支援國際化
+         * 單位是拉丁字母單字（英文）時數字與單位、各段之間加空格，數量 1 用單數；中文維持緊湊
          */
         formatDuration: function(seconds) {
-            if (!seconds || seconds < 0) {
-                const secondsText = this.getTimeUnitText('seconds');
-                return `0${secondsText}`;
+            const total = seconds > 0 ? Math.floor(seconds) : 0;
+            const hours = Math.floor(total / 3600);
+            const minutes = Math.floor((total % 3600) / 60);
+            const remainingSeconds = total % 60;
+
+            const self = this;
+            const sep = /[a-z]/i.test(this.getTimeUnitText('seconds')) ? ' ' : '';
+            function part(value, unit) {
+                return value + sep + self.getTimeUnitText(value === 1 ? unit : unit + 's');
             }
-
-            const hours = Math.floor(seconds / 3600);
-            const minutes = Math.floor((seconds % 3600) / 60);
-            const remainingSeconds = Math.floor(seconds % 60);
-
-            const hoursText = this.getTimeUnitText('hours');
-            const minutesText = this.getTimeUnitText('minutes');
-            const secondsText = this.getTimeUnitText('seconds');
 
             if (hours > 0) {
-                return `${hours}${hoursText}${minutes > 0 ? minutes + minutesText : ''}`;
+                return minutes > 0 ? part(hours, 'hour') + sep + part(minutes, 'minute') : part(hours, 'hour');
             } else if (minutes > 0) {
-                return `${minutes}${minutesText}${remainingSeconds > 0 ? remainingSeconds + secondsText : ''}`;
-            } else {
-                return `${remainingSeconds}${secondsText}`;
+                return remainingSeconds > 0 ? part(minutes, 'minute') + sep + part(remainingSeconds, 'second') : part(minutes, 'minute');
             }
+            return part(remainingSeconds, 'second');
         },
 
         /**
@@ -98,8 +96,11 @@
 
             // 回退到預設值（繁體中文）
             const fallbackUnits = {
+                'second': '秒',
                 'seconds': '秒',
+                'minute': '分鐘',
                 'minutes': '分鐘',
+                'hour': '小時',
                 'hours': '小時',
                 'days': '天',
                 'ago': '前',
