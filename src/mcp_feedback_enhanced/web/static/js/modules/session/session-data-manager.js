@@ -528,19 +528,18 @@
         });
         this.sessionStats.todayCount = todaySessions.length;
 
-        // 計算今日平均持續時間
-        const todayCompletedSessions = todaySessions.filter(function(s) {
+        // 計算今日平均持續時間：與歷史卡片的「持續時間」同一個定義（TimeUtils.calculateSessionDuration）；
+        // 伺服器回傳的會話沒有 duration 欄位，只看 duration 會一直是 0
+        const todayDurations = todaySessions.map(function(s) {
+            return TimeUtils.calculateSessionDuration(s);
+        }).filter(function(d) {
             // 過濾有效的持續時間：大於 0 且小於 24 小時（86400 秒）
-            return s.duration && s.duration > 0 && s.duration < 86400;
+            return d > 0 && d < 86400;
         });
 
-        if (todayCompletedSessions.length > 0) {
-            const totalDuration = todayCompletedSessions.reduce(function(sum, s) {
-                // 確保持續時間是合理的數值
-                const duration = Math.min(s.duration, 86400); // 最大 24 小時
-                return sum + duration;
-            }, 0);
-            this.sessionStats.averageDuration = Math.round(totalDuration / todayCompletedSessions.length);
+        if (todayDurations.length > 0) {
+            const totalDuration = todayDurations.reduce(function(sum, d) { return sum + d; }, 0);
+            this.sessionStats.averageDuration = Math.round(totalDuration / todayDurations.length);
         } else {
             this.sessionStats.averageDuration = 0;
         }

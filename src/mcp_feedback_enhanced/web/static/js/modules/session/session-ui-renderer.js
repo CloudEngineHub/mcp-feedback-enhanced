@@ -208,6 +208,9 @@
 
         // 更新會話狀態列
         this.updateSessionStatusBar(sessionData);
+
+        // 詳細統計面板的「狀態」跟當前會話；換語言時卡片會重繪，這裡跟著換
+        DOMUtils.safeSetTextContent(DOMUtils.safeQuerySelector('#statsSessionStatus'), StatusUtils.getSessionStatusText(sessionData.status));
     };
 
     /**
@@ -433,6 +436,9 @@
         // 更新快取
         this.lastRenderedData.historyKey = historyKeyOf(sessionHistory);
 
+        // 詳細統計面板的「會話數」= 會話歷史清單的筆數（含當前會話）
+        DOMUtils.safeSetTextContent(DOMUtils.safeQuerySelector('#statsSessionCount'), String(sessionHistory.length));
+
         // 清空現有內容
         DOMUtils.clearElement(this.historyList);
 
@@ -600,18 +606,11 @@
     };
 
     /**
-     * 計算顯示用的持續時間：開始用 created_at，結束用 completed_at，
-     * 沒有就用最後一則使用者訊息的時間（送出回饋的時間）；缺一就回傳 null 不顯示
+     * 計算顯示用的持續時間（定義見 TimeUtils.calculateSessionDuration）；算不出來回傳 null 不顯示
      */
     SessionUIRenderer.prototype.calculateDisplayDuration = function(sessionData) {
-        const messages = sessionData.user_messages || [];
-        const lastMessage = messages[messages.length - 1];
-        const start = TimeUtils.normalizeTimestamp(sessionData.created_at);
-        const end = TimeUtils.normalizeTimestamp(sessionData.completed_at || (lastMessage && lastMessage.timestamp));
-        if (!start || !end || end < start) {
-            return null;
-        }
-        return TimeUtils.formatDuration(end - start);
+        const seconds = TimeUtils.calculateSessionDuration(sessionData);
+        return seconds === null ? null : TimeUtils.formatDuration(seconds);
     };
 
     /**
@@ -671,11 +670,11 @@
 
         const self = this;
 
-        // 檢查數據是否有變化
+        // 數據與語言都沒變才跳過；平均時長的單位是 JS 組好的字串，換語言要重繪
         if (self.lastRenderedData.stats &&
             self.lastRenderedData.stats.todayCount === stats.todayCount &&
-            self.lastRenderedData.stats.averageDuration === stats.averageDuration) {
-            // 數據沒有變化，跳過渲染
+            self.lastRenderedData.stats.averageDuration === stats.averageDuration &&
+            self.lastRenderedData.stats.language === currentLanguage()) {
             return;
         }
 
@@ -699,7 +698,8 @@
         // 更新快取
         this.lastRenderedData.stats = {
             todayCount: stats.todayCount,
-            averageDuration: stats.averageDuration
+            averageDuration: stats.averageDuration,
+            language: currentLanguage()
         };
 
         // 更新今日會話數

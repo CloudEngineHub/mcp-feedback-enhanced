@@ -87,6 +87,21 @@
         },
 
         /**
+         * 會話持續時間（秒）：開始用 created_at，結束用 completed_at，
+         * 沒有就用最後一則使用者訊息的時間（送出回饋的時間）；缺一或順序不對回傳 null
+         */
+        calculateSessionDuration: function(session) {
+            const messages = session.user_messages || [];
+            const lastMessage = messages[messages.length - 1];
+            const start = this.normalizeTimestamp(session.created_at);
+            const end = this.normalizeTimestamp(session.completed_at || (lastMessage && lastMessage.timestamp));
+            if (!start || !end || end < start) {
+                return null;
+            }
+            return end - start;
+        },
+
+        /**
          * 獲取時間單位文字（支援國際化）
          */
         getTimeUnitText: function(unit) {
