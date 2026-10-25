@@ -8,7 +8,7 @@
 
 import os
 
-from PIL import Image, ImageDraw
+from PIL import Image, ImageDraw, ImageFont
 
 
 def create_simple_icon(size, output_path):
@@ -26,18 +26,12 @@ def create_simple_icon(size, output_path):
         width=2,
     )
 
-    # 在中心繪製 "MCP" 文字
+    # 在中心繪製 "MCP" 文字，優先使用系統字體
+    font_size = size // 4
     try:
-        # 嘗試使用系統字體
-        from PIL import ImageFont
-
-        font_size = size // 4
-        try:
-            font = ImageFont.truetype("arial.ttf", font_size)
-        except:
-            font = ImageFont.load_default()
-    except ImportError:
-        font = None
+        font = ImageFont.truetype("arial.ttf", font_size)
+    except:
+        font = ImageFont.load_default()
 
     text = "MCP"
     if font:

@@ -27,6 +27,7 @@ import io
 import json
 import os
 import sys
+import traceback
 from pathlib import Path
 from typing import Annotated, Any
 
@@ -43,6 +44,7 @@ from .utils.error_handler import ErrorHandler, ErrorType
 
 # 導入資源管理器
 from .utils.resource_manager import create_temp_file
+from .web import launch_web_feedback_ui as web_launch
 from .web.utils.browser import is_wsl_environment
 
 
@@ -52,7 +54,7 @@ def init_encoding():
     try:
         # Windows 特殊處理
         if sys.platform == "win32":
-            import msvcrt
+            import msvcrt  # noqa: PLC0415  # 只有 Windows 有這個模組
 
             # 設置為二進制模式
             msvcrt.setmode(sys.stdin.fileno(), os.O_BINARY)
@@ -238,7 +240,9 @@ def create_feedback_text(feedback_data: dict) -> str:
 
     # 基本回饋內容
     if feedback_data.get("interactive_feedback"):
-        text_parts.append(f"=== 使用者回饋 ===\n{feedback_data['interactive_feedback']}")
+        text_parts.append(
+            f"=== 使用者回饋 ===\n{feedback_data['interactive_feedback']}"
+        )
 
     # 圖片附件概要
     if feedback_data.get("images"):
@@ -401,7 +405,7 @@ def resolve_feedback_timeout(requested: object) -> int:
         int: 鉗制後的秒數
     """
     try:
-        value = int(requested)  # type: ignore[call-overload]
+        value: int = int(requested)  # type: ignore[call-overload]
     except (TypeError, ValueError):
         debug_log(
             f"timeout 值無法解析（{requested!r}），改用預設 {DEFAULT_FEEDBACK_TIMEOUT} 秒"
@@ -562,28 +566,7 @@ async def launch_web_feedback_ui(project_dir: str, summary: str, timeout: int) -
     """
     debug_log(f"啟動 Web UI 介面，超時時間: {timeout} 秒")
 
-    try:
-        # 使用新的 web 模組
-        from .web import launch_web_feedback_ui as web_launch
-
-        # 傳遞 timeout 參數給 Web UI
-        return await web_launch(project_dir, summary, timeout)
-    except ImportError as e:
-        # 使用統一錯誤處理
-        error_id = ErrorHandler.log_error_with_context(
-            e,
-            context={"operation": "Web UI 模組導入", "module": "web"},
-            error_type=ErrorType.DEPENDENCY,
-        )
-        user_error_msg = ErrorHandler.format_user_error(
-            e, ErrorType.DEPENDENCY, include_technical=False
-        )
-        debug_log(f"Web UI 模組導入失敗 [錯誤ID: {error_id}]: {e}")
-
-        return {
-            "interactive_feedback": user_error_msg,
-            "images": [],
-        }
+    return await web_launch(project_dir, summary, timeout)
 
 
 @mcp.tool()
@@ -670,8 +653,6 @@ def main():
     except Exception as e:
         if debug_enabled:
             debug_log(f"MCP 服務器啟動失敗: {e}")
-            import traceback
-
             debug_log(f"詳細錯誤: {traceback.format_exc()}")
         sys.exit(1)
 

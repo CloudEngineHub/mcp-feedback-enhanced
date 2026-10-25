@@ -22,6 +22,7 @@ UV Cache 清理腳本
 import argparse
 import os
 import subprocess
+import time
 from pathlib import Path
 
 
@@ -229,7 +230,7 @@ def force_clean_cache():
     # 嘗試關閉可能的 uvx 程序
     print("\n🔍 檢查相關程序...")
     try:
-        import psutil
+        import psutil  # noqa: PLC0415  # 選用相依：腳本可能在專案環境外執行
 
         killed_processes = []
         for proc in psutil.process_iter(["pid", "name", "cmdline"]):
@@ -250,8 +251,6 @@ def force_clean_cache():
 
         if killed_processes:
             print(f"  已終止 {len(killed_processes)} 個程序")
-            import time
-
             time.sleep(2)  # 等待程序完全關閉
         else:
             print("  未發現相關程序")
@@ -266,7 +265,7 @@ def force_clean_cache():
         print("✅ 強制清理成功")
     else:
         print("⚠️  標準清理仍然失敗，使用檔案級清理...")
-        cleaned_count, skipped_count, total_saved = clean_cache_selective(
+        cleaned_count, skipped_count, _total_saved = clean_cache_selective(
             cache_dir, dry_run=False
         )
         print(f"  清理檔案: {cleaned_count}, 跳過: {skipped_count}")

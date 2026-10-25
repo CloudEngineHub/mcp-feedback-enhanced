@@ -46,6 +46,8 @@ __all__ = [
 
 def main():
     """主要入口點，用於 uvx 執行"""
-    from .__main__ import main as cli_main
+    # 延遲匯入：__main__ 匯入時會設定 Windows 的警告過濾與事件迴圈策略，
+    # 只在 CLI 進入點執行，不影響單純 import 套件的程式
+    from .__main__ import main as cli_main  # noqa: PLC0415
 
     return cli_main()

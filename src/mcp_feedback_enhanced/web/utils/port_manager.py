@@ -128,8 +128,6 @@ class PortManager:
             # 如果綁定失敗，再檢查是否真的有進程在監聽
             # 使用 psutil 檢查是否有進程在監聽該端口
             try:
-                import psutil
-
                 for conn in psutil.net_connections(kind="inet"):
                     if (
                         conn.laddr.port == port

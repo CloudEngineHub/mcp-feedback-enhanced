@@ -10,8 +10,12 @@
 
 import asyncio
 import os
+import platform
+import subprocess
 import sys
+import tempfile
 import time
+from pathlib import Path
 
 
 # 導入現有的 MCP Feedback Enhanced 模組
@@ -93,8 +97,6 @@ class DesktopApp:
         if not self.web_manager:
             raise RuntimeError("Web 管理器未初始化")
 
-        import tempfile
-
         with tempfile.TemporaryDirectory() as temp_dir:
             session_id = self.web_manager.create_session(
                 temp_dir, "桌面應用程式測試 - 驗證 Tauri 整合功能"
@@ -106,20 +108,18 @@ class DesktopApp:
         """啟動 Tauri 桌面應用程式"""
         debug_log("正在啟動 Tauri 桌面視窗...")
 
-        import os
-        import subprocess
-        from pathlib import Path
-
         # 找到 Tauri 可執行檔案
         # 首先嘗試從打包後的位置找（PyPI 安裝後的位置）
         try:
-            from mcp_feedback_enhanced.desktop_release import __file__ as desktop_init
+            # 延遲匯入：發佈包沒附桌面 binary 時退回開發環境路徑（見下方 except）；
+            # 測試也靠呼叫時才讀 __file__ 來換成假的 binary 目錄
+            from mcp_feedback_enhanced.desktop_release import (  # noqa: PLC0415
+                __file__ as desktop_init,
+            )
 
             desktop_dir = Path(desktop_init).parent
 
             # 根據平台選擇對應的二進制文件
-            import platform
-
             system = platform.system().lower()
             machine = platform.machine().lower()
 

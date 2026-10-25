@@ -14,7 +14,15 @@ import argparse
 import asyncio
 import os
 import sys
+import tempfile
+import time
+import traceback
 import warnings
+import webbrowser
+
+from . import __author__, __version__
+from .server import main as server_main
+from .web.main import WebUIManager, get_web_ui_manager
 
 
 # 抑制 Windows 上的 asyncio ResourceWarning
@@ -70,8 +78,6 @@ def main():
 
 def run_server():
     """啟動 MCP 伺服器"""
-    from .server import main as server_main
-
     return server_main()
 
 
@@ -82,8 +88,6 @@ def run_tests(args):
 
     # 在 Windows 上抑制 asyncio 警告
     if sys.platform == "win32":
-        import warnings
-
         # 設置更全面的警告抑制
         os.environ["PYTHONWARNINGS"] = (
             "ignore::ResourceWarning,ignore::DeprecationWarning"
@@ -117,12 +121,6 @@ def run_tests(args):
 def test_web_ui_simple():
     """簡單的 Web UI 測試"""
     try:
-        import tempfile
-        import time
-        import webbrowser
-
-        from .web.main import WebUIManager
-
         # 設置測試模式，禁用自動清理避免權限問題
         os.environ["MCP_TEST_MODE"] = "true"
         os.environ["MCP_WEB_HOST"] = "127.0.0.1"
@@ -255,8 +253,6 @@ def process_feedback(data):
 
     except Exception as e:
         print(f"❌ Web UI 測試失敗: {e}")
-        import traceback
-
         traceback.print_exc()
         return False
     finally:
@@ -273,14 +269,14 @@ def test_desktop_app():
 
         # 檢查是否有 Tauri 桌面模組
         try:
-            import os
-            import sys
-
             # 嘗試導入桌面應用程式模組
             def import_desktop_app():
                 # 首先嘗試從發佈包位置導入
                 try:
-                    from .desktop_app import launch_desktop_app as desktop_func
+                    # 延遲匯入：只有桌面模式需要，匯入失敗時改找開發環境路徑
+                    from .desktop_app import (  # noqa: PLC0415
+                        launch_desktop_app as desktop_func,
+                    )
 
                     print("✅ 找到發佈包中的桌面應用程式模組")
                     return desktop_func
@@ -295,7 +291,8 @@ def test_desktop_app():
                     sys.path.insert(0, tauri_python_path)
                     print(f"✅ 找到 Tauri Python 模組路徑: {tauri_python_path}")
                     try:
-                        from mcp_feedback_enhanced_desktop import (  # type: ignore
+                        # 延遲匯入：模組路徑在上面才加進 sys.path
+                        from mcp_feedback_enhanced_desktop import (  # type: ignore # noqa: PLC0415
                             launch_desktop_app as dev_func,
                         )
 
@@ -339,9 +336,6 @@ def test_desktop_app():
         asyncio.set_event_loop(loop)
 
         try:
-            # 使用 WebUIManager 來管理桌面應用實例
-            from .web.main import get_web_ui_manager
-
             manager = get_web_ui_manager()
 
             # 啟動桌面應用並保存實例到 manager
@@ -354,8 +348,6 @@ def test_desktop_app():
             # 保持應用程式運行
             try:
                 while True:
-                    import time
-
                     time.sleep(1)
             except KeyboardInterrupt:
                 print("\n🛑 停止桌面應用程式...")
@@ -364,8 +356,6 @@ def test_desktop_app():
 
         except Exception as e:
             print(f"❌ 桌面應用程式啟動失敗: {e}")
-            import traceback
-
             traceback.print_exc()
             return False
         finally:
@@ -373,8 +363,6 @@ def test_desktop_app():
 
     except Exception as e:
         print(f"❌ 桌面應用程式測試失敗: {e}")
-        import traceback
-
         traceback.print_exc()
         return False
     finally:
@@ -405,8 +393,6 @@ async def wait_for_process(process):
 
 def show_version():
     """顯示版本資訊"""
-    from . import __author__, __version__
-
     print(f"MCP Feedback Enhanced Enhanced v{__version__}")
     print(f"作者: {__author__}")
     print("GitHub: https://github.com/Minidoracat/mcp-feedback-enhanced")

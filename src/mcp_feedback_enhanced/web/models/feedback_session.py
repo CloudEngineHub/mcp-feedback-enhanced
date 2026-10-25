@@ -8,6 +8,7 @@ Web 回饋會話模型
 
 import asyncio
 import base64
+import os
 import threading
 import time
 from collections.abc import Callable
@@ -16,6 +17,7 @@ from enum import Enum
 from pathlib import Path
 from typing import Any
 
+import psutil
 from fastapi import WebSocket
 
 from ...debug import web_debug_log as debug_log
@@ -286,8 +288,6 @@ class WebFeedbackSession:
                 if not self._cleanup_done and self.is_expired():
                     debug_log(f"會話 {self.session_id} 觸發自動清理（過期）")
                     # 使用異步方式執行清理
-                    import asyncio
-
                     try:
                         loop = asyncio.get_event_loop()
                         loop.create_task(
@@ -575,14 +575,13 @@ class WebFeedbackSession:
                 )
 
                 # 檢查是否為桌面模式，如果是則立即關閉桌面應用程式
-                import os
-
                 if os.environ.get("MCP_DESKTOP_MODE", "").lower() == "true":
                     debug_log("桌面模式：反饋提交後立即關閉桌面應用程式")
 
                     # 立即關閉桌面應用程式，無延遲
                     try:
-                        from ..main import get_web_ui_manager
+                        # 延遲匯入：web/main.py 匯入本模組，頂層匯入會循環
+                        from ..main import get_web_ui_manager  # noqa: PLC0415
 
                         manager = get_web_ui_manager()
                         manager.close_desktop_app()
@@ -597,8 +596,6 @@ class WebFeedbackSession:
 
     def add_user_message(self, message_data: dict[str, Any]) -> None:
         """添加用戶消息記錄"""
-        import time
-
         # 創建用戶消息記錄
         user_message = {
             "timestamp": int(time.time() * 1000),  # 毫秒時間戳
@@ -697,8 +694,6 @@ class WebFeedbackSession:
         try:
             # 記錄清理前的內存使用（如果可能）
             try:
-                import psutil
-
                 process = psutil.Process()
                 memory_before = process.memory_info().rss
             except:
@@ -792,8 +787,6 @@ class WebFeedbackSession:
             cleanup_duration = time.time() - cleanup_start_time
             memory_after = 0
             try:
-                import psutil
-
                 process = psutil.Process()
                 memory_after = process.memory_info().rss
             except:
@@ -859,8 +852,6 @@ class WebFeedbackSession:
         try:
             # 記錄清理前的內存使用
             try:
-                import psutil
-
                 process = psutil.Process()
                 memory_before = process.memory_info().rss
             except:
@@ -913,8 +904,6 @@ class WebFeedbackSession:
             cleanup_duration = time.time() - cleanup_start_time
             memory_after = 0
             try:
-                import psutil
-
                 process = psutil.Process()
                 memory_after = process.memory_info().rss
             except:

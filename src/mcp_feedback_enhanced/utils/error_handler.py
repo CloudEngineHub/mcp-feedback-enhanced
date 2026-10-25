@@ -18,6 +18,7 @@ from enum import Enum
 from typing import Any
 
 from ..debug import debug_log
+from ..i18n import get_i18n_manager
 
 
 class ErrorType(Enum):
@@ -106,8 +107,6 @@ class ErrorHandler:
         """獲取當前語言設置"""
         try:
             # 嘗試從 i18n 模組獲取當前語言
-            from ..i18n import get_i18n_manager
-
             return get_i18n_manager().get_current_language()
         except Exception:
             # 回退到環境變數或默認語言
@@ -117,8 +116,6 @@ class ErrorHandler:
     def get_i18n_error_message(error_type: ErrorType) -> str:
         """從國際化系統獲取錯誤信息"""
         try:
-            from ..i18n import get_i18n_manager
-
             i18n = get_i18n_manager()
             key = f"errors.types.{error_type.value}"
             message = i18n.t(key)

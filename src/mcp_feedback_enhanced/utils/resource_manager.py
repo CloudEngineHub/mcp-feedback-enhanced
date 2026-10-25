@@ -20,6 +20,7 @@ from typing import Any
 
 from ..debug import debug_log
 from .error_handler import ErrorHandler, ErrorType
+from .memory_monitor import get_memory_monitor
 
 
 class ResourceType:
@@ -88,9 +89,6 @@ class ResourceManager:
     def _setup_memory_monitoring(self):
         """設置內存監控集成"""
         try:
-            # 延遲導入避免循環依賴
-            from .memory_monitor import get_memory_monitor
-
             self.memory_monitor = get_memory_monitor()
 
             # 註冊清理回調

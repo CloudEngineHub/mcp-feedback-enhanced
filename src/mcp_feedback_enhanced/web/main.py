@@ -9,6 +9,7 @@ Web UI 主要管理類
 import asyncio
 import concurrent.futures
 import os
+import socket
 import sys
 import threading
 import time
@@ -17,11 +18,13 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+import psutil
 import uvicorn
 from fastapi import FastAPI, Request
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from fastapi.websockets import WebSocketState
 
 from ..debug import user_notice
 from ..debug import web_debug_log as debug_log
@@ -93,8 +96,6 @@ class WebUIManager:
                         debug_log(f"自動切換到可用端口: {original_port} → {self.port}")
         elif preferred_port == 0:
             # 如果偏好端口為 0，使用系統自動分配
-            import socket
-
             with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                 s.bind((self.host, 0))
                 self.port = s.getsockname()[1]
@@ -628,7 +629,8 @@ class WebUIManager:
             def import_desktop_app():
                 # 首先嘗試從發佈包位置導入
                 try:
-                    from mcp_feedback_enhanced.desktop_app import (
+                    # 延遲匯入：desktop_app 匯入本模組，頂層匯入會循環
+                    from mcp_feedback_enhanced.desktop_app import (  # noqa: PLC0415
                         launch_desktop_app as desktop_func,
                     )
 
@@ -645,7 +647,8 @@ class WebUIManager:
                 if desktop_module_path not in sys.path:
                     sys.path.insert(0, desktop_module_path)
                 try:
-                    from mcp_feedback_enhanced_desktop import (  # type: ignore
+                    # 延遲匯入：模組路徑在上面才加進 sys.path
+                    from mcp_feedback_enhanced_desktop import (  # type: ignore # noqa: PLC0415
                         launch_desktop_app as dev_func,
                     )
 
@@ -769,23 +772,13 @@ class WebUIManager:
 
                 # 檢查連接是否已關閉
                 if hasattr(websocket, "client_state"):
-                    try:
-                        # 嘗試從 starlette 導入（FastAPI 基於 Starlette）
-                        import starlette.websockets  # type: ignore[import-not-found]
-
-                        if hasattr(starlette.websockets, "WebSocketState"):
-                            WebSocketState = starlette.websockets.WebSocketState
-                            if websocket.client_state != WebSocketState.CONNECTED:
-                                debug_log(
-                                    f"準確檢測：WebSocket 狀態不是 CONNECTED，而是 {websocket.client_state}"
-                                )
-                                # 清理死連接
-                                self.current_session.websocket = None
-                                return False
-                    except ImportError:
-                        # 如果導入失敗，使用替代方法
-                        debug_log("無法導入 WebSocketState，使用替代方法檢測連接")
-                        # 跳過狀態檢查，直接測試連接
+                    if websocket.client_state != WebSocketState.CONNECTED:
+                        debug_log(
+                            f"準確檢測：WebSocket 狀態不是 CONNECTED，而是 {websocket.client_state}"
+                        )
+                        # 清理死連接
+                        self.current_session.websocket = None
+                        return False
 
                 # 如果連接看起來是活的，嘗試發送 ping（非阻塞）
                 # 注意：FastAPI WebSocket 沒有內建的 ping 方法，這裡使用自定義消息
@@ -906,7 +899,7 @@ class WebUIManager:
         cleaned_count = 0
 
         for i in range(max_cleanup):
-            session_id, session, priority = sessions_to_clean[i]
+            session_id, session, _priority = sessions_to_clean[i]
             try:
                 # 使用增強清理方法
                 session._cleanup_sync_enhanced(CleanupReason.MEMORY_PRESSURE)
@@ -976,8 +969,6 @@ class WebUIManager:
 
         # 計算內存使用（如果可能）
         try:
-            import psutil
-
             process = psutil.Process()
             stats["memory_usage_mb"] = round(
                 process.memory_info().rss / (1024 * 1024), 2
@@ -1165,8 +1156,6 @@ element.innerHTML = renderedContent;
 ---
 
 **測試狀態**: ✅ 功能正常運作"""
-
-            from ..debug import debug_log
 
             debug_log("啟動 Web UI 測試...")
             debug_log(f"專案目錄: {project_dir}")

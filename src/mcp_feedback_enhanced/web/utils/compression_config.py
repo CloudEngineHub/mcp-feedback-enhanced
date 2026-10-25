@@ -9,6 +9,7 @@
 
 import os
 from dataclasses import dataclass, field
+from datetime import datetime, timedelta
 from typing import Any
 
 
@@ -107,8 +108,6 @@ class CompressionConfig:
 
     def _get_expires_header(self, max_age: int) -> str:
         """生成 Expires 頭"""
-        from datetime import datetime, timedelta
-
         expires_time = datetime.utcnow() + timedelta(seconds=max_age)
         return expires_time.strftime("%a, %d %b %Y %H:%M:%S GMT")
 
