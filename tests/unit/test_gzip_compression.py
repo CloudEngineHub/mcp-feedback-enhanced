@@ -264,6 +264,38 @@ async def test_compression_performance():
     assert decompressed_data == json_data
 
 
+class TestGzipLevelFromEnv:
+    """MCP_GZIP_LEVEL 要真的傳到 WebUIManager 的 GZipMiddleware"""
+
+    def _gzipped_size(self, monkeypatch, level: str) -> tuple[int, int]:
+        from mcp_feedback_enhanced.web import main as web_main
+        from mcp_feedback_enhanced.web.utils import compression_config
+
+        monkeypatch.setenv("MCP_TEST_MODE", "true")
+        monkeypatch.setenv("MCP_WEB_HOST", "127.0.0.1")
+        monkeypatch.setenv("MCP_WEB_PORT", "0")
+        monkeypatch.setenv("MCP_GZIP_LEVEL", level)
+        # 全域 CompressionManager 只在第一次取用時讀環境變數
+        monkeypatch.setattr(compression_config, "_compression_manager", None)
+
+        manager = web_main.WebUIManager()
+        gzip_options = [
+            m.kwargs for m in manager.app.user_middleware if m.cls is GZipMiddleware
+        ]
+        response = TestClient(manager.app).get(
+            "/static/css/styles.css", headers={"Accept-Encoding": "gzip"}
+        )
+        assert response.headers["content-encoding"] == "gzip"
+        return gzip_options[0]["compresslevel"], int(response.headers["content-length"])
+
+    def test_level_reaches_middleware_and_changes_size(self, monkeypatch):
+        fast_level, fast_size = self._gzipped_size(monkeypatch, "1")
+        best_level, best_size = self._gzipped_size(monkeypatch, "9")
+
+        assert (fast_level, best_level) == (1, 9)
+        assert best_size < fast_size
+
+
 def test_global_instances():
     """測試全域實例"""
     # 測試壓縮管理器全域實例

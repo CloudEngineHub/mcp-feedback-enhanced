@@ -212,8 +212,12 @@ class WebUIManager:
         compression_manager = get_compression_manager()
         config = compression_manager.config
 
-        # 添加 Gzip 壓縮中間件
-        self.app.add_middleware(GZipMiddleware, minimum_size=config.minimum_size)
+        # 添加 Gzip 壓縮中間件（MCP_GZIP_MIN_SIZE／MCP_GZIP_LEVEL）
+        self.app.add_middleware(
+            GZipMiddleware,
+            minimum_size=config.minimum_size,
+            compresslevel=config.compression_level,
+        )
 
         # 添加緩存和壓縮統計中間件
         @self.app.middleware("http")
