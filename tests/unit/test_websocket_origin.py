@@ -2,9 +2,10 @@
 """
 WebSocket Origin 驗證的回歸測試
 
-對應兩份私下回報的 advisory：
+對應三份私下回報的 advisory：
 - GHSA-cmr5-gpm3-79vf (critical) — Unauthenticated WebSocket Command Execution via CSWSH
 - GHSA-2wx7-r4rh-f663 (high)     — CSWSH to RCE via missing Origin validation
+- GHSA-x999-258q-h9mh           — 綁 0.0.0.0 時只比埠，同埠外站可通過
 
 瀏覽器開啟 WebSocket 不受 same-origin policy 限制，因此惡意網頁可以讓使用者的
 瀏覽器連上 ws://127.0.0.1:<port>/ws。v2.6.1 已移除命令執行，切斷了 RCE 路徑，
@@ -21,6 +22,9 @@ from mcp_feedback_enhanced.web.routes.main_routes import is_allowed_origin
 
 HOST = "127.0.0.1"
 PORT = 8765
+HOST_HEADER = f"{HOST}:{PORT}"
+LAN_HOST_HEADER = f"192.168.1.50:{PORT}"
+ANY_V4 = "0.0.0.0"  # noqa: S104
 
 
 class TestRejectsCrossOrigin:
@@ -38,17 +42,19 @@ class TestRejectsCrossOrigin:
         ],
     )
     def test_foreign_origin_rejected(self, origin):
-        assert is_allowed_origin(origin, HOST, PORT) is False, (
+        assert is_allowed_origin(origin, HOST, PORT, HOST_HEADER) is False, (
             f"{origin} 必須被拒絕，否則惡意網頁可劫持本機 WebSocket"
         )
 
     def test_different_port_rejected(self):
         """同主機但不同埠也應拒絕（可能是另一個本機服務）"""
-        assert is_allowed_origin("http://127.0.0.1:9999", HOST, PORT) is False
+        assert (
+            is_allowed_origin("http://127.0.0.1:9999", HOST, PORT, HOST_HEADER) is False
+        )
 
     @pytest.mark.parametrize("origin", ["ws://127.0.0.1:8765", "file://", "null"])
     def test_non_http_scheme_rejected(self, origin):
-        assert is_allowed_origin(origin, HOST, PORT) is False
+        assert is_allowed_origin(origin, HOST, PORT, HOST_HEADER) is False
 
 
 class TestAllowsLegitimateOrigin:
@@ -63,11 +69,11 @@ class TestAllowsLegitimateOrigin:
         ],
     )
     def test_loopback_origin_allowed(self, origin):
-        assert is_allowed_origin(origin, HOST, PORT) is True
+        assert is_allowed_origin(origin, HOST, PORT, HOST_HEADER) is True
 
     def test_missing_origin_allowed(self):
         """非瀏覽器客戶端（桌面應用、CLI）不會帶 Origin"""
-        assert is_allowed_origin("", HOST, PORT) is True
+        assert is_allowed_origin("", HOST, PORT, HOST_HEADER) is True
 
     @pytest.mark.parametrize(
         "origin",
@@ -75,22 +81,66 @@ class TestAllowsLegitimateOrigin:
     )
     def test_desktop_webview_origin_allowed(self, origin):
         """Tauri WebView 依平台使用不同的自訂 scheme"""
-        assert is_allowed_origin(origin, HOST, PORT) is True
+        assert is_allowed_origin(origin, HOST, PORT, HOST_HEADER) is True
 
     def test_matching_bound_host_allowed(self):
         """綁定到具體 LAN 位址時，該位址自身應被允許"""
         assert (
-            is_allowed_origin("http://192.168.1.50:8765", "192.168.1.50", PORT) is True
+            is_allowed_origin(
+                "http://192.168.1.50:8765", "192.168.1.50", PORT, LAN_HOST_HEADER
+            )
+            is True
         )
 
-    def test_wildcard_bind_accepts_matching_port(self):
-        """綁定 0.0.0.0 時無法預知對外位址，退為以埠相符為準
 
-        這是使用者明確選擇對外開放時的行為（README 已標示不建議），
-        仍能擋掉埠不符的惡意來源。
-        """
-        assert is_allowed_origin("http://192.168.1.50:8765", "0.0.0.0", PORT) is True  # noqa: S104
-        assert is_allowed_origin("http://evil.example:9999", "0.0.0.0", PORT) is False  # noqa: S104
+class TestWildcardBind:
+    """綁定 0.0.0.0 / :: 時無法預知對外位址，Origin 必須等於請求的 Host header
+
+    GHSA-x999-258q-h9mh：舊版只比埠，任何同埠的外站都會通過。
+    """
+
+    @pytest.mark.parametrize("bind", [ANY_V4, "::"])
+    def test_origin_matching_host_header_allowed(self, bind):
+        assert (
+            is_allowed_origin("http://192.168.1.50:8765", bind, PORT, LAN_HOST_HEADER)
+            is True
+        )
+
+    @pytest.mark.parametrize("bind", [ANY_V4, "::"])
+    def test_foreign_host_same_port_rejected(self, bind):
+        assert (
+            is_allowed_origin("http://evil.example:8765", bind, PORT, LAN_HOST_HEADER)
+            is False
+        )
+
+    def test_host_header_port_mismatch_rejected(self):
+        """Host header 主機相符但埠不同也要拒絕"""
+        assert (
+            is_allowed_origin(
+                "http://192.168.1.50:8765", ANY_V4, PORT, "192.168.1.50:9999"
+            )
+            is False
+        )
+
+    @pytest.mark.parametrize("host_header", ["", "192.168.1.50:notaport"])
+    def test_missing_or_malformed_host_header_rejected(self, host_header):
+        assert (
+            is_allowed_origin("http://192.168.1.50:8765", ANY_V4, PORT, host_header)
+            is False
+        )
+
+    def test_ipv6_host_header(self):
+        lan6 = f"[fe80::1]:{PORT}"
+        assert is_allowed_origin(f"http://{lan6}", "::", PORT, lan6) is True
+
+    def test_loopback_still_allowed(self):
+        assert (
+            is_allowed_origin("http://localhost:8765", ANY_V4, PORT, LAN_HOST_HEADER)
+            is True
+        )
+
+    def test_different_port_rejected(self):
+        assert is_allowed_origin("http://evil.example:9999", ANY_V4, PORT, "") is False
 
 
 class TestEndpointEnforcesCheck:

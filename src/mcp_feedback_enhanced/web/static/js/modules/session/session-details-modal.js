@@ -132,6 +132,8 @@
      * 創建彈窗 HTML
      */
     SessionDetailsModal.prototype.createModalHTML = function(details) {
+        // 會話歷史可能來自被竄改的 session_history.json，所有欄位都要轉義（GHSA-x999-258q-h9mh）
+        const esc = this.escapeHtml;
         const i18n = window.i18nManager;
         const title = i18n ? i18n.t('sessionManagement.sessionDetails.title') : '會話詳細資訊';
         const closeLabel = i18n ? i18n.t('sessionManagement.sessionDetails.close') : '關閉';
@@ -149,23 +151,23 @@
                     <div class="modal-body">
                         <div class="detail-row">
                             <span class="detail-label">${sessionIdLabel}:</span>
-                            <span class="detail-value session-id" title="${details.sessionId}">${details.sessionId}</span>
+                            <span class="detail-value session-id" title="${esc(details.sessionId)}">${esc(details.sessionId)}</span>
                         </div>
                         <div class="detail-row">
                             <span class="detail-label">${statusLabel}:</span>
-                            <span class="detail-value" style="color: ${details.statusColor};">${details.status}</span>
+                            <span class="detail-value" style="color: ${esc(details.statusColor)};">${esc(details.status)}</span>
                         </div>
                         <div class="detail-row">
                             <span class="detail-label">${i18n ? i18n.t('sessionManagement.createdTime') : '建立時間'}:</span>
-                            <span class="detail-value">${details.createdTime}</span>
+                            <span class="detail-value">${esc(details.createdTime)}</span>
                         </div>
                         <div class="detail-row">
                             <span class="detail-label">${i18n ? i18n.t('sessionManagement.sessionDetails.duration') : '持續時間'}:</span>
-                            <span class="detail-value">${details.duration}</span>
+                            <span class="detail-value">${esc(details.duration)}</span>
                         </div>
                         <div class="detail-row">
                             <span class="detail-label">${i18n ? i18n.t('sessionManagement.sessionDetails.projectDirectory') : '專案目錄'}:</span>
-                            <span class="detail-value project-path" title="${details.projectDirectory}">${details.projectDirectory}</span>
+                            <span class="detail-value project-path" title="${esc(details.projectDirectory)}">${esc(details.projectDirectory)}</span>
                         </div>
                         <div class="detail-row">
                             <span class="detail-label">${i18n ? i18n.t('sessionManagement.aiSummary') : 'AI 摘要'}:</span>
@@ -191,6 +193,7 @@
      */
     SessionDetailsModal.prototype.createUserMessagesSection = function(details) {
         const i18n = window.i18nManager;
+        const esc = this.escapeHtml;
         const userMessages = details.userMessages || [];
 
         if (userMessages.length === 0) {
@@ -225,7 +228,7 @@
                     const imageCountText = i18n ? i18n.t('sessionHistory.userMessages.imageCount') : '圖片數量';
                     contentHtml += `
                         <div class="message-images">
-                            <strong>${imageCountText}:</strong> ${message.images.length}
+                            <strong>${imageCountText}:</strong> ${esc(message.images.length)}
                         </div>
                     `;
                 }
@@ -235,8 +238,8 @@
                 const imageCountLabel = i18n ? i18n.t('sessionHistory.userMessages.imageCount') : '圖片數量';
                 contentHtml = `
                     <div class="message-stats">
-                        <strong>${contentLengthLabel}:</strong> ${message.content_length} 字元<br>
-                        <strong>${imageCountLabel}:</strong> ${message.image_count || 0}
+                        <strong>${contentLengthLabel}:</strong> ${esc(message.content_length)} 字元<br>
+                        <strong>${imageCountLabel}:</strong> ${esc(message.image_count || 0)}
                     </div>
                 `;
             } else if (message.privacy_note) {
@@ -252,7 +255,7 @@
                 <div class="user-message-item" data-message-index="${index}">
                     <div class="message-header">
                         <span class="message-index">#${index + 1}</span>
-                        <span class="message-time">${timestamp}</span>
+                        <span class="message-time">${esc(timestamp)}</span>
                         <span class="message-method">${submissionMethod}</span>
                         <button class="btn-copy-message" title="複製消息內容" aria-label="複製消息內容" data-message-content="${this.escapeHtml(message.content)}">📋</button>
                     </div>
@@ -381,11 +384,7 @@
      * HTML 轉義
      */
     SessionDetailsModal.prototype.escapeHtml = function(text) {
-        if (!text) return '';
-
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
+        return window.MCPFeedback.Utils.escapeHtml(text);
     };
 
     /**

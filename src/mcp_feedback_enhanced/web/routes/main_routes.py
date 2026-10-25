@@ -48,6 +48,8 @@ def load_user_layout_settings() -> str:
 
 # 瀏覽器不受 same-origin policy 限制地開啟 WebSocket，因此 /ws 必須自行驗證 Origin，
 # 否則惡意網頁可從使用者瀏覽器連上本機服務（Cross-Site WebSocket Hijacking）。
+# 跨站網頁同樣能以 CORS simple request 對 /api/* 送出 POST（讀不到回應但會生效），
+# 所以會改狀態的 HTTP 請求也走同一個檢查（GHSA-x999-258q-h9mh）。
 # 桌面應用與非瀏覽器客戶端不會送 Origin，這種情況放行。
 _LOOPBACK_HOSTS = frozenset({"127.0.0.1", "localhost", "::1", "[::1]"})
 # Tauri WebView 依平台使用不同的自訂 scheme
@@ -60,16 +62,17 @@ _DESKTOP_ORIGINS = frozenset(
 )
 
 
-def is_allowed_origin(origin: str, host: str, port: int) -> bool:
-    """判斷 WebSocket 的 Origin 是否可信
+def is_allowed_origin(origin: str, host: str, port: int, host_header: str) -> bool:
+    """判斷瀏覽器請求的 Origin 是否可信（/ws 與會改狀態的 HTTP 請求共用）
 
     Args:
         origin: 請求的 Origin header（空字串代表未提供）
         host: 伺服器綁定的主機
         port: 伺服器綁定的埠
+        host_header: 請求的 Host header，綁定 0.0.0.0 / :: 時用來比對 Origin
 
     Returns:
-        bool: True 表示允許連線
+        bool: True 表示允許
     """
     # 非瀏覽器客戶端（桌面應用、CLI 工具）不會帶 Origin
     if not origin:
@@ -94,8 +97,25 @@ def is_allowed_origin(origin: str, host: str, port: int) -> bool:
     if hostname in _LOOPBACK_HOSTS:
         return True
 
-    # 綁定 0.0.0.0 時無法預先得知對外位址，此時僅以埠相符為準
-    return host in ("0.0.0.0", "::") or hostname == host.lower()
+    if host in ("0.0.0.0", "::"):
+        # 綁定萬用位址時無法預知對外位址：Origin 必須正是瀏覽器連上的 host:port。
+        # 只比埠會放行任何同埠的外站（GHSA-x999-258q-h9mh）
+        target = urlsplit(f"//{host_header}")
+        try:
+            target_port = target.port
+        except ValueError:
+            return False
+        target_hostname = (target.hostname or "").lower()
+        return bool(hostname) and (hostname, origin_port) == (
+            target_hostname,
+            target_port,
+        )
+
+    return hostname == host.lower()
+
+
+# 不會改狀態的方法；其餘方法打 /api/* 都要通過 reject_cross_site_writes
+_SAFE_METHODS = frozenset({"GET", "HEAD", "OPTIONS"})
 
 
 # 使用統一的訊息代碼系統
@@ -105,6 +125,30 @@ def is_allowed_origin(origin: str, host: str, port: int) -> bool:
 
 def setup_routes(manager: "WebUIManager"):
     """設置路由"""
+
+    @manager.app.middleware("http")
+    async def reject_cross_site_writes(request: Request, call_next):
+        """擋下跨站對 /api/* 的寫入（GHSA-x999-258q-h9mh）
+
+        之後新增的 POST /api/* 也自動受保護，不必各自檢查。
+        跨站網頁不需 preflight 就能送出 text/plain 等 simple request；
+        要求 application/json 會逼它先 preflight，而本服務不核准任何 CORS。
+        """
+        if request.method not in _SAFE_METHODS and request.url.path.startswith("/api/"):
+            origin = request.headers.get("origin", "")
+            host_header = request.headers.get("host", "")
+            if not is_allowed_origin(origin, manager.host, manager.port, host_header):
+                debug_log(f"拒絕來源不受信任的 {request.method} {request.url.path}")
+                return JSONResponse(
+                    status_code=403, content={"error": "Origin not allowed"}
+                )
+            content_type = request.headers.get("content-type", "")
+            if content_type.split(";")[0].strip().lower() != "application/json":
+                return JSONResponse(
+                    status_code=415,
+                    content={"error": "Content-Type must be application/json"},
+                )
+        return await call_next(request)
 
     @manager.app.get("/", response_class=HTMLResponse)
     async def index(request: Request):
@@ -313,7 +357,9 @@ def setup_routes(manager: "WebUIManager"):
         """WebSocket 端點 - 重構後移除 session_id 依賴"""
         # 先驗證 Origin，避免惡意網頁從使用者瀏覽器劫持此連線（CSWSH）
         origin = websocket.headers.get("origin", "")
-        if not is_allowed_origin(origin, manager.host, manager.port):
+        if not is_allowed_origin(
+            origin, manager.host, manager.port, websocket.headers.get("host", "")
+        ):
             debug_log(f"拒絕來源不受信任的 WebSocket 連線: {origin!r}")
             await websocket.close(code=4003, reason="Origin not allowed")
             return

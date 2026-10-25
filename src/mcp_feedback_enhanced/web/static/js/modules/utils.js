@@ -423,18 +423,21 @@
 
 
         /**
-         * HTML 轉義函數
-         * @param {string} text - 要轉義的文字
+         * HTML 轉義函數，連引號一起轉義，可安全放進元素內容與屬性值
+         * @param {*} text - 要轉義的值（null / undefined 視為空字串）
          * @returns {string} 轉義後的文字
          */
         escapeHtml: function(text) {
-            if (typeof text !== 'string') {
-                return text;
+            if (text === null || text === undefined) {
+                return '';
             }
 
-            const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
+            return String(text)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
         },
 
         /**

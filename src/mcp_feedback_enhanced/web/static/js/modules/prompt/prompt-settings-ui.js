@@ -174,7 +174,7 @@
         const isAutoSubmit = prompt.isAutoSubmit || false;
 
         return `
-            <div class="prompt-settings-item ${isAutoSubmit ? 'auto-submit-prompt' : ''}" data-prompt-id="${prompt.id}">
+            <div class="prompt-settings-item ${isAutoSubmit ? 'auto-submit-prompt' : ''}" data-prompt-id="${Utils.escapeHtml(prompt.id)}">
                 <div class="prompt-settings-info">
                     <div class="prompt-settings-name">
                         ${isAutoSubmit ? '<span class="auto-submit-badge" title="自動提交提示詞">⏰</span>' : ''}
@@ -189,15 +189,15 @@
                 </div>
                 <div class="prompt-settings-actions">
                     <button type="button" class="prompt-action-btn auto-submit-btn ${isAutoSubmit ? 'active' : ''}"
-                            data-prompt-id="${prompt.id}"
+                            data-prompt-id="${Utils.escapeHtml(prompt.id)}"
                             title="${isAutoSubmit ? '取消自動提交' : '設定為自動提交'}"
                             data-i18n="${isAutoSubmit ? 'prompts.management.cancelAutoSubmit' : 'prompts.management.setAutoSubmit'}">
                         ${isAutoSubmit ? '⏸️' : '⏰'}
                     </button>
-                    <button type="button" class="prompt-action-btn edit-btn" data-prompt-id="${prompt.id}" data-i18n="prompts.management.edit">
+                    <button type="button" class="prompt-action-btn edit-btn" data-prompt-id="${Utils.escapeHtml(prompt.id)}" data-i18n="prompts.management.edit">
                         編輯
                     </button>
-                    <button type="button" class="prompt-action-btn delete-btn delete" data-prompt-id="${prompt.id}" data-i18n="prompts.management.delete">
+                    <button type="button" class="prompt-action-btn delete-btn delete" data-prompt-id="${Utils.escapeHtml(prompt.id)}" data-i18n="prompts.management.delete">
                         刪除
                     </button>
                 </div>

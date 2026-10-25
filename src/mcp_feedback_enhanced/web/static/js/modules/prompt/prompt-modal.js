@@ -189,7 +189,7 @@
      */
     PromptModal.prototype.createSelectModalHTML = function(modalId, modalData) {
         const promptsHtml = modalData.prompts.map(prompt => `
-            <div class="prompt-item" data-prompt-id="${prompt.id}">
+            <div class="prompt-item" data-prompt-id="${Utils.escapeHtml(prompt.id)}">
                 <div class="prompt-item-header">
                     <h4 class="prompt-item-name">${Utils.escapeHtml(prompt.name)}</h4>
                     <span class="prompt-item-date">${this.formatDate(prompt.createdAt)}</span>
