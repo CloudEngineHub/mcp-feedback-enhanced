@@ -1218,7 +1218,7 @@ tests/
 
 **uv (現代 Python 包管理)**：
 - 快速依賴解析
-- `uv sync --dev` 安裝 `[dependency-groups]` 的開發依賴（ruff、mypy、pre-commit 等）；`uv.lock` 列在 `.gitignore`，不進版本控制
+- `uv sync --dev` 安裝 `[dependency-groups]` 的開發依賴（ruff、mypy、pre-commit 等）；`uv.lock` 列在 `.gitignore`，不進版本控制，CI 每次重新解析依賴，因此 lint 工具釘死版本（`ruff==0.17.2`、`mypy==2.4.0`），ruff 版本要和 `.pre-commit-config.yaml` 的 `ruff-pre-commit` rev 一起升級
 - 開發環境隔離
 - 跨平台支援
 
