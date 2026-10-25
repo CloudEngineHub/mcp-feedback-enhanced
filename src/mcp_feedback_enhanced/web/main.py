@@ -116,9 +116,6 @@ class WebUIManager:
         self.current_session: WebFeedbackSession | None = None
         self.sessions: dict[str, WebFeedbackSession] = {}  # 保留用於向後兼容
 
-        # 全局標籤頁狀態管理 - 跨會話保持
-        self.global_active_tabs: dict[str, dict] = {}
-
         # 會話更新通知標記
         self._pending_session_update = False
 
@@ -333,7 +330,7 @@ class WebUIManager:
             raise RuntimeError(f"Templates directory not found: {web_templates_path}")
 
     def create_session(self, project_directory: str, summary: str) -> str:
-        """創建新的回饋會話 - 重構為單一活躍會話模式，保留標籤頁狀態"""
+        """創建新的回饋會話 - 重構為單一活躍會話模式"""
         # 保存舊會話的引用和 WebSocket 連接
         old_session = self.current_session
         old_websocket = None
@@ -350,10 +347,6 @@ class WebUIManager:
             debug_log(
                 f"處理舊會話 {old_session.session_id} 的狀態轉換，當前狀態: {old_session.status.value}"
             )
-
-            # 保存標籤頁狀態到全局
-            if hasattr(old_session, "active_tabs"):
-                self._merge_tabs_to_global(old_session.active_tabs)
 
             # 如果舊會話是已提交狀態，進入下一步（已完成）
             if old_session.status == SessionStatus.FEEDBACK_SUBMITTED:
@@ -380,16 +373,12 @@ class WebUIManager:
             # 同步清理會話資源（但保留 WebSocket 連接）
             old_session._cleanup_sync()
 
-        # 將全局標籤頁狀態繼承到新會話
-        session.active_tabs = self.global_active_tabs.copy()
-
         # 設置為當前活躍會話
         self.current_session = session
         # 同時保存到字典中以保持向後兼容
         self.sessions[session_id] = session
 
         debug_log(f"創建新的活躍會話: {session_id}")
-        debug_log(f"繼承 {len(session.active_tabs)} 個活躍標籤頁")
 
         # 處理WebSocket連接轉移
         if old_websocket:
@@ -437,52 +426,6 @@ class WebUIManager:
                 del self.sessions[session_id]
 
             debug_log("已清空當前活躍會話")
-
-    def _merge_tabs_to_global(self, session_tabs: dict):
-        """將會話的標籤頁狀態合併到全局狀態"""
-        current_time = time.time()
-        expired_threshold = 60  # 60秒過期閾值
-
-        # 清理過期的全局標籤頁
-        self.global_active_tabs = {
-            tab_id: tab_info
-            for tab_id, tab_info in self.global_active_tabs.items()
-            if current_time - tab_info.get("last_seen", 0) <= expired_threshold
-        }
-
-        # 合併會話標籤頁到全局
-        for tab_id, tab_info in session_tabs.items():
-            if current_time - tab_info.get("last_seen", 0) <= expired_threshold:
-                self.global_active_tabs[tab_id] = tab_info
-
-        debug_log(f"合併標籤頁狀態，全局活躍標籤頁數量: {len(self.global_active_tabs)}")
-
-    def get_global_active_tabs_count(self) -> int:
-        """獲取全局活躍標籤頁數量"""
-        current_time = time.time()
-        expired_threshold = 60
-
-        # 清理過期標籤頁並返回數量
-        valid_tabs = {
-            tab_id: tab_info
-            for tab_id, tab_info in self.global_active_tabs.items()
-            if current_time - tab_info.get("last_seen", 0) <= expired_threshold
-        }
-
-        self.global_active_tabs = valid_tabs
-        return len(valid_tabs)
-
-    async def broadcast_to_active_tabs(self, message: dict):
-        """向所有活躍標籤頁廣播消息"""
-        if not self.current_session or not self.current_session.websocket:
-            debug_log("沒有活躍的 WebSocket 連接，無法廣播消息")
-            return
-
-        try:
-            await self.current_session.websocket.send_json(message)
-            debug_log(f"已廣播消息到活躍標籤頁: {message.get('type', 'unknown')}")
-        except Exception as e:
-            debug_log(f"廣播消息失敗: {e}")
 
     def start_server(self):
         """啟動 Web 伺服器（優化版本，支援並行初始化）"""

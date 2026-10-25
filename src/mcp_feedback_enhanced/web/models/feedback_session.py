@@ -118,9 +118,6 @@ class WebFeedbackSession:
             "resources_cleaned": 0,
         }
 
-        # 新增：活躍標籤頁管理
-        self.active_tabs: dict[str, Any] = {}
-
         # 新增：用戶設定的會話超時
         self.user_timeout_enabled = False
         self.user_timeout_seconds = 3600  # 預設 1 小時

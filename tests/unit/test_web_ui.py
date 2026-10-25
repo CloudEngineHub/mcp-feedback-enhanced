@@ -3,8 +3,6 @@
 Web UI 單元測試
 """
 
-import time
-
 import pytest
 
 from tests.fixtures.test_data import TestData
@@ -52,28 +50,6 @@ class TestWebUIManager:
         current_session = web_ui_manager.get_current_session()
         assert current_session.session_id == session_id_2
         assert current_session.summary == "第二個會話"
-
-    def test_global_tabs_management(self, web_ui_manager):
-        """測試全局標籤頁管理"""
-        # 測試初始狀態
-        assert web_ui_manager.get_global_active_tabs_count() == 0
-
-        # 模擬添加活躍標籤頁
-        tab_info = {"timestamp": time.time(), "last_seen": time.time()}
-        web_ui_manager.global_active_tabs["tab-1"] = tab_info
-
-        assert web_ui_manager.get_global_active_tabs_count() == 1
-
-        # 測試過期標籤頁清理
-        old_tab_info = {
-            "timestamp": time.time() - 120,  # 2分鐘前
-            "last_seen": time.time() - 120,
-        }
-        web_ui_manager.global_active_tabs["tab-old"] = old_tab_info
-
-        # 獲取計數時應該自動清理過期標籤頁
-        count = web_ui_manager.get_global_active_tabs_count()
-        assert count == 1  # 只剩下有效的標籤頁
 
 
 class TestWebFeedbackSession:
