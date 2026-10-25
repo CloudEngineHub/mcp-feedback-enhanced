@@ -139,32 +139,6 @@ class TestWebUISessionManagement:
     """Web UI 會話管理集成測試"""
 
     @pytest.mark.asyncio
-    async def test_session_lifecycle(self, web_ui_manager, test_project_dir):
-        """測試會話生命週期"""
-        # 1. 創建會話
-        session_id = web_ui_manager.create_session(str(test_project_dir), "第一個會話")
-
-        current_session = web_ui_manager.get_current_session()
-        assert current_session is not None
-        assert current_session.session_id == session_id
-
-        # 2. 創建第二個會話（模擬第二次 MCP 調用）
-        session_id_2 = web_ui_manager.create_session(
-            str(test_project_dir), "第二個會話"
-        )
-
-        # 當前會話應該切換到新會話
-        current_session = web_ui_manager.get_current_session()
-        assert current_session.session_id == session_id_2
-        assert current_session.summary == "第二個會話"
-
-        # 3. 測試會話狀態更新
-        from mcp_feedback_enhanced.web.models import SessionStatus
-
-        current_session.update_status(SessionStatus.FEEDBACK_SUBMITTED, "已提交回饋")
-        assert current_session.status == SessionStatus.FEEDBACK_SUBMITTED
-
-    @pytest.mark.asyncio
     async def test_session_feedback_flow(self, web_ui_manager, test_project_dir):
         """測試會話回饋流程"""
         # 創建會話

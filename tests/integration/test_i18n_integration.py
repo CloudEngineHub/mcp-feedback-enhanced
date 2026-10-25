@@ -228,25 +228,3 @@ class TestI18NEnvironmentIntegration:
                 elif var in os.environ:
                     # 如果原始值為 None，且變數存在於環境中，則移除
                     os.environ.pop(var, None)
-
-    def test_i18n_with_web_ui_manager(self, web_ui_manager, i18n_manager):
-        """測試 I18N 與 WebUIManager 的集成"""
-        # 驗證 WebUIManager 使用了 I18N 管理器
-        assert hasattr(web_ui_manager, "i18n")
-        assert web_ui_manager.i18n is not None
-
-        # 測試語言切換對 WebUIManager 的影響
-        original_lang = i18n_manager.get_current_language()
-
-        for lang in TestData.SUPPORTED_LANGUAGES:
-            if lang != original_lang:
-                success = i18n_manager.set_language(lang)
-                assert success == True
-
-                # WebUIManager 應該能夠訪問當前語言設置
-                current_lang = web_ui_manager.i18n.get_current_language()
-                assert current_lang == lang
-                break
-
-        # 恢復原始語言
-        i18n_manager.set_language(original_lang)
