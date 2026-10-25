@@ -69,12 +69,16 @@
             false
         );
 
-        // 為 WebSocket 訊息處理添加防抖
-        this._debouncedHandleWebSocketMessage = window.MCPFeedback.Utils.DOM.debounce(
-            this._originalHandleWebSocketMessage.bind(this),
-            50,
-            false
-        );
+        // WebSocket 訊息依類型分開防抖：只有整份快照類訊息（狀態、會話資訊）同類 50ms 內只處理最後一則；
+        // 其他類型直接處理，避免心跳回應等訊息蓋掉前一則不同類型的訊息
+        this._debouncedWebSocketHandlers = Object.create(null);
+        ['status_update', 'session_updated'].forEach(function(type) {
+            this._debouncedWebSocketHandlers[type] = window.MCPFeedback.Utils.DOM.debounce(
+                this._originalHandleWebSocketMessage.bind(this),
+                50,
+                false
+            );
+        }, this);
 
         // 為會話更新處理添加防抖
         this._debouncedHandleSessionUpdated = window.MCPFeedback.Utils.DOM.debounce(
@@ -679,13 +683,13 @@
     };
 
     /**
-     * 處理 WebSocket 訊息（防抖版本）
+     * 處理 WebSocket 訊息（status_update、session_updated 依類型防抖，其他類型直接處理）
      */
     FeedbackApp.prototype.handleWebSocketMessage = function(data) {
-        if (this._debouncedHandleWebSocketMessage) {
-            this._debouncedHandleWebSocketMessage(data);
+        const debounced = this._debouncedWebSocketHandlers && this._debouncedWebSocketHandlers[data.type];
+        if (debounced) {
+            debounced(data);
         } else {
-            // 回退到原始方法（防抖未初始化時）
             this._originalHandleWebSocketMessage(data);
         }
     };
