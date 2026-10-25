@@ -6,7 +6,7 @@ MCP Feedback Enhanced 採用**單一活躍會話 + 持久化 Web UI**的創新�
 
 ### 核心設計理念
 
-- **Web-Only 架構**：完全基於 Web 技術，已移除所有 Electron 桌面應用功能
+- **Web UI 加桌面模式**：介面一律由 FastAPI 提供的 Web 頁面呈現；預設用瀏覽器開啟，`MCP_DESKTOP_MODE=true` 時改用 Tauri 打包的桌面殼載入同一個頁面，桌面殼啟動失敗時自動改回瀏覽器
 - **四層架構設計**：清晰的層次分離，便於維護和擴展
 - **環境適配**：WSL 中改用 Windows 瀏覽器開啟介面；SSH 等遠端環境只偵測並寫進除錯日誌，需自行設定埠轉發
 - **單一活躍會話**：替代傳統多會話管理，提升性能和用戶體驗
@@ -135,19 +135,16 @@ graph TB
 
 ## 🎯 核心設計理念
 
-### 1. Web-Only 架構優勢
+### 1. Web UI 與桌面模式
 
-**完全移除桌面應用依賴**：
-- 無需安裝 Electron 或其他桌面應用框架
-- 減少系統資源佔用和安全風險
-- 支援所有具備現代瀏覽器的環境
-- 簡化部署和維護流程
+**同一套 Web 介面**：
+- 介面一律是 FastAPI 提供的 Web 頁面，瀏覽器模式與桌面模式顯示同一個頁面
+- 預設以瀏覽器開啟，支援具備現代瀏覽器的環境；SSH Remote 需自行設定埠轉發，WSL 改用 Windows 瀏覽器開啟
 
-**跨平台統一體驗**：
-- Windows、macOS、Linux 完全一致的用戶介面
-- SSH Remote 和 WSL 環境無縫支援
-- 響應式設計適應不同螢幕尺寸
-- 無需平台特定的配置或調整
+**Tauri 桌面模式**（`MCP_DESKTOP_MODE=true`）：
+- `desktop_app/desktop_app.py` 依平台從 `desktop_release/` 找出打包好的 Tauri 執行檔（Windows `.exe`、macOS arm64／intel、Linux），以環境變數 `MCP_WEB_URL` 傳入 Web 服務網址後啟動
+- 桌面殼（`src-tauri/`）讀取 `MCP_WEB_URL` 並讓主視窗載入該網址
+- 桌面殼啟動失敗時，本行程改用瀏覽器開啟並在 stderr 印出網址；重啟 MCP 伺服器才會再試桌面
 
 ### 2. 四層架構設計
 
