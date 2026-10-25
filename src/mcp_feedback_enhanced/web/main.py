@@ -360,7 +360,7 @@ class WebUIManager:
                 debug_log(
                     f"舊會話 {old_session.session_id} 進入下一步：已提交 → 已完成"
                 )
-                success = old_session.next_step("反饋已處理，會話完成")
+                success = old_session.next_step("回饋已處理，會話完成")
                 if success:
                     debug_log(f"✅ 舊會話 {old_session.session_id} 成功進入已完成狀態")
                 else:
@@ -1187,7 +1187,7 @@ if __name__ == "__main__":
 
 ## 🎯 任務完成摘要
 
-我已成功為 **mcp-feedback-enhanced** 專案實現了 Markdown 語法顯示功能！
+我已成功為 **mcp-feedback-enhanced** 專案實作了 Markdown 語法顯示功能！
 
 ### ✅ 完成的功能
 
@@ -1197,9 +1197,9 @@ if __name__ == "__main__":
    - *斜體文字* 使用單星號
    - `行內程式碼` 使用反引號
 3. **程式碼區塊**
-4. **列表功能**
-   - 無序列表項目
-   - 有序列表項目
+4. **清單功能**
+   - 無序清單項目
+   - 有序清單項目
 
 ### 📋 技術實作
 
@@ -1211,7 +1211,7 @@ element.innerHTML = renderedContent;
 
 ### 🔗 相關連結
 
-- [marked.js 官方文檔](https://marked.js.org/)
+- [marked.js 官方文件](https://marked.js.org/)
 - [DOMPurify 安全清理](https://github.com/cure53/DOMPurify)
 
 > **注意**: 此功能包含 XSS 防護，使用 DOMPurify 進行 HTML 清理。

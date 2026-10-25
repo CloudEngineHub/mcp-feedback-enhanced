@@ -96,7 +96,7 @@ class WebFeedbackSession:
 
         # 新增：會話狀態管理
         self.status = SessionStatus.WAITING
-        self.status_message = "等待用戶回饋"
+        self.status_message = "等待使用者回饋"
         # 統一使用 time.time() 以避免時間基準不一致
         self.created_at = time.time()
         self.last_activity = self.created_at
@@ -189,7 +189,7 @@ class WebFeedbackSession:
             # 默認消息
             default_messages = {
                 SessionStatus.ACTIVE: "會話已啟動",
-                SessionStatus.FEEDBACK_SUBMITTED: "用戶已提交反饋",
+                SessionStatus.FEEDBACK_SUBMITTED: "使用者已提交回饋",
                 SessionStatus.COMPLETED: "會話已完成",
             }
             self.status_message = default_messages.get(next_status, "狀態已更新")
@@ -387,7 +387,7 @@ class WebFeedbackSession:
                         return
                     debug_log(f"用戶設定的超時已到: {self.session_id}")
                     self.status = SessionStatus.TIMEOUT
-                    self.status_message = "用戶設定的會話超時"
+                    self.status_message = "使用者設定的會話逾時"
                     # 設置完成事件，讓 wait_for_feedback 結束等待
                     self.feedback_completed.set()
 
@@ -500,7 +500,7 @@ class WebFeedbackSession:
             )
             await self._cleanup_resources_on_timeout()
             raise TimeoutError(
-                f"等待用戶回饋超時（{actual_timeout}秒），介面已自動關閉"
+                f"等待使用者回饋逾時（{actual_timeout}秒），介面已自動關閉"
             )
 
         except Exception as e:
@@ -543,7 +543,7 @@ class WebFeedbackSession:
                 # 所以從 WAITING 提交時先走一步 ACTIVE，照單向流轉進入 FEEDBACK_SUBMITTED
                 if self.status == SessionStatus.WAITING:
                     self.next_step()
-                self.next_step("已送出反饋，等待下次 MCP 調用")
+                self.next_step("已送出回饋，等待下次 MCP 呼叫")
 
                 self.feedback_completed.set()
 

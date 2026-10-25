@@ -51,27 +51,27 @@ class ErrorHandler:
     # 錯誤類型到用戶友好信息的映射
     _ERROR_MESSAGES = {
         ErrorType.NETWORK: {
-            "zh-TW": "網絡連接出現問題",
+            "zh-TW": "網路連線出現問題",
             "zh-CN": "网络连接出现问题",
             "en": "Network connection issue",
         },
         ErrorType.FILE_IO: {
-            "zh-TW": "文件讀寫出現問題",
+            "zh-TW": "檔案讀寫出現問題",
             "zh-CN": "文件读写出现问题",
             "en": "File read/write issue",
         },
         ErrorType.PROCESS: {
-            "zh-TW": "進程執行出現問題",
+            "zh-TW": "處理程序執行出現問題",
             "zh-CN": "进程执行出现问题",
             "en": "Process execution issue",
         },
         ErrorType.TIMEOUT: {
-            "zh-TW": "操作超時",
+            "zh-TW": "操作逾時",
             "zh-CN": "操作超时",
             "en": "Operation timeout",
         },
         ErrorType.USER_CANCEL: {
-            "zh-TW": "用戶取消了操作",
+            "zh-TW": "使用者取消了操作",
             "zh-CN": "用户取消了操作",
             "en": "User cancelled the operation",
         },
@@ -86,17 +86,17 @@ class ErrorHandler:
             "en": "Insufficient permissions",
         },
         ErrorType.VALIDATION: {
-            "zh-TW": "數據驗證失敗",
+            "zh-TW": "資料驗證失敗",
             "zh-CN": "数据验证失败",
             "en": "Data validation failed",
         },
         ErrorType.DEPENDENCY: {
-            "zh-TW": "依賴組件出現問題",
+            "zh-TW": "相依元件出現問題",
             "zh-CN": "依赖组件出现问题",
             "en": "Dependency issue",
         },
         ErrorType.CONFIGURATION: {
-            "zh-TW": "配置出現問題",
+            "zh-TW": "設定出現問題",
             "zh-CN": "配置出现问题",
             "en": "Configuration issue",
         },
@@ -335,7 +335,7 @@ class ErrorHandler:
                 if language == "en":
                     parts.append(f"File: {context['file_path']}")
                 else:
-                    parts.append(f"文件：{context['file_path']}")
+                    parts.append(f"檔案：{context['file_path']}")
 
         # 添加技術細節（如果需要）
         if include_technical:

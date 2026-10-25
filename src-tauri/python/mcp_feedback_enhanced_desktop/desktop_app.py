@@ -20,7 +20,7 @@ try:
     from mcp_feedback_enhanced.web.main import WebUIManager, get_web_ui_manager
 except ImportError as e:
     # 在這裡無法使用 debug_log，因為導入失敗
-    sys.stderr.write(f"無法導入 MCP Feedback Enhanced 模組: {e}\n")
+    sys.stderr.write(f"無法匯入 MCP Feedback Enhanced 模組: {e}\n")
     sys.exit(1)
 
 
@@ -82,7 +82,7 @@ class DesktopApp:
         if not (
             self.web_manager.server_thread and self.web_manager.server_thread.is_alive()
         ):
-            raise RuntimeError("Web 服務器啟動失敗")
+            raise RuntimeError("Web 伺服器啟動失敗")
 
         server_url = self.web_manager.get_server_url()
         debug_log(f"Web 後端服務已啟動: {server_url}")
@@ -346,7 +346,7 @@ def run_desktop_app():
             loop.close()
 
     except Exception as e:
-        sys.stderr.write(f"桌面應用程式運行失敗: {e}\n")
+        sys.stderr.write(f"桌面應用程式執行失敗: {e}\n")
         sys.exit(1)
 
 

@@ -126,7 +126,7 @@ class TestNoResponseTellsClientToStop:
     @pytest.mark.asyncio
     async def test_timeout_returns_stop_instruction(self, monkeypatch):
         async def fake_launch(*_args):
-            raise TimeoutError("等待用戶回饋超時（595秒），介面已自動關閉")
+            raise TimeoutError("等待使用者回饋逾時（595秒），介面已自動關閉")
 
         monkeypatch.setattr(server, "launch_web_feedback_ui", fake_launch)
         tool_fn = getattr(

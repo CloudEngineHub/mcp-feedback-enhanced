@@ -238,12 +238,12 @@ def create_feedback_text(feedback_data: dict) -> str:
 
     # 基本回饋內容
     if feedback_data.get("interactive_feedback"):
-        text_parts.append(f"=== 用戶回饋 ===\n{feedback_data['interactive_feedback']}")
+        text_parts.append(f"=== 使用者回饋 ===\n{feedback_data['interactive_feedback']}")
 
     # 圖片附件概要
     if feedback_data.get("images"):
         images = feedback_data["images"]
-        text_parts.append(f"=== 圖片附件概要 ===\n用戶提供了 {len(images)} 張圖片：")
+        text_parts.append(f"=== 圖片附件概要 ===\n使用者提供了 {len(images)} 張圖片：")
 
         for i, img in enumerate(images, 1):
             size = img.get("size", 0)
@@ -279,7 +279,7 @@ def create_feedback_text(feedback_data: dict) -> str:
                             else img_base64
                         )
                         img_info += f"\n     Base64 預覽: {preview}"
-                        img_info += f"\n     完整 Base64 長度: {len(img_base64)} 字符"
+                        img_info += f"\n     完整 Base64 長度: {len(img_base64)} 字元"
 
                         # 如果 AI 助手不支援 MCP 圖片，可以提供完整 base64
                         debug_log(f"圖片 {i} Base64 已準備，長度: {len(img_base64)}")
@@ -310,10 +310,10 @@ def create_feedback_text(feedback_data: dict) -> str:
 
         # 添加兼容性說明
         text_parts.append(
-            "\n💡 注意：如果 AI 助手無法顯示圖片，圖片數據已包含在上述 Base64 信息中。"
+            "\n💡 注意：如果 AI 助手無法顯示圖片，圖片資料已包含在上述 Base64 資訊中。"
         )
 
-    return "\n\n".join(text_parts) if text_parts else "用戶未提供任何回饋內容。"
+    return "\n\n".join(text_parts) if text_parts else "使用者未提供任何回饋內容。"
 
 
 def process_images(images_data: list[dict]) -> list[ImageContent]:
@@ -449,7 +449,7 @@ async def interactive_feedback(
         int,
         Field(
             description=(
-                "等待用戶回饋的超時時間（秒）。"
+                "等待使用者回饋的逾時時間（秒）。"
                 f"有效範圍 {MIN_FEEDBACK_TIMEOUT}–{MAX_FEEDBACK_TIMEOUT}；"
                 "超出範圍會由伺服器端鉗制，因為使用者需要實際可用的回饋時間。"
             )
@@ -504,7 +504,7 @@ async def interactive_feedback(
 
         # 處理取消情況
         if not result:
-            return [TextContent(type="text", text="用戶取消了回饋。")]
+            return [TextContent(type="text", text="使用者取消了回饋。")]
 
         # 儲存詳細結果
         save_feedback_to_file(result)
@@ -527,7 +527,7 @@ async def interactive_feedback(
         # 確保至少有一個回饋項目
         if not feedback_items:
             feedback_items.append(
-                TextContent(type="text", text="用戶未提供任何回饋內容。")
+                TextContent(type="text", text="使用者未提供任何回饋內容。")
             )
 
         debug_log(f"回饋收集完成，共 {len(feedback_items)} 個項目")

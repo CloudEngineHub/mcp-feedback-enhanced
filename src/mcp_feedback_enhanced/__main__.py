@@ -45,7 +45,7 @@ def main():
     # 測試命令
     test_parser = subparsers.add_parser("test", help="執行測試")
     test_parser.add_argument(
-        "--web", action="store_true", help="測試 Web UI (自動持續運行)"
+        "--web", action="store_true", help="測試 Web UI (自動持續執行)"
     )
     test_parser.add_argument(
         "--desktop", action="store_true", help="啟動桌面應用程式模式"
@@ -165,23 +165,23 @@ def process_feedback(data):
     return {"status": "success", "data": data}
 ```
 
-#### 列表功能
-**無序列表：**
+#### 清單功能
+**無序清單：**
 - 第一個項目
 - 第二個項目
   - 巢狀項目 1
   - 巢狀項目 2
 - 第三個項目
 
-**有序列表：**
+**有序清單：**
 1. 初始化 Markdown 渲染器
 2. 載入 marked.js 和 DOMPurify
-3. 配置安全選項
+3. 設定安全選項
 4. 渲染內容
 
 #### 連結和引用
 - 專案連結：[MCP Feedback Enhanced](https://github.com/example/mcp-feedback-enhanced)
-- 文檔連結：[Marked.js 官方文檔](https://marked.js.org/)
+- 文件連結：[Marked.js 官方文件](https://marked.js.org/)
 
 > **重要提示：** 所有 HTML 輸出都經過 DOMPurify 清理，確保安全性。
 
@@ -190,7 +190,7 @@ def process_feedback(data):
 |------|------|------|
 | 標題渲染 | ✅ | 支援 H1-H6 |
 | 程式碼高亮 | ✅ | 基本語法高亮 |
-| 列表功能 | ✅ | 有序/無序列表 |
+| 清單功能 | ✅ | 有序/無序清單 |
 | 連結處理 | ✅ | 安全連結渲染 |
 
 ---
@@ -198,7 +198,7 @@ def process_feedback(data):
 ### 🔒 安全特性
 - XSS 防護：使用 DOMPurify 清理
 - 白名單標籤：僅允許安全的 HTML 標籤
-- URL 驗證：限制允許的 URL 協議
+- URL 驗證：限制允許的 URL 協定
 
 ### 📝 測試結果
 如果您能看到上述內容以正確的格式顯示，表示 Markdown 渲染功能運作正常！"""

@@ -81,7 +81,7 @@ class TestErrorHandler:
 
         assert "❌" in result
         assert (
-            "網絡連接出現問題" in result
+            "網路連線出現問題" in result
             or "网络连接出现问题" in result
             or "Network connection issue" in result
         )
@@ -163,9 +163,9 @@ class TestErrorHandler:
         error = ConnectionError("Network error")
 
         # 測試繁體中文
-        mock_get_message.return_value = "網絡連接出現問題"
+        mock_get_message.return_value = "網路連線出現問題"
         result = ErrorHandler.format_user_error(error)
-        assert "網絡連接出現問題" in result
+        assert "網路連線出現問題" in result
 
         # 測試簡體中文
         mock_get_message.return_value = "网络连接出现问题"

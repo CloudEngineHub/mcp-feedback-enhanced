@@ -766,7 +766,7 @@ async def handle_websocket_message(manager: "WebUIManager", session, data: dict)
     elif message_type == "user_timeout":
         # 用戶設置的超時已到。先寫明原因：wait_for_feedback 會把它原樣回給 AI
         debug_log(f"收到用戶超時通知: {session.session_id}")
-        session.status_message = "用戶設定的會話超時"
+        session.status_message = "使用者設定的會話逾時"
         # 清理會話資源
         await session._cleanup_resources_on_timeout()
         # 重構：不再自動停止服務器，保持服務器運行以支援持久性
