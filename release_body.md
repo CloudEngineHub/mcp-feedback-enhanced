@@ -1,8 +1,8 @@
-# Release v2.8.1 - 2026-09-07 - Desktop Fallback Follow-ups
+# Release v2.8.2 - 2026-10-25 - Blocking Cross-Site Writes to /api/*
 
 ## 🌟 Key Highlights
-- stderr notices are now protected writes and never fall back to stdout (the MCP protocol channel) when `sys.stderr` is None.
-- The desktop shell only counts as failed on a non-zero exit, so closing the window yourself no longer demotes the process to web mode; the failure reason is printed for the user.
+- Cross-origin pages can no longer rewrite settings, session history or the log level through `/api/*`, so they cannot turn on auto-submit for you.
+- Every field in the session details dialog is escaped, so tampered session history is no longer executed as HTML.
 
 ## 🌐 Detailed Release Notes
 
@@ -24,7 +24,7 @@
 uvx mcp-feedback-enhanced@latest
 
 # This specific version / 此特定版本
-uvx mcp-feedback-enhanced@v2.8.1
+uvx mcp-feedback-enhanced@v2.8.2
 ```
 
 ## 🔗 Links
