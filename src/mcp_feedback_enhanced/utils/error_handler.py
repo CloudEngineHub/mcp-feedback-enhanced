@@ -113,23 +113,11 @@ class ErrorHandler:
             return os.getenv("MCP_LANGUAGE", "zh-TW")
 
     @staticmethod
-    def get_i18n_error_message(error_type: ErrorType) -> str:
-        """從國際化系統獲取錯誤信息"""
-        try:
-            i18n = get_i18n_manager()
-            key = f"errors.types.{error_type.value}"
-            message = i18n.t(key)
-            # 如果返回的是鍵本身，說明沒有找到翻譯，使用回退
-            if message == key:
-                raise Exception("Translation not found")
-            return message
-        except Exception:
-            # 回退到內建映射
-            language = ErrorHandler.get_current_language()
-            error_messages = ErrorHandler._ERROR_MESSAGES.get(error_type, {})
-            return error_messages.get(
-                language, error_messages.get("zh-TW", "發生未知錯誤")
-            )
+    def get_error_message(error_type: ErrorType) -> str:
+        """依目前介面語言取得錯誤類型的使用者訊息"""
+        language = ErrorHandler.get_current_language()
+        error_messages = ErrorHandler._ERROR_MESSAGES.get(error_type, {})
+        return error_messages.get(language, error_messages.get("zh-TW", "發生未知錯誤"))
 
     @staticmethod
     def classify_error(error: Exception) -> ErrorType:
@@ -229,8 +217,8 @@ class ErrorHandler:
         # 獲取當前語言
         language = ErrorHandler.get_current_language()
 
-        # 獲取用戶友好的錯誤信息（優先使用國際化系統）
-        user_message = ErrorHandler.get_i18n_error_message(error_type)
+        # 獲取用戶友好的錯誤信息
+        user_message = ErrorHandler.get_error_message(error_type)
 
         # 構建完整的錯誤信息
         parts = [f"❌ {user_message}"]

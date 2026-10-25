@@ -117,27 +117,20 @@ class TestErrorHandler:
         assert error_id.startswith("ERR_")
         assert len(error_id.split("_")) == 3  # ERR_timestamp_id
 
-    @patch(
-        "mcp_feedback_enhanced.utils.error_handler.ErrorHandler.get_i18n_error_message"
+    @pytest.mark.parametrize(
+        ("language", "expected"),
+        [
+            ("zh-TW", "網路連線出現問題"),
+            ("zh-CN", "网络连接出现问题"),
+            ("en", "Network connection issue"),
+        ],
     )
-    def test_language_support(self, mock_get_message):
-        """測試多語言支持"""
-        error = ConnectionError("Network error")
-
-        # 測試繁體中文
-        mock_get_message.return_value = "網路連線出現問題"
-        result = ErrorHandler.format_user_error(error)
-        assert "網路連線出現問題" in result
-
-        # 測試簡體中文
-        mock_get_message.return_value = "网络连接出现问题"
-        result = ErrorHandler.format_user_error(error)
-        assert "网络连接出现问题" in result
-
-        # 測試英文
-        mock_get_message.return_value = "Network connection issue"
-        result = ErrorHandler.format_user_error(error)
-        assert "Network connection issue" in result
+    def test_language_support(self, language, expected):
+        """錯誤訊息依介面語言從內建訊息表取得"""
+        with patch.object(ErrorHandler, "get_current_language", return_value=language):
+            assert ErrorHandler.get_error_message(ErrorType.NETWORK) == expected
+            result = ErrorHandler.format_user_error(ConnectionError("Network error"))
+        assert result.startswith(f"❌ {expected}")
 
     def test_error_severity_logging(self):
         """測試錯誤嚴重程度記錄"""
@@ -160,16 +153,6 @@ class TestErrorHandler:
 
         # 測試語言代碼格式
         assert language in ["zh-TW", "zh-CN", "en"] or "-" in language
-
-    def test_i18n_integration(self):
-        """測試國際化系統集成"""
-        # 測試當 i18n 系統不可用時的回退
-        error_type = ErrorType.NETWORK
-
-        # 測試獲取錯誤信息
-        message = ErrorHandler.get_i18n_error_message(error_type)
-        assert isinstance(message, str)
-        assert len(message) > 0
 
     def test_error_context_preservation(self):
         """測試錯誤上下文保存"""
