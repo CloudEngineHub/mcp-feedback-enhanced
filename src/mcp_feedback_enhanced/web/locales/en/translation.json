@@ -478,7 +478,9 @@
             "enabledChanged": "Audio notification settings updated",
             "audioSelected": "Audio selected",
             "testPlaying": "Playing test audio",
-            "audioNotFound": "Selected audio not found"
+            "audioNotFound": "Selected audio not found",
+            "play": "Play",
+            "delete": "Delete"
         }
     },
     "notification": {

@@ -463,11 +463,15 @@
                 </div>
                 <div class="audio-custom-actions">
                     <button type="button" class="btn btn-sm btn-secondary audio-play-btn" 
-                            data-audio-id="${Utils.escapeHtml(audio.id)}" title="播放">
+                            data-audio-id="${Utils.escapeHtml(audio.id)}"
+                            title="${Utils.escapeHtml(this.t('audio.notification.play', '播放'))}" data-i18n-title="audio.notification.play"
+                            aria-label="${Utils.escapeHtml(this.t('audio.notification.play', '播放'))}" data-i18n-aria-label="audio.notification.play">
                         ▶️
                     </button>
                     <button type="button" class="btn btn-sm btn-danger audio-delete-btn" 
-                            data-audio-id="${Utils.escapeHtml(audio.id)}" title="刪除">
+                            data-audio-id="${Utils.escapeHtml(audio.id)}"
+                            title="${Utils.escapeHtml(this.t('audio.notification.delete', '刪除'))}" data-i18n-title="audio.notification.delete"
+                            aria-label="${Utils.escapeHtml(this.t('audio.notification.delete', '刪除'))}" data-i18n-aria-label="audio.notification.delete">
                         🗑️
                     </button>
                 </div>

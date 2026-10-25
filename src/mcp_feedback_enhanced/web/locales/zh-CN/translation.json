@@ -474,7 +474,9 @@
             "enabledChanged": "音效通知设定已更新",
             "audioSelected": "音效已选择",
             "testPlaying": "正在播放测试音效",
-            "audioNotFound": "找不到选择的音效"
+            "audioNotFound": "找不到选择的音效",
+            "play": "播放",
+            "delete": "删除"
         }
     },
     "stats": {
