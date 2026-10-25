@@ -79,20 +79,6 @@
                 false
             );
         }, this);
-
-        // 為會話更新處理添加防抖
-        this._debouncedHandleSessionUpdated = window.MCPFeedback.Utils.DOM.debounce(
-            this._originalHandleSessionUpdated.bind(this),
-            100,
-            false
-        );
-
-        // 為狀態更新處理添加防抖
-        this._debouncedHandleStatusUpdate = window.MCPFeedback.Utils.DOM.debounce(
-            this._originalHandleStatusUpdate.bind(this),
-            100,
-            false
-        );
     };
 
     /**
@@ -782,7 +768,7 @@
     };
 
     /**
-     * 處理會話更新（原始版本，供防抖使用）
+     * 處理會話更新（由 _originalHandleWebSocketMessage 呼叫，訊息層已防抖）
      */
     FeedbackApp.prototype._originalHandleSessionUpdated = function(data) {
         console.log('🔄 處理會話更新:', data);
@@ -964,19 +950,7 @@
     };
 
     /**
-     * 處理會話更新（防抖版本）
-     */
-    FeedbackApp.prototype.handleSessionUpdated = function(data) {
-        if (this._debouncedHandleSessionUpdated) {
-            this._debouncedHandleSessionUpdated(data);
-        } else {
-            // 回退到原始方法（防抖未初始化時）
-            this._originalHandleSessionUpdated(data);
-        }
-    };
-
-    /**
-     * 處理狀態更新（原始版本，供防抖使用）
+     * 處理狀態更新（由 _originalHandleWebSocketMessage 呼叫，訊息層已防抖）
      */
     FeedbackApp.prototype._originalHandleStatusUpdate = function(statusInfo) {
         console.log('📊 處理狀態更新:', statusInfo);
@@ -1040,18 +1014,6 @@
                 const completedMessage = window.i18nManager ? window.i18nManager.t('feedback.completed') : '會話已完成';
                 this.updateSummaryStatus(completedMessage);
                 break;
-        }
-    };
-
-    /**
-     * 處理狀態更新（防抖版本）
-     */
-    FeedbackApp.prototype.handleStatusUpdate = function(statusInfo) {
-        if (this._debouncedHandleStatusUpdate) {
-            this._debouncedHandleStatusUpdate(statusInfo);
-        } else {
-            // 回退到原始方法（防抖未初始化時）
-            this._originalHandleStatusUpdate(statusInfo);
         }
     };
 
