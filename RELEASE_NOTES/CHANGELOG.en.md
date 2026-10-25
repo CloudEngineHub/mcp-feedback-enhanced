@@ -2,6 +2,46 @@
 
 This document records all version updates for **MCP Feedback Enhanced**.
 
+## [v2.8.5] - Unreleased - Statistics Panel, UI Language and Documentation Fixes
+
+### 🌟 Highlights
+- The Detailed Statistics panel now shows the real status, session count, today's average duration, reconnect count and connection time.
+- Times, dates and copied session content follow the UI language and update as soon as you switch.
+- The top-right reconnect status shows the actual attempt number instead of a raw `{attempt}` placeholder.
+- Native Windows with `WSLENV` set is no longer misdetected as WSL and no longer opens the browser through `cmd.exe`.
+- `docs/architecture/` and the three READMEs now match the actual implementation.
+
+### 🐛 Bug Fixes
+- **Detailed Statistics always showed "Waiting" and 1 session**: both fields copied from elements that no longer exist on the page, so they stayed at their defaults. Status now follows the current session (Submitted after you send feedback, back to Waiting when a new session arrives), Sessions is the number of entries in the session history (including the current one), and both update when you switch languages.
+- **Today's average duration was always 0 and kept the old language's units after a switch**: the statistic only read a duration field that sessions from the server don't have, and it was only redrawn when the value changed. It now uses the same definition as the session history duration (created time to end time, or to the feedback submission time when there is no end time) and switches units immediately.
+- **Reconnect count reset to 0 after reconnecting, and connection time stuck at 00:00**: the reconnect count now accumulates for the page; connection time updates every second while connected, shows --:-- while disconnected, and restarts from the new connection.
+- **Connection status could show "Reconnecting... (attempt {attempt})"**: the attempt number was not filled in, and switching languages while disconnected reapplied the raw string. It now shows the actual attempt number, restarting for each outage, also after a language switch.
+- **Times and dates followed the browser locale**: the English UI could show "下午9:51:30". Times on the current session card, the session history and the "Feedback submitted" status, as well as prompt and custom audio dates, now follow the UI language and update as soon as you switch.
+- **Copy Session Content / Copy User Content were hard-coded Simplified Chinese**: output now follows the UI language. Copied session content used to show user messages as [object Object] and raw status/created values; it now shows the message content and status text, and times in both use YYYY/MM/DD HH:MM:SS, matching the Session Details dialog.
+- **Auto-submit buttons in prompt settings turned into text after translations were applied**: the ⏰/⏸️ icons were replaced by labels such as "Set as Auto Submit", and the tooltip was hard-coded Chinese. The icons now stay, with the description in the tooltip and screen-reader label, following the UI language.
+- **Hard-coded Chinese in the UI**: the Session Details dialog's "(進行中)", "未知", content/character labels, copy buttons and toasts, the custom audio "Created / Format" labels and play/delete button tooltips, and the prompt picker's "Last Used" label are now translated; the play/delete icon buttons also have screen-reader labels.
+- **Some messages showed raw keys or unfilled parameters**: added missing translations in all three locales (mostly Simplified Chinese system/error messages and session timeout; English session timeout and auto-submit hint). The session history saved, prompt applied and generic error messages used {{count}} while the front end replaces {count}, so the console showed "Session history saved ({4} sessions)"; fixed.
+- **About page still mentioned command execution, removed in v2.6.1**: the description now reflects current features.
+- **Native Windows with `WSLENV` set was misdetected as WSL**: the browser was then opened through `cmd.exe`. `is_wsl_environment()` now only checks for WSL on Linux, and the duplicate implementation in `server.py` now uses the one in `web/utils/browser.py`.
+
+### 📝 Documentation
+- **Architecture docs did not match the code**: the deployment guide and API reference under `docs/architecture/` described a non-existent `web` subcommand, `--port`/`--session-retention` flags, `MCP_FEEDBACK_*` environment variables, a `config.json`, a `/health` endpoint and WebSocket messages such as `session_history`, and claimed session history lives in localStorage. They now describe the real subcommands (`server`, `test --web/--desktop`, `version`), the environment variables the code actually reads (`MCP_WEB_HOST`, `MCP_WEB_PORT`, etc.), `ui_settings.json` and `session_history.json` under `~/.config/mcp-feedback-enhanced/`, and the actual WebSocket message types and frontend method signatures (`getStats()`, a parameterless `exportSessionHistory()`).
+- **Environment detection, interaction flow and component docs**: remote (SSH etc.) detection only goes to the debug log and never creates an SSH tunnel; WSL is detected only on Linux and opens the Windows browser. The interaction-flow and component docs now use the real method names and states, and the reconnect and stats-panel docs match current behavior (the header retry count restarts on each disconnect, the panel's reconnect count accumulates for the page, and average duration uses the same definition as history durations).
+- **System overview**: now describes the Web UI plus the Tauri desktop mode; references to the removed TabManager and the stale version footers are gone, and the architecture index states it reflects main as of 2026-10-25.
+- **READMEs in all three languages**: environment detection now describes actual behavior, `test` examples pass `--web` (without it the command only prints help), and `MCP_WEB_PORT=0` is noted to let the OS pick a port.
+
+### 🧹 Cleanup
+- Removed unused debounced session/status update wrappers from app.js, and handlers for the feedback_received and desktop_close_request messages, which the server never sends (including the unused feedback_received test fixture).
+- Removed the WebSocket reconnect branch for a "會話更新" close reason the server never sends, and the unused connection-stats reset function.
+- Removed the never-initialized tab-manager.js module (including its call to the non-existent /api/register-tab route).
+- `highlights.txt` and `release_body.md` are no longer tracked and are listed in `.gitignore`: publish.yml regenerates both on every release; they were only picked up by the release commit's `git add .`.
+
+### ✅ Tests
+- The desktop launch tests no longer replace `asyncio.sleep` for the whole process: doing so turned uvicorn server threads left over from earlier tests into busy loops fighting for the GIL, occasionally timing out the CI ubuntu job after 60 s; only the `desktop_app` module's own `asyncio` reference is replaced now.
+- Dev dependencies moved from the deprecated `[tool.uv] dev-dependencies` to the PEP 735 `[dependency-groups] dev`; `uv sync --dev` no longer prints the deprecation warning and installs the same packages.
+
+---
+
 ## [v2.8.4] - 2026-10-25 - Session History Retention and Message Handling Fixes
 
 ### 🌟 Highlights
