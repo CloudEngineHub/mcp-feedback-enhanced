@@ -1,12 +1,6 @@
 {
     "app": {
         "title": "MCP Feedback Enhanced",
-        "subtitle": "AI 輔助開發回饋收集器",
-        "version": "v2.2.5",
-        "description": "一個 MCP 伺服器，建立回饋導向的開發工作流程，提供 Web UI 和桌面應用程式雙重選擇。透過引導 AI 與使用者確認而非進行推測性操作，在長任務中插入人工檢查點，降低 AI 跑偏與返工。",
-        "author": "作者：Fábio Ferreira (原作者) / Minidoracat (增強版)",
-        "authorLink": "GitHub: Minidoracat",
-        "credits": "⭐ 如果這個專案對您有幫助，請在 GitHub 上給我們一個星星！\n\n本增強版本由 Minidoracat 開發和維護，大幅擴充了專案功能，新增了 Web UI 介面、圖片支援、多語言能力以及許多其他改進功能。\n\n同時感謝 sanshao85 的 mcp-feedback-collector 專案提供的 UI 設計靈感。\n\n開源協作讓技術變得更美好！",
         "projectDirectory": "專案目錄",
         "clickToCopyPath": "點選複製完整路徑",
         "clickToCopySessionId": "點選複製完整會話ID",
@@ -31,18 +25,6 @@
         "detailedPlaceholder": "請在這裡輸入您的回饋...\n\n💡 小提示：\n• 按 Ctrl+Enter/Cmd+Enter (支援數字鍵盤) 可快速提交\n• 按 Ctrl+I/Cmd+I 可聚焦輸入框\n• 按 Ctrl+V/Cmd+V 可直接貼上剪貼簿圖片",
         "imageLabel": "圖片附件（選填）",
         "imageUploadText": "📎 點選以選擇圖片或拖放圖片到此處\n支援 PNG、JPG、JPEG、GIF、BMP、WebP 等格式",
-        "submit": "✅ 提交回饋",
-        "uploading": "上傳中...",
-        "dragdrop": "拖放圖片到這裡或點選上傳",
-        "selectfiles": "選擇檔案",
-        "processing": "處理中...",
-        "success": "回饋已成功提交！",
-        "error": "提交回饋時發生錯誤",
-        "shortcuts": {
-            "submit": "Ctrl+Enter 提交 (Mac 用 Cmd+Enter，支援數字鍵盤)",
-            "clear": "Ctrl+Delete 清除 (Mac 用 Cmd+Delete)",
-            "paste": "Ctrl+V 貼上圖片 (Mac 用 Cmd+V)"
-        },
         "submitSuccess": "回饋提交成功！",
         "submittedWaiting": "已送出回饋，等待下次 MCP 呼叫...",
         "completed": "會話已完成",
@@ -57,20 +39,11 @@
         "copyFailed": "複製失敗",
         "provideTextOrImage": "請提供回饋文字或上傳圖片"
     },
-    "summary": {
-        "title": "📋 AI 工作摘要",
-        "description": "以下是 AI 助手完成的工作摘要，請仔細查看並提供您的回饋意見。",
-        "placeholder": "AI 工作摘要將在這裡顯示...",
-        "empty": "目前沒有摘要內容",
-        "lastupdate": "最後更新",
-        "refresh": "重新整理"
-    },
     "combined": {
         "summaryTitle": "📋 AI 工作摘要",
         "feedbackTitle": "💬 提供回饋"
     },
     "settingsUI": {
-        "title": "⚙️ 設定",
         "language": "🌍 語言",
         "currentLanguage": "目前語言",
         "languageDesc": "選擇介面顯示語言",
@@ -81,20 +54,9 @@
         "combinedVerticalDesc": "AI 摘要在上，回饋輸入在下，適合標準螢幕使用",
         "combinedHorizontal": "水平佈局",
         "combinedHorizontalDesc": "AI 摘要在左，回饋輸入在右，適合寬螢幕使用",
-        "autoClose": "自動關閉頁面",
-        "autoCloseDesc": "提交回饋後自動關閉頁面",
-        "theme": "主題",
-        "notifications": "通知",
         "advanced": "🔧 進階設定",
-        "save": "儲存設定",
         "reset": "重設設定",
         "resetDesc": "清除所有已儲存的設定，恢復到預設狀態",
-        "resetConfirm": "確定要重設所有設定嗎？這將清除所有已儲存的偏好設定。",
-        "resetSuccess": "設定已重設為預設值",
-        "resetError": "重設設定時發生錯誤",
-        "timeout": "連線逾時 (秒)",
-        "autorefresh": "自動重新整理",
-        "debug": "除錯模式",
         "autoCommitNoPrompt": "請先選擇一個提示詞作為自動提交內容",
         "sessionTimeoutTitle": "⏱️ 會話逾時設定",
         "sessionTimeoutEnable": "啟用會話逾時",
@@ -107,11 +69,6 @@
         "zh-TW": "繁體中文",
         "zh-CN": "简体中文",
         "en": "English"
-    },
-    "themes": {
-        "dark": "深色",
-        "light": "淺色",
-        "auto": "自動"
     },
     "timeUnits": {
         "second": "秒",
@@ -147,50 +104,17 @@
             "message": "會話已完成"
         }
     },
-    "notifications": {
-        "feedback_sent": "回饋已傳送",
-        "settings_saved": "設定已儲存",
-        "connection_lost": "連線中斷",
-        "connection_restored": "連線已恢復"
-    },
-    "connection": {
-        "waiting": "已連線 - 等待回饋",
-        "submitted": "已連線 - 回饋已提交",
-        "processing": "已連線 - 處理中"
-    },
-    "errors": {
-        "connection_failed": "連線失敗",
-        "upload_failed": "上傳失敗",
-        "invalid_input": "輸入內容無效",
-        "timeout": "請求逾時"
-    },
     "buttons": {
         "ok": "確定",
         "cancel": "❌ 取消",
         "submit": "✅ 提交回饋",
         "processing": "處理中...",
         "submitted": "已提交",
-        "retry": "重試",
-        "close": "關閉",
-        "upload": "上傳",
-        "download": "下載"
+        "close": "關閉"
     },
     "sessionTimeout": {
-        "timeout": "⏰ 會話已逾時，介面將自動關閉",
-        "timeoutWarning": "會話即將逾時",
-        "timeoutDescription": "由於長時間無回應，會話已逾時。介面將在 3 秒後自動關閉。",
-        "closing": "正在關閉...",
         "triggered": "會話已逾時，程式即將關閉",
         "label": "會話逾時:"
-    },
-    "autoRefresh": {
-        "enable": "自動檢測",
-        "seconds": "秒",
-        "disabled": "停用",
-        "enabled": "檢測中",
-        "checking": "檢查中",
-        "detected": "已檢測",
-        "error": "失敗"
     },
     "sessionManagement": {
         "title": "會話管理",
@@ -200,8 +124,6 @@
         "statistics": "統計資訊",
         "sessionId": "會話 ID",
         "status": "狀態",
-        "activeTime": "活躍時間",
-        "switchSession": "切換會話",
         "viewDetails": "詳細資訊",
         "refresh": "重新整理",
         "noHistory": "暫無歷史會話",
@@ -211,9 +133,6 @@
         "project": "專案",
         "aiSummary": "AI 摘要",
         "loading": "載入中...",
-        "collapsePanel": "收合面板",
-        "expandPanel": "展開面板",
-        "sessionPanel": "會話",
         "sessionDetails": {
             "title": "會話詳細資訊",
             "close": "關閉",
@@ -235,14 +154,12 @@
         },
         "noSummary": "無摘要",
         "copySessionContent": "複製會話內容",
-        "copyUserContent": "複製使用者內容",
-        "exportSession": "匯出此會話"
+        "copyUserContent": "複製使用者內容"
     },
     "sessionHistory": {
         "management": {
             "title": "📚 會話歷史管理",
             "retentionPeriod": "儲存期限",
-            "retentionHours": "小時",
             "export": "匯出",
             "clear": "清空",
             "exportAll": "匯出全部",
@@ -262,8 +179,7 @@
             "24hours": "24 小時",
             "72hours": "72 小時",
             "168hours": "7 天",
-            "720hours": "30 天",
-            "custom": "自訂"
+            "720hours": "30 天"
         },
         "userMessages": {
             "title": "使用者訊息記錄",
@@ -325,8 +241,6 @@
         "latency": "延遲",
         "connectionTime": "連線時間",
         "reconnectCount": "重新連線",
-        "messageCount": "訊息",
-        "sessionCount": "會話",
         "statusText": "狀態",
         "waiting": "等待中",
         "times": "次",
@@ -340,14 +254,10 @@
         "metrics": {
             "messages": "訊息",
             "latencyMs": "延遲",
-            "sessions": "會話",
-            "reconnects": "重新連線"
+            "sessions": "會話"
         },
         "unknown": "未知",
         "offline": "網路已斷線"
-    },
-    "dynamic": {
-        "aiSummary": "測試 Web UI 功能\n\n🎯 **功能測試項目：**\n- Web UI 伺服器啟動和執行\n- WebSocket 即時通訊\n- 回饋提交功能\n- 圖片上傳和預覽\n- 智慧 Ctrl+V 圖片貼上\n- 多語言介面功能\n\n📋 **測試步驟：**\n1. 測試圖片上傳（拖曳、選擇檔案、剪貼簿）\n2. 在文字框內按 Ctrl+V 測試智慧貼上\n3. 嘗試切換語言（繁中/簡中/英文）\n4. 提交回饋和圖片\n\n請測試這些功能並提供回饋！"
     },
     "prompts": {
         "management": {
@@ -400,14 +310,9 @@
         }
     },
     "about": {
-        "title": "ℹ️ 關於",
         "description": "一個 MCP 伺服器，建立回饋導向的開發工作流程，提供 Web UI 和桌面應用程式雙重選擇。透過引導 AI 與使用者確認而非進行推測性操作，在長任務中插入人工檢查點，降低 AI 跑偏與返工。",
-        "appInfo": "應用程式資訊",
-        "version": "版本",
-        "projectLinks": "專案連結",
         "githubProject": "GitHub 專案",
         "visitGithub": "訪問 GitHub",
-        "contact": "聯絡與支援",
         "discordSupport": "Discord 支援",
         "joinDiscord": "加入 Discord",
         "contactDescription": "如需技術支援、問題回報或功能建議，歡迎透過 Discord 社群或 GitHub Issues 與我們聯絡。",
@@ -430,9 +335,7 @@
             "base64Warning": "⚠️ 會增加傳輸量",
             "compatibilityHint": "💡 圖片無法正確識別？",
             "enableBase64Hint": "嘗試啟用 Base64 相容模式"
-        },
-        "sizeLimitExceeded": "圖片 {filename} 大小為 {size}，超過 {limit} 限制！",
-        "sizeLimitExceededAdvice": "建議使用圖片編輯軟體壓縮後再上傳，或調整圖片大小限制設定。"
+        }
     },
     "autoSubmit": {
         "title": "⏰ 自動定時提交",
@@ -470,7 +373,6 @@
             "notificationDing": "通知鈴聲",
             "softChime": "輕柔鐘聲",
             "default": "預設",
-            "customAudio": "自訂音效",
             "noCustomAudios": "尚未上傳任何自訂音效",
             "created": "建立於",
             "format": "格式",

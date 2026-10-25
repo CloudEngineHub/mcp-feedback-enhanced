@@ -1,7 +1,6 @@
 {
     "app": {
         "title": "MCP Interactive Feedback System",
-        "subtitle": "AI Assistant Interactive Feedback Platform",
         "projectDirectory": "Project Directory",
         "clickToCopyPath": "Click to copy full path",
         "clickToCopySessionId": "Click to copy full session ID",
@@ -26,18 +25,6 @@
         "detailedPlaceholder": "Please enter your feedback here...\n\n💡 Tips:\n• Press Ctrl+Enter/Cmd+Enter (numpad supported) for quick submit\n• Press Ctrl+I/Cmd+I to focus input box\n• Press Ctrl+V/Cmd+V to paste clipboard images directly",
         "imageLabel": "Image Attachments (Optional)",
         "imageUploadText": "📎 Click to select images or drag and drop images here\nSupports PNG, JPG, JPEG, GIF, BMP, WebP formats",
-        "submit": "✅ Submit Feedback",
-        "uploading": "Uploading...",
-        "dragdrop": "Drag and drop images here or click to upload",
-        "selectfiles": "Select Files",
-        "processing": "Processing...",
-        "success": "Feedback submitted successfully!",
-        "error": "Error submitting feedback",
-        "shortcuts": {
-            "submit": "Ctrl+Enter to submit (Cmd+Enter on Mac, numpad supported)",
-            "clear": "Ctrl+Delete to clear (Cmd+Delete on Mac)",
-            "paste": "Ctrl+V to paste images (Cmd+V on Mac)"
-        },
         "submitSuccess": "Feedback submitted successfully!",
         "submittedWaiting": "Feedback submitted, waiting for next MCP call...",
         "completed": "Session completed",
@@ -52,20 +39,11 @@
         "copyFailed": "Failed to copy",
         "provideTextOrImage": "Please provide feedback text or upload an image"
     },
-    "summary": {
-        "title": "📋 AI Work Summary",
-        "description": "Below is the work summary completed by the AI assistant. Please review carefully and provide your feedback.",
-        "placeholder": "AI work summary will be displayed here...",
-        "empty": "No summary content available",
-        "lastupdate": "Last updated",
-        "refresh": "Refresh"
-    },
     "combined": {
         "summaryTitle": "📋 AI Work Summary",
         "feedbackTitle": "💬 Provide Feedback"
     },
     "settingsUI": {
-        "title": "⚙️ Settings",
         "language": "🌍 Language",
         "currentLanguage": "Current Language",
         "languageDesc": "Select interface display language",
@@ -76,20 +54,9 @@
         "combinedVerticalDesc": "AI summary on top, feedback input below, suitable for standard screens",
         "combinedHorizontal": "Horizontal Layout",
         "combinedHorizontalDesc": "AI summary on left, feedback input on right, suitable for widescreen displays",
-        "autoClose": "Auto Close Page",
-        "autoCloseDesc": "Automatically close page after submitting feedback",
-        "theme": "Theme",
-        "notifications": "Notifications",
         "advanced": "🔧 Advanced Settings",
-        "save": "Save Settings",
         "reset": "Reset Settings",
         "resetDesc": "Clear all saved settings and restore to default state",
-        "resetConfirm": "Are you sure you want to reset all settings? This will clear all saved preferences.",
-        "resetSuccess": "Settings have been reset to default values",
-        "resetError": "Error occurred while resetting settings",
-        "timeout": "Connection Timeout (seconds)",
-        "autorefresh": "Auto Refresh",
-        "debug": "Debug Mode",
         "autoCommitNoPrompt": "Please select a prompt as auto-submit content first",
         "sessionTimeoutTitle": "⏱️ Session Timeout Settings",
         "sessionTimeoutEnable": "Enable Session Timeout",
@@ -102,11 +69,6 @@
         "zh-TW": "繁體中文",
         "zh-CN": "简体中文",
         "en": "English"
-    },
-    "themes": {
-        "dark": "Dark",
-        "light": "Light",
-        "auto": "Auto"
     },
     "timeUnits": {
         "second": "second",
@@ -142,50 +104,17 @@
             "message": "Session completed"
         }
     },
-    "notifications": {
-        "feedback_sent": "Feedback sent",
-        "settings_saved": "Settings saved",
-        "connection_lost": "Connection lost",
-        "connection_restored": "Connection restored"
-    },
-    "connection": {
-        "waiting": "Connected - Waiting for feedback",
-        "submitted": "Connected - Feedback submitted",
-        "processing": "Connected - Processing"
-    },
-    "errors": {
-        "connection_failed": "Connection failed",
-        "upload_failed": "Upload failed",
-        "invalid_input": "Invalid input",
-        "timeout": "Request timeout"
-    },
     "buttons": {
         "ok": "OK",
         "cancel": "❌ Cancel",
         "submit": "✅ Submit Feedback",
         "processing": "Processing...",
         "submitted": "Submitted",
-        "retry": "Retry",
-        "close": "Close",
-        "upload": "Upload",
-        "download": "Download"
+        "close": "Close"
     },
     "sessionTimeout": {
-        "timeout": "⏰ Session has timed out, interface will close automatically",
-        "timeoutWarning": "Session is about to timeout",
-        "timeoutDescription": "Due to prolonged inactivity, the session has timed out. The interface will automatically close in 3 seconds.",
-        "closing": "Closing...",
         "triggered": "Session timed out, the program will close",
         "label": "Session Timeout:"
-    },
-    "autoRefresh": {
-        "enable": "Auto Detect",
-        "seconds": "seconds",
-        "disabled": "Disabled",
-        "enabled": "Detecting",
-        "checking": "Checking",
-        "detected": "Detected",
-        "error": "Failed"
     },
     "sessionManagement": {
         "title": "Session Management",
@@ -195,8 +124,6 @@
         "statistics": "Statistics",
         "sessionId": "Session ID",
         "status": "Status",
-        "activeTime": "Active Time",
-        "switchSession": "Switch Session",
         "viewDetails": "View Details",
         "refresh": "Refresh",
         "noHistory": "No session history",
@@ -207,9 +134,6 @@
         "aiSummary": "AI Summary",
         "noSummary": "No summary",
         "loading": "Loading...",
-        "collapsePanel": "Collapse Panel",
-        "expandPanel": "Expand Panel",
-        "sessionPanel": "Session",
         "sessionDetails": {
             "title": "Session Details",
             "close": "Close",
@@ -230,14 +154,12 @@
             "copyFailed": "Copy failed, please copy manually"
         },
         "copySessionContent": "Copy Session Content",
-        "copyUserContent": "Copy User Content",
-        "exportSession": "Export This Session"
+        "copyUserContent": "Copy User Content"
     },
     "sessionHistory": {
         "management": {
             "title": "📚 Session History Management",
             "retentionPeriod": "Retention Period",
-            "retentionHours": "hours",
             "export": "Export",
             "clear": "Clear",
             "exportAll": "Export All",
@@ -257,8 +179,7 @@
             "24hours": "24 hours",
             "72hours": "72 hours",
             "168hours": "7 days",
-            "720hours": "30 days",
-            "custom": "Custom"
+            "720hours": "30 days"
         },
         "userMessages": {
             "title": "User Message Recording",
@@ -320,8 +241,6 @@
         "latency": "Latency",
         "connectionTime": "Connection Time",
         "reconnectCount": "Reconnects",
-        "messageCount": "Messages",
-        "sessionCount": "Sessions",
         "statusText": "Status",
         "waiting": "Waiting",
         "times": "times",
@@ -335,17 +254,13 @@
         "metrics": {
             "messages": "Messages",
             "latencyMs": "Latency",
-            "sessions": "Sessions",
-            "reconnects": "Reconnects"
+            "sessions": "Sessions"
         },
         "unknown": "Unknown",
         "offline": "Network disconnected"
     },
     "stats": {
         "detailedStats": "Detailed Statistics"
-    },
-    "dynamic": {
-        "aiSummary": "Test Web UI Functionality\n\n🎯 **Test Items:**\n- Web UI server startup and operation\n- WebSocket real-time communication\n- Feedback submission functionality\n- Image upload and preview\n- Smart Ctrl+V image pasting\n- Multi-language interface functionality\n\n📋 **Test Steps:**\n1. Test image upload (drag-drop, file selection, clipboard)\n2. Press Ctrl+V in text box to test smart pasting\n3. Try switching languages (Traditional Chinese/Simplified Chinese/English)\n4. Submit feedback and images\n\nPlease test these features and provide feedback!"
     },
     "prompts": {
         "management": {
@@ -398,14 +313,9 @@
         }
     },
     "about": {
-        "title": "ℹ️ About",
         "description": "An MCP server that establishes feedback-oriented development workflows, providing Web UI and Desktop Application dual interface options. By guiding AI to confirm with users rather than making speculative operations, it inserts human checkpoints into long-running tasks, reducing drift and rework.",
-        "appInfo": "Application Information",
-        "version": "Version",
-        "projectLinks": "Project Links",
         "githubProject": "GitHub Project",
         "visitGithub": "Visit GitHub",
-        "contact": "Contact & Support",
         "discordSupport": "Discord Support",
         "joinDiscord": "Join Discord",
         "contactDescription": "For technical support, issue reports, or feature suggestions, please contact us through Discord community or GitHub Issues.",
@@ -428,9 +338,7 @@
             "base64Warning": "⚠️ Increases transmission size",
             "compatibilityHint": "💡 Images not recognized correctly?",
             "enableBase64Hint": "Try enabling Base64 compatibility mode"
-        },
-        "sizeLimitExceeded": "Image {filename} size is {size}, exceeds {limit} limit!",
-        "sizeLimitExceededAdvice": "Consider compressing the image with editing software before uploading, or adjust the image size limit settings."
+        }
     },
     "autoSubmit": {
         "title": "⏰ Auto Timed Submit",
@@ -449,8 +357,7 @@
         "countdownLabel": "Submit Countdown",
         "pauseCountdown": "Pause Countdown",
         "resumeCountdown": "Resume Countdown",
-        "paused": "Auto submit paused",
-        "autoCommitNoPrompt": "Please select a prompt as auto-submit content first"
+        "paused": "Auto submit paused"
     },
     "audio": {
         "notification": {
@@ -469,7 +376,6 @@
             "notificationDing": "Notification Ding",
             "softChime": "Soft Chime",
             "default": "Default",
-            "customAudio": "Custom Audio",
             "noCustomAudios": "No custom audio files uploaded yet",
             "created": "Created",
             "format": "Format",

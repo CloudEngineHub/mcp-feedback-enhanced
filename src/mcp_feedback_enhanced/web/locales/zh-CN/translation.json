@@ -1,7 +1,6 @@
 {
     "app": {
         "title": "MCP 交互反馈系统",
-        "subtitle": "AI 助手交互反馈平台",
         "projectDirectory": "项目目录",
         "clickToCopyPath": "点击复制完整路径",
         "clickToCopySessionId": "点击复制完整会话ID",
@@ -26,18 +25,6 @@
         "detailedPlaceholder": "请在这里输入您的反馈...\n\n💡 小提示：\n• 按 Ctrl+Enter/Cmd+Enter (支持数字键盘) 可快速提交\n• 按 Ctrl+I/Cmd+I 可聚焦输入框\n• 按 Ctrl+V/Cmd+V 可直接粘贴剪贴板图片",
         "imageLabel": "图片附件（可选）",
         "imageUploadText": "📎 点击选择图片或拖放图片到此处\n支持 PNG、JPG、JPEG、GIF、BMP、WebP 等格式",
-        "submit": "✅ 提交反馈",
-        "uploading": "上传中...",
-        "dragdrop": "拖放图片到这里或点击上传",
-        "selectfiles": "选择文件",
-        "processing": "处理中...",
-        "success": "反馈已成功提交！",
-        "error": "提交反馈时发生错误",
-        "shortcuts": {
-            "submit": "Ctrl+Enter 提交 (Mac 用 Cmd+Enter，支持数字键盘)",
-            "clear": "Ctrl+Delete 清除 (Mac 用 Cmd+Delete)",
-            "paste": "Ctrl+V 粘贴图片 (Mac 用 Cmd+V)"
-        },
         "submitSuccess": "反馈提交成功！",
         "submittedWaiting": "已送出反馈，等待下次 MCP 调用...",
         "completed": "会话已完成",
@@ -52,20 +39,11 @@
         "copyFailed": "复制失败",
         "provideTextOrImage": "请提供反馈文字或上传图片"
     },
-    "summary": {
-        "title": "📋 AI 工作摘要",
-        "description": "以下是 AI 助手完成的工作摘要，请仔细查看并提供您的反馈意见。",
-        "placeholder": "AI 工作摘要将在这里显示...",
-        "empty": "目前没有摘要内容",
-        "lastupdate": "最后更新",
-        "refresh": "刷新"
-    },
     "combined": {
         "summaryTitle": "📋 AI 工作摘要",
         "feedbackTitle": "💬 提供反馈"
     },
     "settingsUI": {
-        "title": "⚙️ 设定",
         "language": "🌍 语言",
         "currentLanguage": "当前语言",
         "languageDesc": "选择界面显示语言",
@@ -76,20 +54,9 @@
         "combinedVerticalDesc": "AI 摘要在上，反馈输入在下，适合标准屏幕使用",
         "combinedHorizontal": "水平布局",
         "combinedHorizontalDesc": "AI 摘要在左，反馈输入在右，适合宽屏幕使用",
-        "autoClose": "自动关闭页面",
-        "autoCloseDesc": "提交回馈后自动关闭页面",
-        "theme": "主题",
-        "notifications": "通知",
         "advanced": "🔧 进阶设定",
-        "save": "储存设定",
         "reset": "重置设定",
         "resetDesc": "清除所有已保存的设定，恢复到预设状态",
-        "resetConfirm": "确定要重置所有设定吗？这将清除所有已保存的偏好设定。",
-        "resetSuccess": "设定已重置为预设值",
-        "resetError": "重置设定时发生错误",
-        "timeout": "连线逾时 (秒)",
-        "autorefresh": "自动重新整理",
-        "debug": "除错模式",
         "autoCommitNoPrompt": "请先选择一个提示词作为自动提交内容",
         "sessionTimeoutTitle": "⏱️ 会话超时设置",
         "sessionTimeoutEnable": "启用会话超时",
@@ -102,11 +69,6 @@
         "zh-TW": "繁體中文",
         "zh-CN": "简体中文",
         "en": "English"
-    },
-    "themes": {
-        "dark": "深色",
-        "light": "浅色",
-        "auto": "自动"
     },
     "timeUnits": {
         "second": "秒",
@@ -142,50 +104,17 @@
             "message": "会话已完成"
         }
     },
-    "notifications": {
-        "feedback_sent": "反馈已发送",
-        "settings_saved": "设置已保存",
-        "connection_lost": "连接中断",
-        "connection_restored": "连接已恢复"
-    },
-    "connection": {
-        "waiting": "已连接 - 等待反馈",
-        "submitted": "已连接 - 反馈已提交",
-        "processing": "已连接 - 处理中"
-    },
-    "errors": {
-        "connection_failed": "连接失败",
-        "upload_failed": "上传失败",
-        "invalid_input": "输入内容无效",
-        "timeout": "请求超时"
-    },
     "buttons": {
         "ok": "确定",
         "cancel": "❌ 取消",
         "submit": "✅ 提交反馈",
         "processing": "处理中...",
         "submitted": "已提交",
-        "retry": "重试",
-        "close": "关闭",
-        "upload": "上传",
-        "download": "下载"
+        "close": "关闭"
     },
     "sessionTimeout": {
-        "timeout": "⏰ 会话已超时，界面将自动关闭",
-        "timeoutWarning": "会话即将超时",
-        "timeoutDescription": "由于长时间无响应，会话已超时。界面将在 3 秒后自动关闭。",
-        "closing": "正在关闭...",
         "triggered": "会话已超时，程序即将关闭",
         "label": "会话超时:"
-    },
-    "autoRefresh": {
-        "enable": "自动检测",
-        "seconds": "秒",
-        "disabled": "停用",
-        "enabled": "检测中",
-        "checking": "检查中",
-        "detected": "已检测",
-        "error": "失败"
     },
     "sessionManagement": {
         "title": "会话管理",
@@ -195,8 +124,6 @@
         "statistics": "统计信息",
         "sessionId": "会话 ID",
         "status": "状态",
-        "activeTime": "活跃时间",
-        "switchSession": "切换会话",
         "viewDetails": "详细信息",
         "refresh": "重新整理",
         "noHistory": "暂无历史会话",
@@ -207,9 +134,6 @@
         "aiSummary": "AI 总结",
         "noSummary": "无总结",
         "loading": "加载中...",
-        "collapsePanel": "收合面板",
-        "expandPanel": "展开面板",
-        "sessionPanel": "会话",
         "sessionDetails": {
             "title": "会话详细信息",
             "close": "关闭",
@@ -230,14 +154,12 @@
             "copyFailed": "复制失败，请手动复制"
         },
         "copySessionContent": "复制会话内容",
-        "copyUserContent": "复制用户内容",
-        "exportSession": "导出此会话"
+        "copyUserContent": "复制用户内容"
     },
     "sessionHistory": {
         "management": {
             "title": "📚 会话历史管理",
             "retentionPeriod": "保存期限",
-            "retentionHours": "小时",
             "export": "导出",
             "clear": "清空",
             "exportAll": "导出全部",
@@ -257,8 +179,7 @@
             "24hours": "24 小时",
             "72hours": "72 小时",
             "168hours": "7 天",
-            "720hours": "30 天",
-            "custom": "自定义"
+            "720hours": "30 天"
         },
         "userMessages": {
             "title": "用户消息记录",
@@ -320,8 +241,6 @@
         "latency": "延迟",
         "connectionTime": "连线时间",
         "reconnectCount": "重连",
-        "messageCount": "消息",
-        "sessionCount": "会话",
         "statusText": "状态",
         "waiting": "等待中",
         "times": "次",
@@ -335,14 +254,10 @@
         "metrics": {
             "messages": "消息",
             "latencyMs": "延迟",
-            "sessions": "会话",
-            "reconnects": "重连"
+            "sessions": "会话"
         },
         "unknown": "未知",
         "offline": "网络已断开"
-    },
-    "dynamic": {
-        "aiSummary": "测试 Web UI 功能\n\n🎯 **功能测试项目：**\n- Web UI 服务器启动和运行\n- WebSocket 实时通讯\n- 反馈提交功能\n- 图片上传和预览\n- 智能 Ctrl+V 图片粘贴\n- 多语言界面功能\n\n📋 **测试步骤：**\n1. 测试图片上传（拖拽、选择文件、剪贴板）\n2. 在文本框内按 Ctrl+V 测试智能粘贴\n3. 尝试切换语言（繁中/简中/英文）\n4. 提交反馈和图片\n\n请测试这些功能并提供反馈！"
     },
     "prompts": {
         "management": {
@@ -395,14 +310,9 @@
         }
     },
     "about": {
-        "title": "ℹ️ 关于",
         "description": "一个 MCP 服务器，建立反馈导向的开发工作流程，提供 Web UI 和桌面应用程序双重选择。通过引导 AI 与用户确认而非进行推测性操作，在长任务中插入人工检查点，降低 AI 跑偏与返工。",
-        "appInfo": "应用程序信息",
-        "version": "版本",
-        "projectLinks": "项目链接",
         "githubProject": "GitHub 项目",
         "visitGithub": "访问 GitHub",
-        "contact": "联系与支持",
         "discordSupport": "Discord 支持",
         "joinDiscord": "加入 Discord",
         "contactDescription": "如需技术支持、问题反馈或功能建议，欢迎通过 Discord 社群或 GitHub Issues 与我们联系。",
@@ -425,9 +335,7 @@
             "base64Warning": "⚠️ 会增加传输量",
             "compatibilityHint": "💡 图片无法正确识别？",
             "enableBase64Hint": "尝试启用 Base64 兼容模式"
-        },
-        "sizeLimitExceeded": "图片 {filename} 大小为 {size}，超过 {limit} 限制！",
-        "sizeLimitExceededAdvice": "建议使用图片编辑软件压缩后再上传，或调整图片大小限制设置。"
+        }
     },
     "autoSubmit": {
         "title": "⏰ 自动定时提交",
@@ -465,7 +373,6 @@
             "notificationDing": "通知铃声",
             "softChime": "轻柔钟声",
             "default": "默认",
-            "customAudio": "自定义音效",
             "noCustomAudios": "尚未上传任何自定义音效",
             "created": "创建于",
             "format": "格式",
