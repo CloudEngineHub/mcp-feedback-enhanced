@@ -17,6 +17,60 @@
         return window.MCPFeedback && window.MCPFeedback.Utils && window.MCPFeedback.Utils.DOM;
     }
 
+    // 翻譯；i18n 還沒載入或缺 key 時用繁中預設字串，params 代入 {name}
+    function t(key, fallback, params) {
+        let text = window.i18nManager ? window.i18nManager.t(key, fallback) : fallback;
+        Object.keys(params || {}).forEach(function(name) {
+            text = text.replace('{' + name + '}', params[name]);
+        });
+        return text;
+    }
+
+    /**
+     * 一則使用者訊息的複製內容（標題層級由 heading 決定），依介面語言輸出
+     */
+    function formatUserMessageLines(msg, index, heading) {
+        const lines = [heading + ' ' + t('sessionHistory.copyContent.message', '訊息 {index}', { index: index + 1 })];
+
+        // 時間格式與會話詳情視窗相同（YYYY/MM/DD HH:MM:SS，秒或毫秒皆可）；
+        // 沒有時間戳或小於 2001 年（可能是相對時間）時用目前時間
+        const timeStr = window.MCPFeedback.Utils.Time.formatTimestamp(
+            msg.timestamp && msg.timestamp >= 1000000000 ? msg.timestamp : Date.now()
+        );
+        lines.push(`**${t('sessionHistory.userMessages.timestamp', '時間戳記')}**: ${timeStr}`);
+
+        if (msg.submission_method) {
+            const methodText = msg.submission_method === 'auto' ?
+                t('sessionHistory.userMessages.auto', '自動提交') :
+                t('sessionHistory.userMessages.manual', '手動提交');
+            lines.push(`**${t('sessionHistory.userMessages.submissionMethod', '提交方式')}**: ${methodText}`);
+        }
+
+        const imageCountLabel = t('sessionHistory.userMessages.imageCount', '圖片數量');
+        if (msg.content !== undefined) {
+            // 完整記錄模式
+            lines.push(`**${t('sessionManagement.sessionDetails.content', '內容')}**: ${msg.content}`);
+            if (msg.images && msg.images.length > 0) {
+                lines.push(`**${imageCountLabel}**: ${msg.images.length}`);
+            }
+        } else if (msg.content_length !== undefined) {
+            // 基本統計模式
+            lines.push(`**${t('sessionHistory.userMessages.contentLength', '內容長度')}**: ` +
+                t('sessionManagement.sessionDetails.characters', '{count} 字元', { count: msg.content_length }));
+            lines.push(`**${imageCountLabel}**: ${msg.image_count || 0}`);
+            lines.push(`**${t('sessionHistory.copyContent.hasContent', '有內容')}**: ` +
+                (msg.has_content ? t('sessionHistory.copyContent.yes', '是') : t('sessionHistory.copyContent.no', '否')));
+        } else if (msg.privacy_note) {
+            // 隱私保護模式
+            lines.push(`**${t('sessionManagement.sessionDetails.content', '內容')}**: [${t('sessionManagement.sessionDetails.recordingDisabled', '內容記錄已停用（隱私設定）')}]`);
+        } else {
+            lines.push(`**${t('sessionHistory.copyContent.rawData', '原始資料')}**: ${JSON.stringify(msg, null, 2)}`);
+        }
+
+        lines.push('');
+        return lines;
+    }
+
     /**
      * 會話管理器建構函數（重構版）
      */
@@ -846,35 +900,24 @@
     };
 
     /**
-     * 格式化当前会话内容
+     * 格式化当前会话内容（依介面語言）
      */
     SessionManager.prototype.formatCurrentSessionContent = function(sessionData) {
+        const Utils = window.MCPFeedback.Utils;
         const lines = [];
-        lines.push('# MCP Feedback Enhanced - 当前会话内容');
+        lines.push('# ' + t('sessionHistory.copyContent.sessionTitle', 'MCP Feedback Enhanced - 當前會話內容'));
         lines.push('');
-        lines.push(`**会话ID**: ${sessionData.session_id || 'N/A'}`);
-        lines.push(`**项目目录**: ${sessionData.project_directory || 'N/A'}`);
-        lines.push(`**摘要**: ${sessionData.summary || 'N/A'}`);
-        lines.push(`**状态**: ${sessionData.status || 'N/A'}`);
-        lines.push(`**创建时间**: ${sessionData.created_at || 'N/A'}`);
-        lines.push(`**更新时间**: ${sessionData.updated_at || 'N/A'}`);
+        lines.push(`**${t('sessionManagement.sessionId', '會話 ID')}**: ${sessionData.session_id || 'N/A'}`);
+        lines.push(`**${t('sessionManagement.sessionDetails.projectDirectory', '專案目錄')}**: ${sessionData.project_directory || 'N/A'}`);
+        lines.push(`**${t('sessionManagement.sessionDetails.summary', '摘要')}**: ${sessionData.summary || 'N/A'}`);
+        lines.push(`**${t('sessionManagement.status', '狀態')}**: ${sessionData.status ? Utils.Status.getStatusText(sessionData.status) : 'N/A'}`);
+        lines.push(`**${t('sessionManagement.createdTime', '建立時間')}**: ${sessionData.created_at ? Utils.Time.formatTimestamp(sessionData.created_at) : 'N/A'}`);
         lines.push('');
 
         if (sessionData.user_messages && sessionData.user_messages.length > 0) {
-            lines.push('## 用户消息');
-            sessionData.user_messages.forEach((msg, index) => {
-                lines.push(`### 消息 ${index + 1}`);
-                lines.push(msg);
-                lines.push('');
-            });
-        }
-
-        if (sessionData.ai_responses && sessionData.ai_responses.length > 0) {
-            lines.push('## AI 响应');
-            sessionData.ai_responses.forEach((response, index) => {
-                lines.push(`### 响应 ${index + 1}`);
-                lines.push(response);
-                lines.push('');
+            lines.push('## ' + t('sessionHistory.userMessages.title', '用戶訊息記錄'));
+            sessionData.user_messages.forEach(function(msg, index) {
+                lines.push.apply(lines, formatUserMessageLines(msg, index, '###'));
             });
         }
 
@@ -882,60 +925,15 @@
     };
 
     /**
-     * 格式化当前用户内容
+     * 格式化当前用户内容（依介面語言）
      */
     SessionManager.prototype.formatCurrentUserContent = function(userMessages) {
         const lines = [];
-        lines.push('# MCP Feedback Enhanced - 用户发送内容');
+        lines.push('# ' + t('sessionHistory.copyContent.userTitle', 'MCP Feedback Enhanced - 用戶發送內容'));
         lines.push('');
-
-        userMessages.forEach((msg, index) => {
-            lines.push(`## 消息 ${index + 1}`);
-
-            // 调试：输出完整的消息对象
-            console.log(`📝 消息 ${index + 1} 完整对象:`, msg);
-            console.log(`📝 消息 ${index + 1} 所有属性:`, Object.keys(msg));
-
-            // 時間格式與會話詳情視窗相同（YYYY/MM/DD HH:MM:SS，秒或毫秒皆可）；
-            // 沒有時間戳或小於 2001 年（可能是相對時間）時用目前時間
-            const TimeUtils = window.MCPFeedback.Utils.Time;
-            const timeStr = TimeUtils.formatTimestamp(
-                msg.timestamp && msg.timestamp >= 1000000000 ? msg.timestamp : Date.now()
-            );
-
-            lines.push(`**时间**: ${timeStr}`);
-
-            // 添加提交方式
-            if (msg.submission_method) {
-                const methodText = msg.submission_method === 'auto' ? '自动提交' : '手动提交';
-                lines.push(`**提交方式**: ${methodText}`);
-            }
-
-            // 处理消息内容
-            if (msg.content !== undefined) {
-                // 完整记录模式 - 显示实际内容
-                lines.push(`**内容**: ${msg.content}`);
-
-                // 如果有图片，显示图片数量
-                if (msg.images && msg.images.length > 0) {
-                    lines.push(`**图片数量**: ${msg.images.length}`);
-                }
-            } else if (msg.content_length !== undefined) {
-                // 基本统计模式 - 显示统计信息
-                lines.push(`**内容长度**: ${msg.content_length} 字符`);
-                lines.push(`**图片数量**: ${msg.image_count || 0}`);
-                lines.push(`**有内容**: ${msg.has_content ? '是' : '否'}`);
-            } else if (msg.privacy_note) {
-                // 隐私保护模式
-                lines.push(`**内容**: [内容记录已停用 - 隐私设置]`);
-            } else {
-                // 兜底情况 - 尝试显示对象的JSON格式
-                lines.push(`**原始数据**: ${JSON.stringify(msg, null, 2)}`);
-            }
-
-            lines.push('');
+        userMessages.forEach(function(msg, index) {
+            lines.push.apply(lines, formatUserMessageLines(msg, index, '##'));
         });
-
         return lines.join('\n');
     };
 

@@ -299,6 +299,15 @@
             "copySuccess": "当前会话内容已复制到剪贴板",
             "userContentCopySuccess": "当前用户内容已复制到剪贴板",
             "copyFailedManual": "复制失败，请手动复制"
+        },
+        "copyContent": {
+            "sessionTitle": "MCP Feedback Enhanced - 当前会话内容",
+            "userTitle": "MCP Feedback Enhanced - 用户发送内容",
+            "message": "消息 {index}",
+            "hasContent": "有内容",
+            "yes": "是",
+            "no": "否",
+            "rawData": "原始数据"
         }
     },
     "connectionMonitor": {

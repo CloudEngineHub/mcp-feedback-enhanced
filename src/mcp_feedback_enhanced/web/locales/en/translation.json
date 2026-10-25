@@ -299,6 +299,15 @@
             "copySuccess": "Current session content copied to clipboard",
             "userContentCopySuccess": "Current user content copied to clipboard",
             "copyFailedManual": "Copy failed, please copy manually"
+        },
+        "copyContent": {
+            "sessionTitle": "MCP Feedback Enhanced - Current Session",
+            "userTitle": "MCP Feedback Enhanced - User Messages",
+            "message": "Message {index}",
+            "hasContent": "Has content",
+            "yes": "Yes",
+            "no": "No",
+            "rawData": "Raw data"
         }
     },
     "connectionMonitor": {
