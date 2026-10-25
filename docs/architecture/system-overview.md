@@ -26,7 +26,7 @@ MCP Feedback Enhanced 採用**單一活躍會話 + 持久化 Web UI**的創新�
 - JavaScript ES6+ (模組化架構)
 - WebSocket API (雙向通信)
 - Web Audio API (音效通知系統)
-- localStorage API (本地數據存儲)
+- localStorage API (介面語言、通知設定與分頁追蹤)
 - ResizeObserver API (元素尺寸監控)
 - 響應式設計 (多設備支援)
 
@@ -402,7 +402,7 @@ graph TB
     end
 
     subgraph "設定存儲"
-        LS[localStorage]
+        LS[ui_settings.json<br/>經 /api/save-settings]
         SM[SettingsManager]
     end
 
@@ -447,7 +447,7 @@ graph LR
 **新增功能模組**：
 - **session-ui-renderer.js**: 專門的 UI 渲染器
 - **session-details-modal.js**: 會話詳情彈窗
-- **本地歷史存儲**: 支援 72 小時可配置保存期限
+- **伺服器端歷史存儲**: 存在 `session_history.json`，保存期限可選 24、72、168、720 小時（預設 72）
 - **隱私控制**: 三級用戶訊息記錄設定
 - **數據管理**: 匯出和清理功能
 

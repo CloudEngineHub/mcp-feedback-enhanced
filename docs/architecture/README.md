@@ -1,11 +1,13 @@
 # MCP Feedback Enhanced 架構文檔
 
-> ⚠️ **這些架構文件描述 v2.6.0 之前的架構，自 v2.6.1 起未再更新。**
+> ⚠️ **這些架構文件大多描述 v2.6.0 之前的架構，自 v2.6.1 起未全面更新。**
 >
 > 主要差異：**命令執行功能已於 v2.6.1 完整移除**（見 [#219](https://github.com/Minidoracat/mcp-feedback-enhanced/issues/219) 與 [SECURITY.md](../../SECURITY.md)）。
 > 文件中所有關於 `run_command`、命令輸出、自動執行命令、命令分頁、`command_logs` 欄位的敘述**皆已不適用**。
 >
-> 目前維護範圍聚焦在安全與相容性，因此這些文件暫不同步更新，保留作為歷史參考。
+> 目前維護範圍聚焦在安全與相容性，因此這些文件暫不全面同步更新，保留作為歷史參考。
+>
+> 例外：v2.8.5 已對照實作修正 [部署指南](./deployment-guide.md) 的安裝、命令列、環境變數、設定檔與運維段落，以及 [API 參考文檔](./api-reference.md) 的 MCP 工具、HTTP、WebSocket、內部 API 與安全限制段落。
 
 ## 📋 文檔索引
 
@@ -42,7 +44,7 @@ MCP Feedback Enhanced 採用**單一活躍會話 + 持久化 Web UI**的創新�
 - **後端**: Python 3.11+, FastAPI, FastMCP
 - **前端**: HTML5, JavaScript ES6+, WebSocket, Web Audio API（v2.4.3）
 - **通信**: WebSocket, HTTP REST API
-- **存儲**: localStorage（會話歷史、音效文件、設定記憶）
+- **存儲**: 伺服器端 `~/.config/mcp-feedback-enhanced/`：`ui_settings.json`（設定、提示詞、自訂音效、輸入框高度）、`session_history.json`（會話歷史）；瀏覽器 localStorage 只存介面語言、通知設定與分頁追蹤
 - **部署**: uvicorn, 跨平台支援
 
 ### 🎯 快速導航
@@ -75,7 +77,7 @@ MCP Feedback Enhanced 採用**單一活躍會話 + 持久化 Web UI**的創新�
 
 #### 📋 會話管理重構
 - **頁籤化設計**: 從側邊欄遷移到獨立頁籤，解決瀏覽器相容性問題
-- **本地歷史存儲**: 支援 72 小時可配置保存期限
+- **伺服器端歷史存儲**: 存在 `session_history.json`，保存期限可選 24、72、168、720 小時（預設 72）
 - **隱私控制**: 三級用戶訊息記錄設定（完整/基本/停用）
 - **數據管理**: 匯出和清理功能
 - **詳情查看**: 專門的會話詳情彈窗

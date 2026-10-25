@@ -610,14 +610,14 @@ graph TB
 
 **v2.4.3 重構亮點**：
 - **從側邊欄遷移到頁籤**: 解決瀏覽器相容性問題
-- **本地歷史存儲**: 支援 72 小時可配置保存期限
+- **伺服器端歷史存儲**: 存在 `session_history.json`，保存期限可選 24、72、168、720 小時（預設 72）
 - **隱私控制**: 三級用戶訊息記錄設定（完整/基本/停用）
 - **數據管理**: 匯出和清理功能
 - **UI 重新設計**: 專門的渲染器和詳情彈窗
 
 **核心功能**：
 - **SessionManager**: 當前會話的狀態管理和控制
-- **SessionDataManager**: 會話歷史記錄、統計數據和本地存儲管理
+- **SessionDataManager**: 會話歷史記錄、統計數據，以及透過 `/api/load-session-history`、`/api/save-session-history` 讀寫伺服器端歷史
 - **SessionUIRenderer**: 專門的 UI 渲染器，負責會話列表和狀態顯示
 - **SessionDetailsModal**: 會話詳情彈窗，提供完整的會話資訊查看
 
@@ -654,7 +654,7 @@ graph TB
 
 **技術特性**：
 - **Web Audio API**: 使用原生 Audio 物件進行播放
-- **Base64 存儲**: 音效文件以 Base64 格式存儲在 localStorage
+- **Base64 存儲**: 音效文件以 Base64 格式經 SettingsManager 存在伺服器端 `ui_settings.json` 的 `customAudios`
 - **音量控制**: 0-100% 可調節音量
 - **瀏覽器相容性**: 處理自動播放政策限制
 

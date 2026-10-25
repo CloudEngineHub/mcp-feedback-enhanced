@@ -520,7 +520,7 @@ sequenceDiagram
     participant UI as 設定界面
     participant PM as PromptManager
     participant Modal as PromptModal
-    participant Storage as LocalStorage
+    participant Storage as SettingsManager
 
     Note over User,Storage: 📝 新增提示詞
     User->>UI: 點擊「新增提示詞」
@@ -529,7 +529,7 @@ sequenceDiagram
     User->>Modal: 輸入名稱和內容
     Modal->>PM: addPrompt(name, content)
     PM->>PM: 驗證數據和唯一性
-    PM->>Storage: 保存到 localStorage
+    PM->>Storage: set('promptSettings') 存到 ui_settings.json
     PM->>UI: 觸發 onPromptsChange 回調
     UI->>UI: refreshPromptList()
 
@@ -539,7 +539,7 @@ sequenceDiagram
     Modal->>User: 顯示預填表單
     User->>Modal: 修改內容
     Modal->>PM: updatePrompt(id, name, content)
-    PM->>Storage: 更新 localStorage
+    PM->>Storage: 更新 ui_settings.json
     PM->>UI: 觸發回調更新界面
 
     Note over User,Storage: 🎯 使用提示詞
@@ -599,10 +599,10 @@ sequenceDiagram
     SDM->>Server: POST /api/save-session-history
     UI->>SDM: getSessionHistory()
     SDM-->>UI: 返回歷史列表
-    UI->>SDM: getSessionStats()
+    UI->>SDM: getStats()
     SDM-->>UI: 返回統計數據
     UI->>SDM: exportSessionHistory()
-    SDM-->>UI: 返回匯出數據
+    SDM-->>UI: 下載 JSON 檔並返回檔名
 ```
 
 ### 音效通知系統流程（v2.4.3 新增）
@@ -652,7 +652,7 @@ sequenceDiagram
     ASU->>ASU: validateAudioFile()
     ASU->>AM: addCustomAudio(file)
     AM->>AM: convertToBase64()
-    AM->>AM: saveToLocalStorage()
+    AM->>AM: saveAudioSettings() 經 SettingsManager 存到 ui_settings.json
     ASU->>User: 顯示上傳成功
 ```
 
@@ -671,12 +671,12 @@ sequenceDiagram
     TEXTAREA->>RO: 觸發尺寸變化事件
     RO->>THM: handleResize(element)
     THM->>THM: debounce(500ms)
-    THM->>SM: saveHeight(elementId, height)
-    SM->>SM: 保存到 localStorage
+    THM->>SM: set(settingKey, height)
+    SM->>SM: POST /api/save-settings 存到 ui_settings.json
 
     Note over User,SM: 🔄 高度恢復
     User->>User: 重新載入頁面
-    THM->>SM: loadHeight(elementId)
+    THM->>SM: get(settingKey)
     SM-->>THM: 返回保存的高度
     THM->>TEXTAREA: 應用保存的高度
     TEXTAREA->>User: 顯示恢復的高度
@@ -695,29 +695,26 @@ sequenceDiagram
 
 ## 📊 狀態同步機制
 
-### WebSocket 訊息類型（v2.4.3 擴展）
+### WebSocket 訊息類型
 
 ```mermaid
 graph LR
     subgraph "服務器 → 客戶端"
         CE[connection_established<br/>連接建立]
         SU[session_updated<br/>會話更新<br/>🔊 觸發音效通知]
-        FR[feedback_received<br/>回饋確認]
         ST[status_update<br/>狀態更新]
-        ASS[auto_submit_status<br/>自動提交狀態]
-        SH[session_history<br/>會話歷史<br/>📚 v2.4.3 增強]
-        AN[audio_notification<br/>音效通知<br/>🔊 v2.4.3 新增]
+        HR[heartbeat_response<br/>心跳回應]
+        PI[ping<br/>連線檢測]
+        NO[notification<br/>回饋已收到／重複提交／會話清理]
     end
 
     subgraph "客戶端 → 服務器"
         SF[submit_feedback<br/>提交回饋]
+        GS[get_status<br/>查詢狀態]
         HB[heartbeat<br/>心跳檢測]
-        LS[language_switch<br/>語言切換]
-        PM[prompt_management<br/>提示詞管理]
-        ASC[auto_submit_control<br/>自動提交控制]
-        SM[session_management<br/>會話管理<br/>📋 v2.4.3 重構]
-        AM[audio_management<br/>音效管理<br/>🎵 v2.4.3 新增]
-        HM[height_management<br/>高度管理<br/>📏 v2.4.3 新增]
+        PO[pong<br/>回應 ping]
+        UT[user_timeout<br/>會話超時]
+        UTS[update_timeout_settings<br/>超時設定]
     end
 ```
 
