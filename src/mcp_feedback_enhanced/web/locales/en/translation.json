@@ -392,7 +392,7 @@
     },
     "about": {
         "title": "ℹ️ About",
-        "description": "A powerful MCP server that provides human-in-the-loop feedback functionality for AI-assisted development tools. Features a Web UI interface with rich capabilities including image upload, command execution, and multi-language support.",
+        "description": "An MCP server that establishes feedback-oriented development workflows, providing Web UI and Desktop Application dual interface options. By guiding AI to confirm with users rather than making speculative operations, it inserts human checkpoints into long-running tasks, reducing drift and rework.",
         "appInfo": "Application Information",
         "version": "Version",
         "projectLinks": "Project Links",

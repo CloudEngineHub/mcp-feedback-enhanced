@@ -11,7 +11,6 @@ MCP Interactive Feedback Enhanced
 特色：
 - Web UI 介面支援
 - 智慧環境檢測
-- 命令執行功能
 - 圖片上傳支援
 - 現代化深色主題
 - 重構的模組化架構
