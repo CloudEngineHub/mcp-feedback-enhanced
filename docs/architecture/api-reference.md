@@ -272,14 +272,10 @@ ws://127.0.0.1:{port}/ws
 
 #### create_session()
 ```python
-async def create_session(
-    self,
-    summary: str,
-    project_directory: str
-) -> WebFeedbackSession
+def create_session(self, project_directory: str, summary: str) -> str
 ```
 
-創建新的回饋會話。
+創建新的回饋會話並設為當前會話，回傳 `session_id`。
 
 #### smart_open_browser()
 ```python
@@ -289,7 +285,7 @@ async def smart_open_browser(self, url: str) -> bool
 智能開啟瀏覽器，避免重複開啟。
 
 **返回值**:
-- `True`: 檢測到活躍標籤頁，未開啟新視窗
+- `True`: 桌面模式，或檢測到活躍標籤頁（已送 `session_updated` 通知該分頁），未開啟新視窗
 - `False`: 開啟了新瀏覽器視窗
 
 ### WebFeedbackSession API
@@ -299,32 +295,28 @@ async def smart_open_browser(self, url: str) -> bool
 async def submit_feedback(
     self,
     feedback: str,
-    images: List[str],
-    settings: dict
+    images: list[dict[str, Any]],
+    settings: dict[str, Any] | None = None,
 ) -> None
 ```
 
-提交用戶回饋到會話。
+提交用戶回饋到會話。同一會話重複提交會被忽略，並送出 `notification`（`severity: "warning"`）。
 
 #### wait_for_feedback()
 ```python
-async def wait_for_feedback(self, timeout: int = 600) -> dict
+async def wait_for_feedback(self, timeout: int = 600) -> dict[str, Any]
 ```
 
-等待用戶回饋完成。
+等待用戶回饋完成，回傳 `{"interactive_feedback": str, "images": list, "settings": dict}`。逾時或會話未取得回饋即結束時拋出 `TimeoutError`。
 
-#### add_websocket()
-```python
-def add_websocket(self, websocket: WebSocket) -> None
-```
-
-添加 WebSocket 連接到會話。
+#### WebSocket 連線
+沒有 `add_websocket()`。`/ws` 端點把連線直接指定給 `session.websocket`，新連線會取代舊連線。
 
 ### PromptManager API
 
 #### addPrompt()
-```python
-def addPrompt(self, name: str, content: str) -> dict
+```javascript
+PromptManager.prototype.addPrompt = function(name, content) // => Object
 ```
 
 新增提示詞到管理器。
@@ -333,44 +325,44 @@ def addPrompt(self, name: str, content: str) -> dict
 - `name`: 提示詞名稱（必須唯一）
 - `content`: 提示詞內容
 
-**返回值**: 新建的提示詞對象
+**返回值**: 新建的提示詞對象。名稱或內容為空、名稱重複時拋出 `Error`。
 
 #### updatePrompt()
-```python
-def updatePrompt(self, id: str, name: str, content: str) -> dict
+```javascript
+PromptManager.prototype.updatePrompt = function(id, name, content) // => Object
 ```
 
-更新現有提示詞。
+更新現有提示詞，回傳更新後的提示詞。找不到、名稱或內容為空、名稱重複時拋出 `Error`。
 
 #### deletePrompt()
-```python
-def deletePrompt(self, id: str) -> bool
+```javascript
+PromptManager.prototype.deletePrompt = function(id) // => Object
 ```
 
-刪除指定提示詞。
+刪除指定提示詞，回傳被刪除的提示詞。找不到時拋出 `Error`。
 
 #### usePrompt()
-```python
-def usePrompt(self, id: str) -> dict
+```javascript
+PromptManager.prototype.usePrompt = function(id) // => Object
 ```
 
-使用提示詞（更新最近使用記錄）。
+使用提示詞（更新最近使用記錄），回傳該提示詞。找不到時拋出 `Error`。
 
 #### getPromptsSortedByUsage()
-```python
-def getPromptsSortedByUsage(self) -> List[dict]
+```javascript
+PromptManager.prototype.getPromptsSortedByUsage = function() // => Array<Object>
 ```
 
-獲取按使用頻率排序的提示詞列表，自動提交提示詞優先顯示。
+回傳排序後的提示詞副本：自動提交提示詞優先，其次依最近使用時間由新到舊，從未使用的排在後面並依建立時間由新到舊。
 
 ### SessionManager API（v2.4.3 重構增強）
 
 #### getCurrentSession()
-```python
-def getCurrentSession(self) -> dict
+```javascript
+SessionDataManager.prototype.getCurrentSession = function() // => Object|null
 ```
 
-獲取當前活躍會話信息。
+獲取當前活躍會話信息。`SessionManager.prototype.getCurrentSession()` 轉呼叫此方法。
 
 #### getSessionHistory()
 ```javascript
@@ -379,22 +371,19 @@ SessionDataManager.prototype.getSessionHistory = function() // => Array<Object>
 
 回傳目前會話歷史的副本，本身不過濾；保存期限在載入時由 `cleanupExpiredSessions()` 套用。
 
-#### getSessionStats()
-```python
-def getSessionStats(self) -> dict
+#### getStats()
+```javascript
+SessionDataManager.prototype.getStats = function() // => { todayCount, averageDuration }
 ```
 
-獲取會話統計信息，包含今日統計和平均時長。
+回傳統計資訊的副本：`todayCount` 是今日會話數，`averageDuration` 是今日會話的平均持續時間（秒）。沒有 `getSessionStats()`；`SessionManager.prototype.getStats()` 轉呼叫此方法。
 
 #### exportSessionHistory()
-```python
-def exportSessionHistory(self, format: str = "json") -> str
+```javascript
+SessionDataManager.prototype.exportSessionHistory = function() // => string
 ```
 
-匯出會話歷史數據。
-
-**參數**:
-- `format`: 匯出格式（json, csv）
+沒有參數，只匯出 JSON。把全部會話歷史下載為 `session-history-YYYY-MM-DD.json`，回傳該檔名。檔案內容是 `{ exportedAt, sessionCount, sessions }`；只有開啟用戶訊息記錄時，各會話才包含 `user_messages` 與 `user_message_count`。`SessionManager.prototype.exportSessionHistory()` 轉呼叫此方法並顯示成功或失敗訊息；單一會話改用 `exportSingleSession(sessionId)`。
 
 #### cleanupExpiredSessions()
 ```javascript
@@ -408,41 +397,44 @@ SessionDataManager.prototype.cleanupExpiredSessions = function() // => number
 ### AudioManager API（v2.4.3 新增）
 
 #### playNotification()
-```python
-def playNotification(self) -> None
+```javascript
+AudioManager.prototype.playNotification = function() // => undefined
 ```
 
-播放通知音效。
+播放選用的通知音效；音效通知停用時不播放，找不到選用的音效時改播 `default-beep`。
 
-#### updateSettings()
-```python
-def updateSettings(self, enabled: bool, volume: int, selectedAudioId: str) -> None
+#### setEnabled()、setVolume()、setSelectedAudio()
+```javascript
+AudioManager.prototype.setEnabled = function(enabled)
+AudioManager.prototype.setVolume = function(volume)
+AudioManager.prototype.setSelectedAudio = function(audioId)
 ```
 
-更新音效設定。
+分別更新音效開關、音量與選用的音效，並存回設定。音量超出 0-100、或找不到指定音效時拋出 `Error`。沒有一次更新全部的 `updateSettings()`。
 
 #### addCustomAudio()
-```python
-def addCustomAudio(self, name: str, audioData: str, mimeType: str) -> dict
+```javascript
+AudioManager.prototype.addCustomAudio = function(name, file) // => Promise<Object>
 ```
 
 新增自訂音效。
 
 **參數**:
-- `name`: 音效名稱
-- `audioData`: Base64 編碼的音效數據
-- `mimeType`: MIME 類型（audio/mp3, audio/wav, audio/ogg）
+- `name`: 音效名稱（不可重複）
+- `file`: 瀏覽器的 `File` 物件，類型須為 `audio/mp3`、`audio/mpeg`、`audio/wav` 或 `audio/ogg`；會轉成 Base64 存進設定
 
-#### deleteCustomAudio()
-```python
-def deleteCustomAudio(self, audioId: str) -> bool
+**返回值**: resolve 為新增的音效物件（`id`、`name`、`data`、`mimeType`、`createdAt`、`isDefault: false`）；名稱或檔案為空、格式不支援、名稱重複時 reject。
+
+#### removeCustomAudio()
+```javascript
+AudioManager.prototype.removeCustomAudio = function(audioId) // => Object
 ```
 
-刪除自訂音效。
+刪除自訂音效，回傳被刪除的音效。找不到時拋出 `Error`。
 
 #### getAllAudios()
-```python
-def getAllAudios(self) -> List[dict]
+```javascript
+AudioManager.prototype.getAllAudios = function() // => Array<Object>
 ```
 
 獲取所有可用音效（內建 + 自訂）。
@@ -450,161 +442,111 @@ def getAllAudios(self) -> List[dict]
 ### TextareaHeightManager API（v2.4.3 新增）
 
 #### registerTextarea()
-```python
-def registerTextarea(self, elementId: str, settingKey: str) -> bool
+```javascript
+TextareaHeightManager.prototype.registerTextarea = function(elementId, settingKey) // => boolean
 ```
 
-註冊 textarea 元素進行高度管理。
-
-#### saveHeight()
-```python
-def saveHeight(self, elementId: str, height: int) -> None
-```
-
-保存 textarea 高度到設定。
-
-#### loadHeight()
-```python
-def loadHeight(self, elementId: str) -> int
-```
-
-從設定載入 textarea 高度。
+註冊 textarea 元素進行高度管理，並套用 `settingKey` 已保存的高度。高度變化經 500 毫秒 debounce 後以 `settingsManager.set(settingKey, height)` 保存；沒有公開的 `saveHeight()`／`loadHeight()`。
 
 #### unregisterTextarea()
-```python
-def unregisterTextarea(self, elementId: str) -> None
+```javascript
+TextareaHeightManager.prototype.unregisterTextarea = function(elementId) // => boolean
 ```
 
 取消註冊 textarea 元素。
 
 ### AutoSubmitManager API
 
+`FeedbackApp.initializeAutoSubmitManager()` 建立的物件（`app.autoSubmitManager`），不是獨立類別。
+
 #### start()
-```python
-def start(self, timeoutSeconds: int, promptId: str) -> None
+```javascript
+start: function(timeoutSeconds, promptId)
 ```
 
 啟動自動提交倒數計時器。
 
 #### stop()
-```python
-def stop(self) -> None
+```javascript
+stop: function()
 ```
 
 停止自動提交倒數計時器。
 
-#### updateSettings()
-```python
-def updateSettings(self, enabled: bool, timeout: int, promptId: str) -> None
+#### pause()、resume()、togglePause()
+```javascript
+pause: function()
+resume: function()
+togglePause: function()
 ```
 
-更新自動提交設定。
+暫停、繼續或切換倒數。沒有 `updateSettings()`；自動提交設定存在 `ui_settings.json` 的 `autoSubmitEnabled`、`autoSubmitTimeout`、`autoSubmitPromptId`。
 
 ## 📊 狀態碼和錯誤碼
 
 ### HTTP 狀態碼
 - `200 OK`: 請求成功
-- `302 Found`: 重定向
-- `404 Not Found`: 資源不存在
+- `400 Bad Request`: `POST /api/log-level` 的等級無效
+- `403 Forbidden`: 非 GET/HEAD/OPTIONS 的 `/api/*` 請求 Origin 不受信任
+- `404 Not Found`: 資源不存在，或 `/api/current-session`、`/api/add-user-message` 沒有活躍會話
+- `415 Unsupported Media Type`: 非 GET/HEAD/OPTIONS 的 `/api/*` 請求不是 `application/json`
 - `500 Internal Server Error`: 服務器內部錯誤
 
-### WebSocket 錯誤碼
-```python
-class ErrorCodes:
-    VALIDATION_ERROR = "VALIDATION_ERROR"
-    SESSION_NOT_FOUND = "SESSION_NOT_FOUND"
-    TIMEOUT_ERROR = "TIMEOUT_ERROR"
-    PROCESSING_ERROR = "PROCESSING_ERROR"
-    CONNECTION_ERROR = "CONNECTION_ERROR"
-```
+### WebSocket 關閉碼與錯誤通知
+- `4003`: Origin 不受信任
+- `4004`: 沒有活躍會話
+
+沒有 `error` 訊息類型或錯誤碼列舉；伺服器以 `notification` 訊息的 `code` 與 `severity` 告知前端。
 
 ### 會話狀態
 ```python
-class SessionStatus:
-    WAITING = "FEEDBACK_WAITING"
-    PROCESSING = "FEEDBACK_PROCESSING"
-    SUBMITTED = "FEEDBACK_SUBMITTED"
-    ERROR = "ERROR"
+class SessionStatus(Enum):
+    WAITING = "waiting"                        # 等待中
+    ACTIVE = "active"                          # 活躍狀態
+    FEEDBACK_SUBMITTED = "feedback_submitted"  # 已提交反饋
+    COMPLETED = "completed"                    # 已完成
+    ERROR = "error"                            # 錯誤（終態）
+    TIMEOUT = "timeout"                        # 超時（終態）
+    EXPIRED = "expired"                        # 已過期（終態）
 ```
 
-### 提示詞狀態
-```python
-class PromptStatus:
-    ACTIVE = "active"           # 活躍提示詞
-    AUTO_SUBMIT = "auto_submit" # 自動提交提示詞
-    ARCHIVED = "archived"       # 已歸檔提示詞
-```
+會話歷史沿用這些狀態值；載入歷史時，不在實時清單裡的未結束會話會被標為 `closed`。
 
-### 自動提交狀態
-```python
-class AutoSubmitStatus:
-    DISABLED = "disabled"       # 已停用
-    ENABLED = "enabled"         # 已啟用
-    COUNTDOWN = "countdown"     # 倒數計時中
-    COMPLETED = "completed"     # 已完成提交
-```
+### 提示詞與自動提交
+沒有提示詞狀態或自動提交狀態的列舉。提示詞以布林欄位 `isAutoSubmit` 標示自動提交；自動提交設定是 `ui_settings.json` 的 `autoSubmitEnabled`、`autoSubmitTimeout`、`autoSubmitPromptId`。
 
-### 音效通知狀態（v2.4.3 新增）
-```python
-class AudioNotificationStatus:
-    DISABLED = "disabled"       # 已停用
-    ENABLED = "enabled"         # 已啟用
-    PLAYING = "playing"         # 播放中
-    ERROR = "error"             # 播放錯誤
-```
-
-### 會話歷史狀態（v2.4.3 新增）
-```python
-class SessionHistoryStatus:
-    ACTIVE = "active"           # 活躍會話
-    COMPLETED = "completed"     # 已完成會話
-    EXPIRED = "expired"         # 已過期會話
-    ARCHIVED = "archived"       # 已歸檔會話
-```
+### 音效通知
+沒有音效通知狀態的列舉，開關是設定 `audioNotificationEnabled`。
 
 ### 隱私等級（v2.4.3 新增）
-```python
-class PrivacyLevel:
-    FULL = "full"               # 完整記錄
-    BASIC = "basic"             # 基本記錄
-    DISABLED = "disabled"       # 停用記錄
-```
+設定 `userMessagePrivacyLevel` 的字串值：
+- `full`: 完整記錄
+- `basic`: 基本記錄
+- `disabled`: 停用記錄
 
 ## 🔒 安全考慮
 
 ### 輸入驗證
-- 回饋內容長度限制：最大 10,000 字符
-- 圖片大小限制：單張最大 5MB
-- 圖片數量限制：最多 10 張
-- 支援的圖片格式：PNG, JPEG, GIF, WebP
-- 提示詞名稱長度限制：最大 100 字符
-- 提示詞內容長度限制：最大 5,000 字符
-- 提示詞數量限制：最多 50 個
+- 回饋內容沒有長度限制
+- 圖片大小限制：由設定 `imageSizeLimit` 決定，可選不限制（預設）、1MB、3MB、5MB；伺服器依 `settings.image_size_limit` 略過超過上限的圖片
+- 圖片數量限制：前端最多 10 張
+- 支援的圖片格式：前端接受任何 `image/*` 類型
+- 提示詞：名稱與內容不可為空、名稱不可重複，沒有長度或數量上限
 - **音效文件限制（v2.4.3 新增）**：
-  - 支援格式：MP3, WAV, OGG
-  - 單個文件最大：2MB
-  - 自訂音效數量：最多 20 個
-  - 音效名稱長度：最大 50 字符
+  - 支援格式：MP3, WAV, OGG（`audio/mp3`、`audio/mpeg`、`audio/wav`、`audio/ogg`）
+  - 名稱不可重複，沒有檔案大小、數量或名稱長度上限
 - **會話歷史限制（v2.4.3 新增）**：
   - 預設保存期限：72 小時
   - 可選保存期限：24 小時、72 小時、7 天（168 小時）、30 天（720 小時）
-  - 單個會話最大用戶訊息數：100 條
+  - 單個會話的用戶訊息數沒有上限
 
 ### 資源保護
-- WebSocket 連接數限制：每會話最多 5 個連接
+- WebSocket 連接：每個會話只保留最新的一條連線
 - 會話超時自動清理
-- 內存使用監控和限制
+- 內存使用監控
 
 ### 跨域設置
-```python
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],  # 開發環境，生產環境應限制
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-```
+沒有 CORS 中介層，伺服器不核准任何跨來源請求。非 GET/HEAD/OPTIONS 的 `/api/*` 與 `/ws` 會檢查 Origin，詳見 [部署指南的安全配置](./deployment-guide.md#安全配置)。
 
 ---
 
