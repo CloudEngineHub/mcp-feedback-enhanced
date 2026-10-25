@@ -56,7 +56,7 @@
 ### 🖥️ 双重界面支持
 - **桌面应用程序**：基于 Tauri 的跨平台原生应用，支持 Windows、macOS、Linux
 - **Web UI 界面**：轻量级浏览器界面，适合远程和 WSL 环境
-- **环境自动检测**：智能识别 SSH Remote、WSL 等特殊环境
+- **环境适配**：WSL 中自动改用 Windows 浏览器打开界面；SSH Remote 需设置端口转发（见常见问题）
 - **统一功能体验**：两种界面提供完全相同的功能
 
 ### 📝 智能工作流程
@@ -200,7 +200,7 @@ pip install uv
 |------|------|-----|------|
 | `MCP_DEBUG` | 调试模式 | `true`/`false` | `false` |
 | `MCP_WEB_HOST` | Web UI 主机绑定 | IP 地址或主机名 | `127.0.0.1` |
-| `MCP_WEB_PORT` | Web UI 端口 | `1024-65535` | `8765` |
+| `MCP_WEB_PORT` | Web UI 端口（`0` 表示由系统分配可用端口，每次启动可能不同） | `0`、`1024-65535` | `8765` |
 | `MCP_DESKTOP_MODE` | 桌面应用程序模式 | `true`/`false` | `false` |
 | `MCP_LANGUAGE` | 强制指定界面语言 | `zh-TW`/`zh-CN`/`en` | 自动检测 |
 
@@ -230,8 +230,8 @@ uvx mcp-feedback-enhanced@latest version       # 检查版本
 uvx mcp-feedback-enhanced@latest test --web    # 测试 Web UI (自动持续运行)
 uvx mcp-feedback-enhanced@latest test --desktop # 测试桌面应用程序 (v2.5.0 新功能)
 
-# 调试模式
-MCP_DEBUG=true uvx mcp-feedback-enhanced@latest test
+# 调试模式（test 子命令会自动设置 MCP_DEBUG=true，调试日志写到 stderr）
+uvx mcp-feedback-enhanced@latest test --web
 
 # 指定语言测试
 MCP_LANGUAGE=en uvx mcp-feedback-enhanced@latest test --web    # 强制使用英文界面
@@ -249,12 +249,11 @@ uv sync
 **本地测试方式**
 ```bash
 # 功能测试
-make test-func                                           # 标准功能测试
 make test-web                                            # Web UI 测试 (持续运行)
 make test-desktop-func                                   # 桌面应用功能测试
 
 # 或直接使用指令
-uv run python -m mcp_feedback_enhanced test              # 标准功能测试
+uv run python -m mcp_feedback_enhanced test --web       # 使用项目 .venv 测试 Web UI (持续运行)
 uvx --no-cache --with-editable . mcp-feedback-enhanced test --web   # Web UI 测试 (持续运行)
 uvx --no-cache --with-editable . mcp-feedback-enhanced test --desktop # 桌面应用测试
 

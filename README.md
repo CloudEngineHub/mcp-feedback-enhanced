@@ -59,7 +59,7 @@ This is an [MCP server](https://modelcontextprotocol.io/) that establishes **fee
 ### 🖥️ Dual Interface Support
 - **Desktop Application**: Cross-platform native application based on Tauri, supporting Windows, macOS, Linux
 - **Web UI Interface**: Lightweight browser interface suitable for remote and WSL environments
-- **Automatic Environment Detection**: Intelligently recognizes SSH Remote, WSL and other special environments
+- **Environment Adaptation**: In WSL the interface opens in the Windows browser automatically; SSH Remote needs port forwarding (see FAQ)
 - **Unified Feature Experience**: Both interfaces provide exactly the same functionality
 
 ### 📝 Smart Workflow
@@ -203,7 +203,7 @@ follow mcp-feedback-enhanced instructions
 |----------|---------|--------|---------|
 | `MCP_DEBUG` | Debug mode | `true`/`false` | `false` |
 | `MCP_WEB_HOST` | Web UI host binding | IP address or hostname | `127.0.0.1` |
-| `MCP_WEB_PORT` | Web UI port | `1024-65535` | `8765` |
+| `MCP_WEB_PORT` | Web UI port (`0` lets the OS pick a free port, which can change on every start) | `0`, `1024-65535` | `8765` |
 | `MCP_DESKTOP_MODE` | Desktop application mode | `true`/`false` | `false` |
 | `MCP_LANGUAGE` | Force UI language | `zh-TW`/`zh-CN`/`en` | Auto-detect |
 
@@ -233,8 +233,8 @@ uvx mcp-feedback-enhanced@latest version       # Check version
 uvx mcp-feedback-enhanced@latest test --web    # Test Web UI (auto continuous running)
 uvx mcp-feedback-enhanced@latest test --desktop # Test desktop application (v2.5.0 new feature)
 
-# Debug mode
-MCP_DEBUG=true uvx mcp-feedback-enhanced@latest test
+# Debug mode (the test subcommand sets MCP_DEBUG=true itself; debug logs go to stderr)
+uvx mcp-feedback-enhanced@latest test --web
 
 # Specify language for testing
 MCP_LANGUAGE=en uvx mcp-feedback-enhanced@latest test --web    # Force English interface
@@ -252,12 +252,11 @@ uv sync
 **Local Testing Methods**
 ```bash
 # Functional testing
-make test-func                                           # Standard functional testing
 make test-web                                            # Web UI testing (continuous running)
 make test-desktop-func                                   # Desktop application functional testing
 
 # Or use direct commands
-uv run python -m mcp_feedback_enhanced test              # Standard functional testing
+uv run python -m mcp_feedback_enhanced test --web       # Web UI testing with the project .venv (continuous running)
 uvx --no-cache --with-editable . mcp-feedback-enhanced test --web   # Web UI testing (continuous running)
 uvx --no-cache --with-editable . mcp-feedback-enhanced test --desktop # Desktop application testing
 
