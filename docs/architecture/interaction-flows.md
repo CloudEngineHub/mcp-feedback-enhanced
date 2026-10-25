@@ -582,7 +582,7 @@ sequenceDiagram
     SM->>SDM: addSessionToHistory()
     SDM->>SDM: 檢查完成狀態
     alt 會話已完成
-        SDM->>SDM: 加入歷史記錄（localStorage）
+        SDM->>SDM: 加入歷史記錄，saveToServer() 存回伺服器
         SDM->>SDM: updateStats()
         SDM->>SUR: renderSessionHistory()
         SUR->>UI: 觸發 onHistoryChange
@@ -590,15 +590,19 @@ sequenceDiagram
         SDM->>SDM: 跳過歷史記錄
     end
 
-    Note over AI,UI: 🔍 歷史查詢與管理
+    Note over AI,UI: 🔍 載入歷史與保存期限
+    SDM->>Server: GET /api/load-session-history、/api/all-sessions
+    Server-->>SDM: 存檔的會話、目前行程的實時會話
+    SDM->>SDM: 依 session_id 合併（同一會話以實時資料為準）
+    SDM->>SDM: 不在實時清單的未結束會話標為 closed（已斷線）
+    SDM->>SDM: cleanupExpiredSessions() 移除超過保存期限的會話
+    SDM->>Server: POST /api/save-session-history
     UI->>SDM: getSessionHistory()
-    SDM-->>UI: 返回歷史列表（72小時內）
+    SDM-->>UI: 返回歷史列表
     UI->>SDM: getSessionStats()
     SDM-->>UI: 返回統計數據
     UI->>SDM: exportSessionHistory()
     SDM-->>UI: 返回匯出數據
-    UI->>SDM: cleanupExpiredSessions()
-    SDM->>SDM: 清理過期會話
 ```
 
 ### 音效通知系統流程（v2.4.3 新增）

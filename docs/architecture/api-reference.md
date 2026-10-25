@@ -655,11 +655,11 @@ def getCurrentSession(self) -> dict
 獲取當前活躍會話信息。
 
 #### getSessionHistory()
-```python
-def getSessionHistory(self, retentionHours: int = 72) -> List[dict]
+```javascript
+SessionDataManager.prototype.getSessionHistory = function() // => Array<Object>
 ```
 
-獲取會話歷史記錄，支援保存期限過濾。
+回傳目前會話歷史的副本，本身不過濾；保存期限在載入時由 `cleanupExpiredSessions()` 套用。
 
 #### getSessionStats()
 ```python
@@ -679,11 +679,11 @@ def exportSessionHistory(self, format: str = "json") -> str
 - `format`: 匯出格式（json, csv）
 
 #### cleanupExpiredSessions()
-```python
-def cleanupExpiredSessions(self, retentionHours: int = 72) -> int
+```javascript
+SessionDataManager.prototype.cleanupExpiredSessions = function() // => number
 ```
 
-清理過期會話記錄。
+移除超過保存期限的會話。保存期限讀取設定 `sessionHistoryRetentionHours`（預設 72 小時），以秒比較；會話時間依序取 `saved_at`、`completed_at`、`created_at`（毫秒會先換成秒）。有清掉會話時立即呼叫 `saveToServer()` 存回 `/api/save-session-history`。`loadFromServer()` 合併存檔與實時會話後會呼叫它。
 
 **返回值**: 清理的會話數量
 
@@ -869,7 +869,7 @@ class PrivacyLevel:
   - 音效名稱長度：最大 50 字符
 - **會話歷史限制（v2.4.3 新增）**：
   - 預設保存期限：72 小時
-  - 最大保存期限：168 小時（7天）
+  - 可選保存期限：24 小時、72 小時、7 天（168 小時）、30 天（720 小時）
   - 單個會話最大用戶訊息數：100 條
 
 ### 資源保護
