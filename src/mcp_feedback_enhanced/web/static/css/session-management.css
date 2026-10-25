@@ -639,6 +639,12 @@
   border: 1px solid var(--session-completed);
 }
 
+.status-badge.feedback_submitted {
+  background: rgba(76, 175, 80, 0.2);
+  color: var(--session-completed);
+  border: 1px solid var(--session-completed);
+}
+
 .status-badge.error {
   background: rgba(244, 67, 54, 0.2);
   color: var(--session-error);

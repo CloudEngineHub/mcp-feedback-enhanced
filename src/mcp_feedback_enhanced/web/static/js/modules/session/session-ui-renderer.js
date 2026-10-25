@@ -54,7 +54,7 @@
         // 快取上次渲染的數據，避免不必要的重渲染
         this.lastRenderedData = {
             stats: null,
-            historyLength: 0,
+            historyKey: null,
             currentSessionId: null
         };
 
@@ -387,6 +387,10 @@
         this.updateActiveTime();
     };
 
+    function historyKeyOf(sessionHistory) {
+        return sessionHistory.map(function(s) { return s.session_id + ':' + s.status; }).join('|');
+    }
+
     /**
      * 渲染會話歷史列表（帶防抖機制）
      */
@@ -395,9 +399,9 @@
 
         const self = this;
 
-        // 檢查數據是否有變化（簡單比較長度）
-        if (self.lastRenderedData.historyLength === sessionHistory.length) {
-            // 長度沒有變化，跳過渲染（可以進一步優化為深度比較）
+        // 會話 ID 與狀態都沒變才跳過；只比長度會讓「已提交 → 已完成」這類狀態變化不重繪
+        const historyKey = historyKeyOf(sessionHistory);
+        if (self.lastRenderedData.historyKey === historyKey) {
             return;
         }
 
@@ -419,7 +423,7 @@
         if (DEBUG_MODE) console.log('🎨 渲染會話歷史:', sessionHistory.length, '個會話');
 
         // 更新快取
-        this.lastRenderedData.historyLength = sessionHistory.length;
+        this.lastRenderedData.historyKey = historyKeyOf(sessionHistory);
 
         // 清空現有內容
         DOMUtils.clearElement(this.historyList);
@@ -802,7 +806,7 @@
         this.currentSessionData = null;
         this.lastRenderedData = {
             stats: null,
-            historyLength: 0,
+            historyKey: null,
             currentSessionId: null
         };
 

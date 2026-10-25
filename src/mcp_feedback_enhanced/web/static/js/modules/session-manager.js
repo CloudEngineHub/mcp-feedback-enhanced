@@ -28,9 +28,6 @@
         this.uiRenderer = null;
         this.detailsModal = null;
 
-        // UI 狀態
-        this.isLoading = false;
-
         // 設定管理器引用
         this.settingsManager = options.settingsManager || null;
 
@@ -350,17 +347,8 @@
      * 刷新會話數據
      */
     SessionManager.prototype.refreshSessionData = function() {
-        if (this.isLoading) return;
-
         console.log('📋 刷新會話數據');
-        this.isLoading = true;
-
-        const self = this;
-        // 這裡可以發送 WebSocket 請求獲取最新數據
-        setTimeout(function() {
-            self.isLoading = false;
-            console.log('📋 會話數據刷新完成');
-        }, 1000);
+        this.dataManager.loadFromServer();
     };
 
     /**

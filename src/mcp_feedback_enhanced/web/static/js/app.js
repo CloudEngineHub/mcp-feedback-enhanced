@@ -1371,6 +1371,9 @@
 
         const self = this;
 
+        // 新會話進來時，會話管理頁的當前會話卡片也要換成伺服器上的新會話
+        this.refreshSessionList();
+
         fetch('/api/current-session')
             .then(function(response) {
                 if (!response.ok) {

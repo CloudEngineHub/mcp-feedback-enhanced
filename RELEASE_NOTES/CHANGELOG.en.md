@@ -9,6 +9,7 @@ This document records all version updates for **MCP Feedback Enhanced**.
 
 ### 🐛 Bug Fixes
 - **Submitting feedback left the session in `active`**: v2.6.0 (#78) inserted an `active` step between `waiting` and `feedback_submitted`, but nothing ever moves a session into `active`, so the single step taken on submit stopped at `active`. The session kept showing "Processing", the previous session was never marked `completed` on the next call, and the post-submit cleanup timer was not reset. Submitting from `waiting` now steps through `active` to `feedback_submitted`, keeping the one-way transition rule.
+- **The "Current Session" card on the Session Management tab stuck at its placeholders**: the card relied only on session data the page kept in memory. After a reload that data was empty, and the server's `feedback_submitted` status was handled as "completed", which only updates existing data, so the card kept showing "Waiting", created time "--:--:--" and AI summary "Loading…". The 🔄 button just waited a second and fetched nothing. The card now uses the session marked current in `/api/all-sessions`, refetched on reload, on 🔄, after submitting feedback and when the next session arrives. Session history only re-rendered when the number of sessions changed, so it still showed "Waiting" after submitting; it now re-renders when a status changes too. The "Submitted" badge gets the same green style as "Completed" and is retranslated when you switch languages.
 
 ---
 

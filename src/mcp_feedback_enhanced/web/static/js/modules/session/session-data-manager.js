@@ -649,6 +649,15 @@
                     self.sessionHistory = data.sessions;
                     console.log('📊 從伺服器載入', self.sessionHistory.length, '個實時會話狀態');
 
+                    // 當前會話卡片以伺服器資料為準：重新載入、🔄、送出回饋、新會話進來都會走到這裡
+                    const serverCurrent = data.sessions.find(function(s) { return s.is_current; });
+                    if (serverCurrent) {
+                        const sameSession = self.currentSession && self.currentSession.session_id === serverCurrent.session_id;
+                        self.currentSession = self.normalizeSessionData(
+                            sameSession ? self.mergeSessionData(self.currentSession, serverCurrent) : serverCurrent
+                        );
+                    }
+
                     // 載入完成後進行清理和統計更新
                     self.cleanupExpiredSessions();
                     self.updateStats();
