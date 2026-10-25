@@ -7,7 +7,7 @@
 ### 核心設計理念
 
 - **持久化會話**: 支援 AI 助手多次循環調用，無需重複建立連接
-- **智能環境適配**: 自動檢測並適配本地、SSH Remote、WSL 環境
+- **環境適配**: WSL 中改用 Windows 瀏覽器開啟介面；SSH 等遠端環境需自行設定埠轉發
 - **無縫狀態切換**: 會話更新時前端局部刷新，保持用戶操作狀態
 - **優雅錯誤處理**: 完整的錯誤恢復機制和超時保護
 - **資源優化**: 單一活躍會話模式，最小化資源佔用
@@ -28,64 +28,62 @@ sequenceDiagram
 
     Note over AI,User: 🚀 第一次調用流程
     AI->>+MCP: interactive_feedback(project_dir, summary, timeout)
+    MCP->>MCP: 環境偵測（結果只寫進除錯日誌）
     MCP->>+WM: launch_web_feedback_ui()
 
-    Note over WM: 環境檢測與會話創建
-    WM->>WM: detect_environment()
+    Note over WM: 會話創建
     WM->>WM: create_session()
 
-    WM->>+FastAPI: 啟動 Web 服務器
-    FastAPI->>FastAPI: setup_routes()
-    FastAPI->>FastAPI: setup_websocket()
+    WM->>+FastAPI: 啟動 Web 服務器（尚未啟動時）
     FastAPI-->>-WM: 服務器就緒
 
     WM->>Browser: smart_open_browser(url)
     Note over Browser: 智能開啟瀏覽器<br/>檢測活躍標籤頁
 
-    Browser->>+FastAPI: GET /feedback
-    FastAPI->>FastAPI: render_template()
+    Browser->>+FastAPI: GET /
+    FastAPI->>FastAPI: TemplateResponse("feedback.html")
     FastAPI-->>-Browser: HTML 頁面
 
     Browser->>+WS: 建立 WebSocket 連接
-    WS->>WM: register_websocket()
+    WS->>WM: session.websocket = websocket
     WS-->>-Browser: connection_established
 
     Note over AI,User: 💬 用戶回饋流程
     User->>Browser: 填寫回饋內容
     Browser->>+WS: submit_feedback
-    WS->>WM: process_feedback()
-    WM->>WM: validate_and_save()
-    WM->>MCP: set_feedback_complete()
-    WS-->>-Browser: feedback_received
+    WS->>WM: session.submit_feedback()
+    WM->>WM: feedback_completed.set()
+    WS-->>-Browser: notification（回饋已收到）
+    WM-->>-MCP: wait_for_feedback() 返回回饋
     MCP-->>-AI: 返回回饋結果
 
     Note over AI,User: 🔄 第二次調用流程 (持久化會話)
     AI->>+MCP: interactive_feedback(new_summary, timeout)
-    MCP->>+WM: 檢查現有會話
+    MCP->>+WM: create_session()（每次調用都建立新會話）
 
-    alt 有活躍會話
-        WM->>WM: update_session()
+    alt 舊分頁仍連線
+        WM->>WM: 把舊 WebSocket 轉給新會話
         WM->>+WS: session_updated 通知
         WS-->>-Browser: 會話更新訊息
         Browser->>Browser: 局部更新內容
-        Note over Browser: 無需重新載入頁面<br/>保持用戶操作狀態
-    else 無活躍會話
-        WM->>WM: create_new_session()
-        WM->>Browser: 重新開啟瀏覽器
+        Note over Browser: 無需重新載入頁面
+    else 沒有連線中的分頁
+        WM->>WM: 標記待送的會話更新
+        WM->>Browser: 開啟瀏覽器，新連線建立後送 session_updated
     end
 
     User->>Browser: 提交新回饋
     Browser->>+WS: submit_feedback
-    WS->>WM: process_new_feedback()
-    WM->>MCP: set_feedback_complete()
-    WS-->>-Browser: feedback_received
+    WS->>WM: session.submit_feedback()
+    WS-->>-Browser: notification（回饋已收到）
+    WM-->>-MCP: wait_for_feedback() 返回回饋
     MCP-->>-AI: 返回新回饋結果
 
-    Note over AI,User: 🧹 資源清理 (可選)
-    alt 會話超時或手動清理
-        WM->>WS: cleanup_session()
-        WS->>Browser: session_cleanup
-        WM->>FastAPI: 停止服務器 (可選)
+    Note over AI,User: 🧹 資源清理
+    alt 會話超時
+        WM->>WS: _cleanup_resources_on_timeout()
+        WS->>Browser: notification（會話清理）並關閉連線
+        Note over FastAPI: Web 服務器繼續運行
     end
 ```
 
@@ -104,7 +102,7 @@ result = await interactive_feedback(
 ```
 
 **參數說明**：
-- `project_directory`: 專案根目錄，用於命令執行上下文
+- `project_directory`: 專案根目錄，用於上下文顯示
 - `summary`: AI 工作摘要，向用戶說明已完成的工作
 - `timeout`: 等待用戶回饋的超時時間（秒）
 
@@ -112,41 +110,34 @@ result = await interactive_feedback(
 
 ```mermaid
 flowchart TD
-    START[AI 調用 interactive_feedback] --> VALIDATE[參數驗證與類型檢查]
-    VALIDATE --> ENV[環境檢測<br/>Local/SSH/WSL]
-    ENV --> MANAGER[獲取 WebUIManager<br/>單例實例]
-    MANAGER --> CHECK[檢查現有會話]
-    CHECK --> DECISION{有活躍會話?}
+    START[AI 調用 interactive_feedback] --> VALIDATE[timeout 鉗制到 60-86400 秒]
+    VALIDATE --> ENV[環境偵測<br/>只寫除錯日誌]
+    ENV --> MANAGER[獲取 WebUIManager<br/>單例實例，首次建立時決定埠]
+    MANAGER --> CREATE[create_session<br/>每次調用都建立新會話]
 
-    DECISION -->|否| CREATE[創建新會話]
-    DECISION -->|是| UPDATE[更新現有會話]
-
-    CREATE --> SESSION[WebFeedbackSession<br/>初始化]
-    UPDATE --> SESSION
-
-    SESSION --> SERVER[啟動 FastAPI 服務器]
-    SERVER --> PORT[動態埠分配]
-    PORT --> ROUTES[設置路由和 WebSocket]
-    ROUTES --> BROWSER[智能開啟瀏覽器]
+    CREATE --> SERVER[啟動 FastAPI 服務器<br/>尚未啟動時]
+    SERVER --> MODE{桌面模式?}
+    MODE -->|是| DESKTOP[launch_desktop_app<br/>失敗時改走瀏覽器]
+    MODE -->|否| BROWSER[智能開啟瀏覽器]
 
     BROWSER --> DETECT[檢測活躍標籤頁]
-    DETECT --> OPEN_DECISION{需要開啟瀏覽器?}
+    DETECT --> OPEN_DECISION{有活躍標籤頁?}
 
-    OPEN_DECISION -->|是| OPEN[開啟新瀏覽器視窗]
-    OPEN_DECISION -->|否| NOTIFY[發送會話更新通知]
+    OPEN_DECISION -->|否| OPEN[開啟新瀏覽器視窗]
+    OPEN_DECISION -->|是| NOTIFY[發送會話更新通知]
 
-    OPEN --> WAIT[等待用戶回饋]
+    DESKTOP --> WAIT[等待用戶回饋]
+    OPEN --> WAIT
     NOTIFY --> WAIT
 
     WAIT --> TIMEOUT{檢查超時}
     TIMEOUT -->|未超時| FEEDBACK[接收回饋數據]
-    TIMEOUT -->|超時| CLEANUP[清理資源]
+    TIMEOUT -->|超時或介面關閉| CLEANUP[清理資源]
 
-    FEEDBACK --> PROCESS[處理回饋數據<br/>圖片壓縮/命令執行]
-    PROCESS --> SAVE[保存回饋記錄]
-    SAVE --> RETURN[返回結果給 AI]
+    FEEDBACK --> PROCESS[儲存回饋 JSON<br/>組合文字與圖片內容]
+    PROCESS --> RETURN[返回結果給 AI]
 
-    CLEANUP --> ERROR[返回超時錯誤]
+    CLEANUP --> ERROR[返回「使用者未回應」文字]
     ERROR --> RETURN
 
     style START fill:#e3f2fd
@@ -158,116 +149,21 @@ flowchart TD
 **關鍵步驟詳解**：
 
 #### 2.1 環境檢測與適配
-```python
-def detect_environment() -> str:
-    """智能檢測運行環境"""
-    # SSH Remote 環境檢測
-    if os.environ.get('SSH_CLIENT') or os.environ.get('SSH_TTY'):
-        return "ssh"
-
-    # WSL 環境檢測
-    elif 'microsoft' in platform.uname().release.lower():
-        return "wsl"
-
-    # 容器環境檢測
-    elif os.path.exists('/.dockerenv'):
-        return "docker"
-
-    # 本地環境
-    else:
-        return "local"
-
-def get_environment_config(env_type: str) -> dict:
-    """根據環境類型獲取配置"""
-    configs = {
-        "local": {
-            "browser_command": "default",
-            "host": "127.0.0.1",
-            "auto_open": True
-        },
-        "ssh": {
-            "browser_command": None,
-            "host": "127.0.0.1",
-            "auto_open": False,
-            "tunnel_hint": "ssh -L {port}:127.0.0.1:{port} user@host"
-        },
-        "wsl": {
-            "browser_command": "cmd.exe /c start",
-            "host": "127.0.0.1",
-            "auto_open": True
-        }
-    }
-    return configs.get(env_type, configs["local"])
-```
+- `is_remote_environment()`（`server.py`）依序檢查：WSL 一律不算遠端；`SSH_CONNECTION`、`SSH_CLIENT`、`SSH_TTY`；`REMOTE_CONTAINERS`、`CODESPACES`；`/.dockerenv`；Windows 的 `SESSIONNAME` 含 `RDP`；Linux 沒有 `DISPLAY`。結果只寫進除錯日誌與 `get_system_info` 的輸出，不改變任何行為，也不會建立 SSH 隧道。
+- `is_wsl_environment()`（`web/utils/browser.py`）只在 Linux 上可能為真：`/proc/version` 含 `microsoft` 或 `wsl`、設了 `WSL_DISTRO_NAME`／`WSL_INTEROP`／`WSLENV`、或存在 `/mnt/c` 等 WSL 路徑。
+- 開啟瀏覽器（`smart_browser_open()`）：桌面模式不開；WSL 依序試 `cmd.exe /c start`、`powershell.exe Start-Process`、`wslview`；其他環境用 Python 的 `webbrowser.open`。開不了時在 stderr 印出網址，請使用者手動開啟。
 
 #### 2.2 智能會話管理
-```python
-async def create_or_update_session(
-    self,
-    project_dir: str,
-    summary: str,
-    timeout: int
-) -> str:
-    """創建新會話或更新現有會話"""
-
-    # 保存現有 WebSocket 連接
-    existing_websockets = []
-    if self.current_session:
-        existing_websockets = list(self.current_session.websockets)
-        debug_log(f"保存 {len(existing_websockets)} 個現有 WebSocket 連接")
-
-    # 創建新會話
-    session_id = str(uuid.uuid4())
-    self.current_session = WebFeedbackSession(
-        session_id=session_id,
-        project_directory=os.path.abspath(project_dir),
-        summary=summary,
-        timeout=timeout,
-        status=SessionStatus.WAITING,
-        created_at=datetime.now()
-    )
-
-    # 繼承 WebSocket 連接，實現無縫切換
-    for ws in existing_websockets:
-        if ws.client_state == WebSocketState.CONNECTED:
-            self.current_session.add_websocket(ws)
-            debug_log("WebSocket 連接已繼承到新會話")
-
-    # 標記需要發送會話更新通知
-    self._pending_session_update = True
-
-    return session_id
-```
+`WebUIManager.create_session(project_directory, summary)` 每次調用都建立新的 `WebFeedbackSession` 並設為當前會話：
+- 舊會話若是「已提交」，推進為「已完成」，並留在 `sessions` 字典供 `/api/all-sessions` 查詢
+- 舊會話有 WebSocket 連線時，把連線直接轉給新會話，之後由 `smart_open_browser()` 送出 `session_updated`
+- 沒有舊連線時設定 `_pending_session_update`，等新 WebSocket 連線建立時送出 `session_updated`
+- 回傳新的 `session_id`
 
 #### 2.3 動態埠管理
-```python
-class PortManager:
-    def find_available_port(self, preferred_port: int = 8765) -> int:
-        """智能埠分配"""
-        # 優先使用環境變數指定的埠
-        env_port = os.environ.get('MCP_WEB_PORT')
-        if env_port and env_port != "0":
-            try:
-                port = int(env_port)
-                if self.is_port_available(port):
-                    return port
-            except ValueError:
-                pass
-
-        # 嘗試首選埠
-        if self.is_port_available(preferred_port):
-            return preferred_port
-
-        # 動態分配埠
-        for port in range(8765, 8865):
-            if self.is_port_available(port):
-                return port
-
-        # 系統自動分配
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
-            sock.bind(('127.0.0.1', 0))
-            return sock.getsockname()[1]
-```
+埠在 `WebUIManager` 初始化時決定：
+- `MCP_WEB_PORT=0`：綁定埠 0，由系統分配可用埠
+- 其他情況以 `MCP_WEB_PORT`（1024-65535，無效時用 8765）或預設 8765 為偏好埠，交給 `PortManager.find_free_port_enhanced()`：偏好埠可用就用；被本專案或 uvicorn/fastapi 的 Python 行程佔用時先嘗試結束它；否則往上找最多 100 個埠，再往下找；都找不到時拋出 `RuntimeError`
 
 ### 3. Web UI 連接建立與初始化
 
@@ -281,117 +177,50 @@ sequenceDiagram
     participant I18N as 國際化
 
     Note over Browser,I18N: 頁面載入流程
-    Browser->>+FastAPI: GET /feedback
-    FastAPI->>+Template: render_template()
-    Template->>I18N: 載入語言包
-    I18N-->>Template: 翻譯資源
-    Template->>Template: 渲染 HTML
+    Browser->>+FastAPI: GET /
+    FastAPI->>+Template: TemplateResponse("feedback.html")
     Template-->>-FastAPI: 完整頁面
     FastAPI-->>-Browser: HTML + CSS + JS
+    Browser->>I18N: GET /api/translations
+    I18N-->>Browser: 三種語言的翻譯資源
 
     Note over Browser,Session: WebSocket 連接建立
     Browser->>Browser: 載入 JavaScript 模組
     Browser->>+WS: 建立 WebSocket 連接 (/ws)
-    WS->>Session: register_websocket()
-    Session->>Session: 檢查會話狀態
+    WS->>WS: 檢查 Origin 與活躍會話
+    WS->>Session: session.websocket = websocket
     WS-->>-Browser: connection_established
 
     Note over Browser,Session: 會話狀態同步
-    alt 有活躍會話
-        Session->>+WS: session_data
-        WS-->>-Browser: 當前會話資訊
-        Browser->>Browser: 更新 AI 摘要
-        Browser->>Browser: 設置會話 ID
-    end
-
-    alt 有待處理的會話更新
+    alt 有待送的會話更新
         Session->>+WS: session_updated
         WS-->>-Browser: 會話更新通知
-        Browser->>Browser: 顯示更新提示
         Browser->>Browser: 局部刷新內容
-        Browser->>Browser: 自動聚焦輸入框
+    else 沒有待送的更新
+        Session->>+WS: status_update
+        WS-->>-Browser: 當前會話狀態
     end
 
     Note over Browser,Session: 心跳檢測啟動
     Browser->>Browser: 啟動心跳定時器
-    loop 每 30 秒
+    loop 每 60 秒
         Browser->>WS: heartbeat
-        WS-->>Browser: heartbeat_ack
+        WS-->>Browser: heartbeat_response
     end
 ```
 
 **連接建立關鍵步驟**：
 
 #### 3.1 頁面渲染
-```python
-@app.get("/feedback")
-async def feedback_page(request: Request):
-    """回饋頁面渲染"""
-    manager = get_web_ui_manager()
-    session = manager.current_session
-
-    # 載入用戶設定
-    layout_mode = load_user_layout_settings()
-
-    # 獲取當前語言
-    i18n_manager = get_i18n_manager()
-    current_language = i18n_manager.get_current_language()
-
-    return templates.TemplateResponse("feedback.html", {
-        "request": request,
-        "project_directory": session.project_directory if session else ".",
-        "layout_mode": layout_mode,
-        "current_language": current_language,
-        "session_id": session.session_id if session else None,
-        "title": i18n_manager.t("app.title")
-    })
-```
+`GET /`（`web/routes/main_routes.py` 的 `index()`）沒有活躍會話時渲染 `index.html`；有活躍會話時讀取使用者的版面設定（`load_user_layout_settings()`），以 `session_id`、`project_directory`、`summary`、`title`、`version`、`has_session`、`layout_mode` 渲染 `feedback.html`。翻譯不在伺服器端套用，由前端的 `i18n.js` 從 `/api/translations` 載入。
 
 #### 3.2 WebSocket 連接處理
-```python
-@app.websocket("/ws")
-async def websocket_endpoint(websocket: WebSocket):
-    """WebSocket 連接端點"""
-    await websocket.accept()
-
-    try:
-        # 註冊 WebSocket 連接
-        manager = get_web_ui_manager()
-        if manager.current_session:
-            manager.current_session.add_websocket(websocket)
-
-        # 發送連接確認
-        await websocket.send_json({
-            "type": "connection_established",
-            "data": {
-                "timestamp": datetime.now().isoformat(),
-                "session_id": manager.current_session.session_id if manager.current_session else None
-            }
-        })
-
-        # 如果有待處理的會話更新，立即發送
-        if manager._pending_session_update and manager.current_session:
-            await websocket.send_json({
-                "type": "session_updated",
-                "data": {
-                    "session_id": manager.current_session.session_id,
-                    "summary": manager.current_session.summary,
-                    "project_directory": manager.current_session.project_directory
-                }
-            })
-            manager._pending_session_update = False
-
-        # 處理訊息循環
-        while True:
-            data = await websocket.receive_json()
-            await handle_websocket_message(websocket, data)
-
-    except WebSocketDisconnect:
-        # 處理連接斷開
-        if manager.current_session:
-            manager.current_session.remove_websocket(websocket)
-        debug_log("WebSocket 連接已斷開")
-```
+`/ws`（`websocket_endpoint()`）的處理順序：
+1. Origin 不受信任時以代碼 4003 關閉；沒有活躍會話時以代碼 4004 關閉
+2. 接受連線，`session.websocket = websocket`（取代舊連線），呼叫 `session.on_client_connected()`
+3. 送出 `connection_established`；有 `_pending_session_update` 時接著送 `session_updated` 並清除標記，否則送 `status_update`
+4. 迴圈讀取文字訊息並交給 `handle_websocket_message()`；會話已切換或連線不符時結束迴圈
+5. 斷線時若這仍是會話登記的連線，清掉 `session.websocket` 並呼叫 `session.on_client_disconnected()` 啟動斷線寬限計時
 
 ## 🔄 多次循環調用機制
 
@@ -438,40 +267,24 @@ result = await interactive_feedback(
 #### 2. 智能會話切換
 ```mermaid
 flowchart TD
-    CALL[AI 再次調用] --> CHECK[檢查現有會話]
-    CHECK --> ACTIVE{有活躍會話?}
-    ACTIVE -->|是| UPDATE[更新會話內容]
-    ACTIVE -->|否| CREATE[創建新會話]
-    UPDATE --> PRESERVE[保存 WebSocket 連接]
-    CREATE --> PRESERVE
-    PRESERVE --> NOTIFY[發送會話更新通知]
-    NOTIFY --> FRONTEND[前端接收更新]
-    FRONTEND --> REFRESH[局部刷新內容]
+    CALL[AI 再次調用] --> CREATE[create_session<br/>建立新會話]
+    CREATE --> OLD{舊會話有 WebSocket?}
+    OLD -->|是| TRANSFER[把連線轉給新會話]
+    OLD -->|否| PENDING[標記待送的會話更新]
+    TRANSFER --> NOTIFY[smart_open_browser<br/>送出 session_updated]
+    PENDING --> OPEN[開啟瀏覽器<br/>新連線建立後送出 session_updated]
+    NOTIFY --> REFRESH[前端局部刷新內容]
+    OPEN --> REFRESH
 ```
 
 #### 3. 前端無縫更新
-```javascript
-// 處理會話更新訊息
-function handleSessionUpdated(data) {
-    // 顯示會話更新通知
-    showNotification('會話已更新', 'info');
+前端收到 `action` 為 `new_session_created` 的 `session_updated` 時（`app.js` 的 `_originalHandleSessionUpdated()`）：
+1. 播放音效通知（`audioManager.playNotification()`），並發送瀏覽器通知（`notificationManager.notifyNewSession()`）
+2. 顯示新會話訊息
+3. 500 毫秒後更新 `currentSessionId`、呼叫 `refreshPageContent()` 刷新 AI 摘要等內容、`clearFeedback()` 清空表單，並把回饋狀態設回等待中（`FEEDBACK_WAITING`）
+4. 有開啟會話超時時重新啟動計時，最後呼叫 `checkAndStartAutoSubmit()` 檢查自動提交
 
-    // 重置回饋狀態
-    feedbackState = 'FEEDBACK_WAITING';
-
-    // 局部更新 AI 摘要
-    updateAISummary(data.summary);
-
-    // 清空回饋表單
-    clearFeedbackForm();
-
-    // 更新會話 ID
-    currentSessionId = data.session_id;
-
-    // 保持 WebSocket 連接不變
-    // 無需重新建立連接
-}
-```
+WebSocket 連線不會重建。
 
 ## 🚀 新功能交互流程
 
@@ -486,29 +299,28 @@ sequenceDiagram
     participant WS as WebSocket
 
     Note over User,WS: 🔧 設定自動提交
-    User->>UI: 開啟設定頁籤
-    UI->>PM: 獲取提示詞列表
-    PM-->>UI: 返回提示詞（自動提交優先）
-    User->>UI: 選擇提示詞並設定倒數時間
-    UI->>ASM: updateSettings(enabled, timeout, promptId)
-    ASM->>WS: 保存設定到服務器
+    User->>UI: 在提示詞設定把某個提示詞設為自動提交
+    UI->>PM: setAutoSubmitPrompt(id)
+    UI->>UI: settingsManager.set autoSubmitPromptId、autoSubmitEnabled
+    User->>UI: 設定倒數秒數（autoSubmitTimeout）
+    Note over UI: 設定經 SettingsManager 存到 ui_settings.json
 
     Note over User,WS: ⏰ 自動提交執行
     WS->>UI: session_updated（AI 新調用）
-    UI->>ASM: checkAutoSubmitConditions()
-    ASM->>ASM: 檢查設定和狀態
-    alt 條件滿足
-        ASM->>ASM: start(timeout, promptId)
-        ASM->>UI: 顯示倒數計時器
+    UI->>UI: checkAndStartAutoSubmit()
+    UI->>PM: getPromptById(autoSubmitPromptId)
+    alt 已啟用、提示詞標記為自動提交、狀態為等待回饋
+        UI->>ASM: start(timeout, promptId)
+        ASM->>UI: showCountdownDisplay()
         loop 每秒更新
             ASM->>UI: updateCountdownDisplay(remaining)
         end
-        ASM->>PM: getPromptById(promptId)
-        PM-->>ASM: 返回提示詞內容
-        ASM->>UI: 填入提示詞到輸入框
-        ASM->>WS: submit_feedback（自動提交）
+        ASM->>UI: 時間到 performAutoSubmit()
+        UI->>UI: 填入提示詞到輸入框並 submitFeedback()
+        UI->>WS: submit_feedback
+        UI->>PM: usePrompt(promptId)
     else 條件不滿足
-        ASM->>UI: 隱藏倒數計時器
+        UI->>ASM: stop()
     end
 ```
 
@@ -530,7 +342,7 @@ sequenceDiagram
     Modal->>PM: addPrompt(name, content)
     PM->>PM: 驗證數據和唯一性
     PM->>Storage: set('promptSettings') 存到 ui_settings.json
-    PM->>UI: 觸發 onPromptsChange 回調
+    PM->>UI: 觸發 addPromptsChangeCallback() 註冊的回調
     UI->>UI: refreshPromptList()
 
     Note over User,Storage: ✏️ 編輯提示詞
@@ -564,30 +376,35 @@ sequenceDiagram
     participant SUR as SessionUIRenderer
     participant UI as 前端界面
 
-    Note over AI,UI: 📊 會話生命週期管理（v2.4.3 重構）
+    Note over AI,UI: 📊 會話生命週期管理
     AI->>Server: interactive_feedback()
-    Server->>SM: createSession()
-    SM->>SDM: addCurrentSession()
-    SDM->>SUR: renderCurrentSession()
+    Server->>Server: create_session()
+    Server->>UI: session_updated 或 status_update（WebSocket）
+    UI->>SM: updateCurrentSession(session_info) 或 updateStatusInfo(status_info)
+    SM->>SDM: updateCurrentSession() 或 updateStatusInfo()
+    SDM->>SM: onSessionChange 回調
+    SM->>SUR: renderCurrentSession()
     SUR->>UI: 更新會話顯示（頁籤化設計）
 
     Note over AI,UI: 📝 用戶回饋處理
-    UI->>Server: submit_feedback
-    Server->>SM: processFeedback()
-    SM->>SDM: updateSessionStatus()
-    SDM->>SDM: 記錄回饋數據（本地存儲）
-    SM->>AI: 返回回饋結果
+    UI->>Server: submit_feedback（WebSocket）
+    UI->>SDM: addUserMessage()
+    SDM->>Server: POST /api/add-user-message
+    Server->>AI: 返回回饋結果
+    Server->>UI: notification（回饋已收到）
 
-    Note over AI,UI: 📚 會話歷史管理（v2.4.3 增強）
-    SM->>SDM: addSessionToHistory()
-    SDM->>SDM: 檢查完成狀態
-    alt 會話已完成
-        SDM->>SDM: 加入歷史記錄，saveToServer() 存回伺服器
+    Note over AI,UI: 📚 會話歷史管理
+    Server->>UI: status_update
+    UI->>SM: updateStatusInfo(status_info)
+    SM->>SDM: updateStatusInfo()
+    alt 狀態為已提交、已完成、逾時、錯誤或已過期
+        SDM->>SDM: handleSessionCompleted()
+        SDM->>SDM: addSessionToHistory()，saveToServer() 存回伺服器
         SDM->>SDM: updateStats()
-        SDM->>SUR: renderSessionHistory()
-        SUR->>UI: 觸發 onHistoryChange
+        SDM->>SM: onHistoryChange 回調
+        SM->>SUR: renderSessionHistory()
     else 會話未完成
-        SDM->>SDM: 跳過歷史記錄
+        SDM->>SDM: updateCurrentSession()
     end
 
     Note over AI,UI: 🔍 載入歷史與保存期限
@@ -616,42 +433,41 @@ sequenceDiagram
     participant User as 用戶
 
     Note over WS,User: 🔊 音效通知觸發流程
-    WS->>AM: session_updated 事件
-    AM->>AM: checkNotificationEnabled()
+    WS->>AM: 收到 session_updated 時 app.js 呼叫 playNotification()
     alt 音效通知已啟用
-        AM->>AM: getSelectedAudio()
-        AM->>AUDIO: 創建 Audio 物件
-        AM->>AUDIO: 設定音量和來源
+        AM->>AM: getAudioById(selectedAudioId)，找不到時改用 default-beep
+        AM->>AUDIO: playAudioSmart() 建立 Audio 物件並設定音量
         AUDIO->>User: 播放通知音效
-        AM->>AM: logPlaybackSuccess()
+        Note over AM: 瀏覽器擋下自動播放時先排入待播清單，使用者互動後再播
     else 音效通知已停用
-        AM->>AM: logSkippedNotification()
+        AM->>AM: 直接返回
     end
 
     Note over WS,User: 🎵 音效設定管理
     User->>ASU: 開啟音效設定
-    ASU->>AM: getAudioSettings()
+    ASU->>AM: getSettings()
     AM-->>ASU: 返回當前設定
     ASU->>User: 顯示設定界面
 
     User->>ASU: 調整音量
-    ASU->>AM: updateVolume(volume)
-    AM->>AM: saveSettings()
+    ASU->>AM: setVolume(volume)
+    AM->>AM: saveAudioSettings()
 
     User->>ASU: 選擇音效
-    ASU->>AM: selectAudio(audioId)
-    AM->>AM: saveSettings()
+    ASU->>AM: setSelectedAudio(audioId)
+    AM->>AM: saveAudioSettings()
 
     User->>ASU: 測試播放
-    ASU->>AM: testPlayAudio(audioId)
+    ASU->>AM: getAudioById(audioId) 後 playAudio(audioData)
     AM->>AUDIO: 播放測試音效
     AUDIO->>User: 播放音效
 
     Note over WS,User: 📁 自訂音效管理
     User->>ASU: 上傳自訂音效
-    ASU->>ASU: validateAudioFile()
-    ASU->>AM: addCustomAudio(file)
-    AM->>AM: convertToBase64()
+    ASU->>User: showAudioNameModal() 輸入音效名稱
+    ASU->>AM: addCustomAudio(name, file)
+    AM->>AM: isValidAudioFile()、檢查名稱重複
+    AM->>AM: fileToBase64()
     AM->>AM: saveAudioSettings() 經 SettingsManager 存到 ui_settings.json
     ASU->>User: 顯示上傳成功
 ```
@@ -720,36 +536,22 @@ graph LR
 
 ### 狀態轉換圖
 
+前端回饋狀態（`Utils.CONSTANTS`）只有三種：`FEEDBACK_WAITING`（`waiting_for_feedback`）、`FEEDBACK_PROCESSING`（`processing`）、`FEEDBACK_SUBMITTED`（`feedback_submitted`）。自動提交倒數不是獨立狀態，而是在等待狀態下由 `autoSubmitManager` 計時。
+
 ```mermaid
 stateDiagram-v2
-    [*] --> WAITING: 會話創建/更新
-    WAITING --> AUTO_SUBMIT_READY: 自動提交條件滿足
-    AUTO_SUBMIT_READY --> AUTO_SUBMIT_COUNTDOWN: 啟動倒數計時
-    AUTO_SUBMIT_COUNTDOWN --> FEEDBACK_PROCESSING: 自動提交執行
-    WAITING --> FEEDBACK_PROCESSING: 用戶手動提交回饋
-    FEEDBACK_PROCESSING --> FEEDBACK_SUBMITTED: 處理完成
-    FEEDBACK_SUBMITTED --> WAITING: 新會話更新
-    FEEDBACK_SUBMITTED --> [*]: 會話結束
+    [*] --> FEEDBACK_WAITING: 會話創建/更新
+    FEEDBACK_WAITING --> FEEDBACK_PROCESSING: 手動提交或自動提交倒數到期
+    FEEDBACK_PROCESSING --> FEEDBACK_SUBMITTED: 收到回饋已收到的 notification
+    FEEDBACK_PROCESSING --> FEEDBACK_WAITING: 發送失敗或 WebSocket 斷線
+    FEEDBACK_WAITING --> FEEDBACK_SUBMITTED: 伺服器狀態為已提交或已完成
+    FEEDBACK_SUBMITTED --> FEEDBACK_WAITING: 新會話更新
 
-    AUTO_SUBMIT_COUNTDOWN --> WAITING: 用戶取消自動提交
-    WAITING --> ERROR: 連接錯誤
-    FEEDBACK_PROCESSING --> ERROR: 處理錯誤
-    AUTO_SUBMIT_COUNTDOWN --> ERROR: 自動提交錯誤
-    ERROR --> WAITING: 錯誤恢復
-    ERROR --> [*]: 致命錯誤
-
-    note right of AUTO_SUBMIT_READY
-        檢查自動提交設定：
+    note right of FEEDBACK_WAITING
+        自動提交倒數在此狀態下執行：
         - 功能已啟用
-        - 已選擇提示詞
-        - 當前狀態為等待回饋
-    end note
-
-    note right of AUTO_SUBMIT_COUNTDOWN
-        倒數計時狀態：
-        - 顯示剩餘時間
-        - 允許用戶取消
-        - 時間到自動提交
+        - 提示詞標記為自動提交
+        - 時間到呼叫 performAutoSubmit()
     end note
 ```
 
@@ -778,17 +580,11 @@ setInterval(() => {
 ```
 
 ### 超時處理
-```python
-async def wait_for_feedback(self, timeout: int = 600):
-    try:
-        await asyncio.wait_for(
-            self.feedback_completed.wait(),
-            timeout=timeout
-        )
-        return self.get_feedback_result()
-    except asyncio.TimeoutError:
-        raise TimeoutError(f"等待用戶回饋超時 ({timeout}秒)")
-```
+`WebFeedbackSession.wait_for_feedback(timeout)` 在執行緒中等待 `feedback_completed`，實際等待時間比 `timeout` 提早一點結束（超過 30 秒提早 5 秒，否則提早 1 秒，最少 1 秒），避免與 MCP 層的超時競爭：
+- 收到回饋：回傳 `{"interactive_feedback", "images", "settings"}`
+- 逾時、使用者設定的會話超時到期、或斷線寬限到期（視為關閉介面）：清理資源後拋出 `TimeoutError`
+
+`interactive_feedback` 接到 `TimeoutError` 時不當成錯誤，回傳「使用者未回應」的文字，要求 AI 結束任務、不要再次呼叫本工具。
 
 ## 🎯 性能優化
 
@@ -808,19 +604,19 @@ async def wait_for_feedback(self, timeout: int = 600):
 - **本地綁定**: 服務器只綁定 127.0.0.1，減少攻擊面
 - **輸入驗證**: 嚴格的參數類型檢查和數據清理
 - **文件上傳安全**: 圖片格式驗證和大小限制
-- **命令執行限制**: 在專案目錄內執行，防止路徑遍歷
+- **命令執行**: 已於 v2.6.1 移除，不再提供
 
 ### 網路安全
 - **WebSocket 驗證**: 連接來源驗證
-- **CORS 控制**: 限制跨域請求來源
+- **跨來源控制**: 沒有 CORS 中介層；非 GET/HEAD/OPTIONS 的 `/api/*` 檢查 Origin 並要求 `application/json`
 - **超時保護**: 防止長時間佔用資源
 - **錯誤信息過濾**: 避免敏感信息洩露
 
 ## 🚀 性能優化總結
 
 ### 連接復用優勢
-- **減少 60% 啟動時間**: 避免重複建立服務器和瀏覽器
-- **降低 40% 記憶體使用**: 單一活躍會話模式
+- **減少啟動時間**: Web 服務器啟動後持續運行，之後的調用不必重新啟動服務器與瀏覽器
+- **單一活躍會話**: 同一時間只有一個當前會話
 - **提升用戶體驗**: 無縫會話切換，保持操作狀態
 - **減少網路開銷**: WebSocket 連接保持和復用
 
@@ -828,7 +624,7 @@ async def wait_for_feedback(self, timeout: int = 600):
 - **智能清理**: 自動檢測和清理過期資源
 - **動態埠分配**: 避免埠衝突，支援並行開發
 - **錯誤恢復**: 優雅的錯誤處理和自動重連
-- **跨平台適配**: 統一的環境檢測和適配機制
+- **跨平台適配**: WSL 中改用 Windows 瀏覽器開啟介面，其他環境用 Python 的 `webbrowser`
 
 ---
 
