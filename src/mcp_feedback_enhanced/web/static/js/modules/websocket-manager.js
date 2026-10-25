@@ -39,7 +39,6 @@
 
         // 待處理的提交
         this.pendingSubmission = null;
-        this.sessionUpdatePending = false;
 
         // 網路狀態檢測
         this.networkOnline = navigator.onLine;
@@ -221,17 +220,8 @@
      * 處理重連邏輯
      */
     WebSocketManager.prototype.handleReconnection = function(event) {
-        // 會話更新導致的正常關閉，立即重連
-        if (event.code === 1000 && event.reason === '會話更新') {
-            console.log('🔄 會話更新導致的連接關閉，立即重連...');
-            this.sessionUpdatePending = true;
-            const self = this;
-            setTimeout(function() {
-                self.connect();
-            }, 200);
-        }
         // 檢查是否應該重連
-        else if (this.shouldAttemptReconnect(event)) {
+        if (this.shouldAttemptReconnect(event)) {
             this.reconnectAttempts++;
 
             // 改進的指數退避算法：基礎延遲 * 2^重試次數，加上隨機抖動
