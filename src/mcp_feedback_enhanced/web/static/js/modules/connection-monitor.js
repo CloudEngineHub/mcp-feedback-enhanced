@@ -24,7 +24,9 @@
         this.lastPingTime = null;
         this.latencyHistory = [];
         this.maxLatencyHistory = 20;
-        this.reconnectCount = 0;
+        this.reconnectCount = 0;   // 整頁累計的重連次數（統計面板）
+        this.reconnectAttempt = 0; // 這次斷線的第幾次重連（頂部狀態），恢復連線時歸零
+        this.connectionTimer = null;
         this.messageCount = 0;
         
         // 連線品質指標
@@ -76,10 +78,15 @@
         
         this.isMonitoring = true;
         this.connectionStartTime = Date.now();
-        this.reconnectCount = 0;
         this.messageCount = 0;
         this.latencyHistory = [];
-        
+
+        // 連線時間只在連線期間每秒更新；斷線時 stopMonitoring 停掉並顯示 --:--，重連後從新連線起算
+        const self = this;
+        this.connectionTimer = setInterval(function() {
+            self.updateDisplay();
+        }, 1000);
+
         console.log('🔍 開始連線監控');
         this.updateDisplay();
     };
@@ -91,6 +98,10 @@
         this.isMonitoring = false;
         this.connectionStartTime = null;
         this.lastPingTime = null;
+        if (this.connectionTimer) {
+            clearInterval(this.connectionTimer);
+            this.connectionTimer = null;
+        }
         
         console.log('🔍 停止連線監控');
         this.updateDisplay();
@@ -135,6 +146,7 @@
         // 處理特殊狀態
         switch (status) {
             case 'connected':
+                this.reconnectAttempt = 0;
                 if (!this.isMonitoring) {
                     this.startMonitoring();
                 }
@@ -145,6 +157,7 @@
                 break;
             case 'reconnecting':
                 this.reconnectCount++;
+                this.reconnectAttempt++;
                 break;
         }
         
@@ -348,9 +361,9 @@
         };
         // 文字由這裡管；留著 data-i18n 的話，切換語言會先套上沒代入 {attempt} 的原字串
         this.statusText.removeAttribute('data-i18n');
-        // reconnectCount 在恢復連線時歸零，斷線期間等於 WebSocketManager 的重連次數
+        // reconnectAttempt 每次恢復連線時歸零，斷線期間等於 WebSocketManager 的重連次數
         this.statusText.textContent = window.i18nManager.t(statusKeys[this.status] || 'connectionMonitor.unknown', {
-            attempt: this.reconnectCount
+            attempt: this.reconnectAttempt
         });
     };
 
