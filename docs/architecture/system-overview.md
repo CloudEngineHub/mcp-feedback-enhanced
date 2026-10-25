@@ -9,7 +9,7 @@ MCP Feedback Enhanced 採用**單一活躍會話 + 持久化 Web UI**的創新�
 - **Web UI 加桌面模式**：介面一律由 FastAPI 提供的 Web 頁面呈現；預設用瀏覽器開啟，`MCP_DESKTOP_MODE=true` 時改用 Tauri 打包的桌面殼載入同一個頁面，桌面殼啟動失敗時自動改回瀏覽器
 - **四層架構設計**：清晰的層次分離，便於維護和擴展
 - **環境適配**：WSL 中改用 Windows 瀏覽器開啟介面；SSH 等遠端環境只偵測並寫進除錯日誌，需自行設定埠轉發
-- **單一活躍會話**：替代傳統多會話管理，提升性能和用戶體驗
+- **單一活躍會話**：同一時間只有一個 `current_session`，每次 AI 調用建立新會話並取代它；舊會話留在 `sessions` 字典直到被清理
 - **模組化設計**：每層職責明確，支援獨立開發和測試
 
 ### 技術棧概覽
@@ -25,7 +25,7 @@ MCP Feedback Enhanced 採用**單一活躍會話 + 持久化 Web UI**的創新�
 - HTML5 + CSS3 (現代化 UI)
 - JavaScript ES6+ (模組化架構)
 - WebSocket API (雙向通信)
-- Web Audio API (音效通知系統)
+- HTML5 Audio（`new Audio()`，音效通知系統）
 - localStorage API (介面語言與通知設定)
 - ResizeObserver API (元素尺寸監控)
 - 響應式設計 (多設備支援)
@@ -196,28 +196,27 @@ stateDiagram-v2
     NoSession --> ActiveSession: AI 首次調用
     ActiveSession --> SessionUpdated: AI 再次調用
     SessionUpdated --> ActiveSession: 會話切換完成
-    ActiveSession --> Cleanup: 超時或手動清理
-    Cleanup --> NoSession: 資源釋放
+    ActiveSession --> Cleanup: 過期清理、記憶體壓力清理或伺服器停止
+    Cleanup --> NoSession: current_session 設為 None
 
     note right of ActiveSession
-        只維護一個活躍會話
-        提升性能和用戶體驗
+        同一時間只有一個 current_session
+        舊會話留在 sessions 直到被清理
     end note
 ```
 
 ### 4. 持久化 Web UI 架構
 
-**智能會話管理**：
-- **瀏覽器標籤頁保持**: 避免重複開啟瀏覽器視窗
-- **WebSocket 連接復用**: 減少連接建立開銷和延遲
-- **狀態無縫切換**: 從 SUBMITTED → WAITING 自動轉換
-- **內容局部更新**: 只更新必要的 UI 元素，保持用戶操作狀態
+**跨調用保留的部分**：
+- **不重複開瀏覽器**: `_check_active_tabs()` 判斷已有連線中的分頁時不開新視窗，改送 `session_updated`
+- **沿用 WebSocket 連線**: `create_session()` 把舊會話的 WebSocket 直接轉給新會話
+- **前端狀態切換**: 收到新會話時，前端回饋狀態回到 `FEEDBACK_WAITING`
+- **局部更新**: 以 `GET /api/current-session` 更新 AI 摘要與專案資訊，不重新載入頁面；輸入框與已貼上的圖片會清空（`clearFeedback()`）
 
-**會話持久性**：
-- 支援 AI 助手多次循環調用
-- 會話狀態在調用間保持
-- 自動超時清理機制
-- 記憶體使用優化
+**跨調用不保留的部分**：
+- 每次 AI 調用都是新的會話，回饋、圖片與會話狀態不會延續到下一次調用
+- 跨調用保留的是頁面本身、WebSocket 連線、`ui_settings.json` 的設定與 `session_history.json` 的會話歷史
+- 舊會話由過期清理與記憶體壓力清理移除（見「性能特性與優化」）
 
 ### 5. 國際化與本地化
 
@@ -228,10 +227,9 @@ stateDiagram-v2
 - 動態語言切換
 
 **本地化特性**：
-- 文化適應的日期時間格式
-- 本地化的錯誤訊息
-- 地區特定的 UI 佈局
-- 字體和排版優化
+- 會話卡片與列表的時間、提示詞的建立／使用時間、自訂音效的建立日期，以 `toLocaleTimeString`／`toLocaleDateString` 依介面語言格式化（`TimeUtils.formatTimestamp()`）；其中提示詞與音效的日期經 `timestampHTML()` 產生，切換語言時重新格式化；會話詳情彈窗的時間用固定的 `YYYY/MM/DD HH:mm:ss` 格式，不分語言
+- 後端錯誤訊息與錯誤上下文前綴依語言分開（`ErrorHandler` 的 `_ERROR_MESSAGES`、`_CONTEXT_LABELS`）
+- 版面與字型不分語言，三種語言共用同一套 HTML 與 CSS
 
 ### 6. 智能環境檢測
 ```mermaid
@@ -277,7 +275,7 @@ self.sessions: dict[str, WebFeedbackSession] = {}  # 保留用於向後兼容
 - **WSL 處理**: 依序用 `cmd.exe`、`powershell.exe`、`wslview` 開啟 Windows 瀏覽器
 - **開啟失敗**: 在 stderr 印出網址，請使用者手動開啟
 
-### 3. 高性能實時通信
+### 3. 即時通信
 
 **WebSocket 雙向通信**：
 - 單一 `/ws` 連線，訊息是以 `type` 區分的 JSON
@@ -294,7 +292,7 @@ self.sessions: dict[str, WebFeedbackSession] = {}  # 保留用於向後兼容
 **JavaScript 模組系統**：
 ```javascript
 // 模組化載入順序
-i18n → logger → utils/(dom、time、status) → session/ → prompt/ →
+vendor/(marked、DOMPurify) → i18n → logger → utils/(dom、time、status) → session/ → prompt/ →
 audio/ → notification/ → utils → websocket-manager →
 connection-monitor → session-manager → file-upload-manager →
 image-handler → settings-manager → ui-manager →
@@ -376,7 +374,7 @@ graph TB
         CA[CustomAudios<br/>自訂音效]
     end
 
-    subgraph "Web Audio API"
+    subgraph "HTML5 Audio"
         AUDIO[Audio 物件]
         BASE64[Base64 音效數據]
     end
@@ -417,7 +415,7 @@ graph LR
 
     subgraph "v2.4.3 重構"
         TAB[獨立頁籤<br/>會話管理]
-        ENHANCED[增強功能<br/>本地存儲 + 隱私控制]
+        ENHANCED[增強功能<br/>會話歷史存檔 + 隱私控制]
     end
 
     SIDEBAR -->|重構| TAB
@@ -457,10 +455,10 @@ graph TB
 ```
 
 **一鍵複製功能**：
-- **專案路徑複製**: 點擊路徑文字即可複製
-- **會話ID複製**: 點擊會話ID即可複製
-- **複製反饋**: 視覺提示複製成功
-- **國際化支援**: 複製提示支援多語言
+- **專案路徑、會話 ID**: 會話頁籤中點擊即複製（`Utils.copyToClipboard()`），成功或失敗都顯示翻譯過的提示
+- **使用者內容**: 工作區的「複製使用者內容」按鈕複製輸入框文字（`copyUserFeedback()`）
+- **目前會話**: 會話頁籤的「複製會話內容」「複製使用者內容」按鈕
+- **會話詳情**: 詳情彈窗的「複製摘要」「複製訊息內容」
 
 ## 🔄 核心工作流程
 
@@ -476,7 +474,7 @@ sequenceDiagram
 
     AI->>MCP: interactive_feedback()
     MCP->>WM: 創建/更新會話
-    WM->>UI: 啟動 Web 服務
+    WM->>UI: 啟動 Web 服務（尚未啟動時）
     WM->>User: 智能開啟瀏覽器
 
     Note over UI,AUDIO: v2.4.3 新增音效通知
