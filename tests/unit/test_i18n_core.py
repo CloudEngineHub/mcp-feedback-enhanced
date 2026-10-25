@@ -56,44 +56,36 @@ class TestI18NManager:
         assert i18n_manager.get_current_language() == original_language
 
     def test_translation_function(self, i18n_manager):
-        """測試翻譯函數"""
-        # 測試基本翻譯
-        for key in TestData.I18N_TEST_KEYS:
-            translation = i18n_manager.t(key)
-            assert isinstance(translation, str)
-            assert len(translation) > 0
-            # 翻譯結果不應該等於 key（除非是回退情況）
-            if key in i18n_manager._translations.get(
-                i18n_manager.get_current_language(), {}
-            ):
-                assert translation != key
-
-    def test_translation_with_parameters(self, i18n_manager):
-        """測試帶參數的翻譯"""
-        # 假設有帶參數的翻譯 key
-        test_key = "test.message.withParam"
-        test_params = {"name": "測試用戶", "count": 5}
-
-        # 即使 key 不存在，也應該返回合理的結果
-        translation = i18n_manager.t(test_key, **test_params)
-        assert isinstance(translation, str)
-        assert len(translation) > 0
-
-    def test_fallback_mechanism(self, i18n_manager):
-        """測試回退機制"""
+        """每個語系都能翻出 I18N_TEST_KEYS，且不是回傳 key 本身"""
         original_language = i18n_manager.get_current_language()
 
         try:
-            # 切換到可能翻譯不完整的語言
+            for lang in TestData.SUPPORTED_LANGUAGES:
+                i18n_manager.set_language(lang)
+                for key in TestData.I18N_TEST_KEYS:
+                    translation = i18n_manager.t(key)
+                    assert isinstance(translation, str)
+                    assert translation.strip()
+                    assert translation != key, f"{lang} 缺少翻譯 {key}"
+        finally:
+            i18n_manager.set_language(original_language)
+
+    def test_translation_with_parameters(self, i18n_manager):
+        """帶參數的翻譯會替換 {placeholder}"""
+        translation = i18n_manager.t("error.generic", error="連線中斷")
+
+        assert "連線中斷" in translation
+        assert "{error}" not in translation
+
+    def test_fallback_mechanism(self, i18n_manager):
+        """當前語言與回退語言都沒有的 key 回傳 key 本身"""
+        original_language = i18n_manager.get_current_language()
+
+        try:
             i18n_manager.set_language("en")
 
-            # 測試不存在的 key
             non_existent_key = "non.existent.key.for.testing"
-            translation = i18n_manager.t(non_existent_key)
-
-            # 應該返回 key 本身或合理的回退值
-            assert isinstance(translation, str)
-            assert len(translation) > 0
+            assert i18n_manager.t(non_existent_key) == non_existent_key
 
         finally:
             # 恢復原始語言
@@ -155,19 +147,20 @@ class TestI18NTranslationCompleteness:
             print("\n".join(report_lines))
 
     def test_common_keys_exist(self, i18n_manager):
-        """測試常用 key 存在"""
-        common_keys = ["common.submit", "common.cancel", "common.loading"]
+        """常用按鈕在每個語系都有翻譯"""
+        common_keys = ["buttons.ok", "buttons.cancel", "buttons.close"]
+        original_language = i18n_manager.get_current_language()
 
-        supported_languages = i18n_manager.get_supported_languages()
+        try:
+            for lang in i18n_manager.get_supported_languages():
+                i18n_manager.set_language(lang)
 
-        for lang in supported_languages:
-            i18n_manager.set_language(lang)
-
-            for key in common_keys:
-                translation = i18n_manager.t(key)
-                # 翻譯應該存在且不為空
-                assert isinstance(translation, str)
-                assert len(translation.strip()) > 0
+                for key in common_keys:
+                    translation = i18n_manager.t(key)
+                    assert translation.strip()
+                    assert translation != key, f"{lang} 缺少翻譯 {key}"
+        finally:
+            i18n_manager.set_language(original_language)
 
     def _get_all_keys(self, translations: dict, prefix: str = "") -> set:
         """遞歸獲取所有翻譯 key"""

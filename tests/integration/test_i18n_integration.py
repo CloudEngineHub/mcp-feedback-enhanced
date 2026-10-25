@@ -72,25 +72,26 @@ class TestI18NMCPIntegration:
     """I18N 與 MCP 集成測試"""
 
     def test_i18n_in_mcp_responses(self, i18n_manager):
-        """測試 MCP 回應中的 I18N"""
-        # 測試不同語言下的錯誤消息
-        for lang in TestData.SUPPORTED_LANGUAGES:
-            i18n_manager.set_language(lang)
+        """錯誤訊息在三個語系都有各自的翻譯"""
+        error_keys = ["error.network", "error.timeout", "error.invalidInput"]
+        original_language = i18n_manager.get_current_language()
+        messages: dict[str, dict[str, str]] = {key: {} for key in error_keys}
 
-            # 測試常見錯誤消息的本地化
-            error_keys = ["error.connection", "error.timeout", "error.invalid_input"]
+        try:
+            for lang in TestData.SUPPORTED_LANGUAGES:
+                i18n_manager.set_language(lang)
+                for key in error_keys:
+                    message = i18n_manager.t(key)
+                    assert message != key, f"{lang} 缺少翻譯 {key}"
+                    messages[key][lang] = message
+        finally:
+            i18n_manager.set_language(original_language)
 
-            for key in error_keys:
-                message = i18n_manager.t(key)
-                assert isinstance(message, str)
-                assert len(message) > 0
-
-                # 不同語言的消息應該不同（除非回退到同一語言）
-                if lang != i18n_manager._fallback_language:
-                    # 簡化測試，只檢查翻譯是否存在
-                    if message != key:  # 如果不是回退到 key 本身
-                        # 這裡可以進一步驗證翻譯的差異
-                        pass
+        # 各語系的文字不同，代表不是回退到同一個語系
+        for key, per_lang in messages.items():
+            assert len(set(per_lang.values())) == len(TestData.SUPPORTED_LANGUAGES), (
+                f"{key} 在不同語系的翻譯相同：{per_lang}"
+            )
 
 
 class TestI18NFileSystemIntegration:

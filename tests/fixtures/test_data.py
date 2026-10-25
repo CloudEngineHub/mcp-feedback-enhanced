@@ -49,16 +49,15 @@ class TestData:
         },
     }
 
-    # I18N 測試數據
+    # I18N 測試數據：三個語系都要有的字串 key
     I18N_TEST_KEYS: list[str] = [
-        "common.submit",
-        "common.cancel",
-        "common.loading",
+        "app.title",
+        "buttons.submit",
+        "buttons.cancel",
         "feedback.placeholder",
-        "feedback.submit",
-        "status.waiting",
-        "status.processing",
-        "error.connection",
+        "status.waiting.title",
+        "status.processing.title",
+        "error.network",
         "error.timeout",
     ]
 
