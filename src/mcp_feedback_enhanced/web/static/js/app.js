@@ -980,20 +980,20 @@
     };
 
     /**
-     * 提交回饋
+     * 提交回饋；submissionMethod 是 'auto'（自動提交倒數到期）或預設的 'manual'
      */
-    FeedbackApp.prototype.submitFeedback = function() {
+    FeedbackApp.prototype.submitFeedback = function(submissionMethod) {
         console.log('📤 嘗試提交回饋...');
 
         // 檢查是否可以提交回饋
         if (!this.canSubmitFeedback()) {
             console.log('⚠️ 無法提交回饋');
-            this.handleSubmitError();
+            this.handleSubmitError(submissionMethod);
             return;
         }
 
         // 收集回饋數據並提交
-        const feedbackData = this.collectFeedbackData();
+        const feedbackData = this.collectFeedbackData(submissionMethod);
         if (!feedbackData) {
             return;
         }
@@ -1025,7 +1025,7 @@
     /**
      * 處理提交錯誤
      */
-    FeedbackApp.prototype.handleSubmitError = function() {
+    FeedbackApp.prototype.handleSubmitError = function(submissionMethod) {
         const feedbackState = this.uiManager ? this.uiManager.getFeedbackState() : null;
 
         if (feedbackState === window.MCPFeedback.Utils.CONSTANTS.FEEDBACK_SUBMITTED) {
@@ -1036,7 +1036,7 @@
             window.MCPFeedback.Utils.showMessage(processingWarning, window.MCPFeedback.Utils.CONSTANTS.MESSAGE_WARNING);
         } else if (!this.webSocketManager || !this.webSocketManager.isReady()) {
             // 收集回饋數據，等待連接就緒後提交
-            const feedbackData = this.collectFeedbackData();
+            const feedbackData = this.collectFeedbackData(submissionMethod);
             if (feedbackData) {
                 this.pendingSubmission = feedbackData;
                 const connectingMessage = window.i18nManager ? window.i18nManager.t('feedback.connectingMessage') : 'WebSocket 連線中，回饋將在連線就緒後自動提交...';
@@ -1051,7 +1051,7 @@
     /**
      * 收集回饋數據
      */
-    FeedbackApp.prototype.collectFeedbackData = function() {
+    FeedbackApp.prototype.collectFeedbackData = function(submissionMethod) {
         // 獲取合併模式的回饋內容
         let feedback = '';
         const combinedFeedbackInput = window.MCPFeedback.Utils.safeQuerySelector('#combinedFeedbackText');
@@ -1073,7 +1073,9 @@
             settings: {
                 image_size_limit: this.imageHandler ? this.imageHandler.imageSizeLimit : 0,
                 enable_base64_detail: this.imageHandler ? this.imageHandler.enableBase64Detail : false
-            }
+            },
+            // 只記進會話歷史，不送給伺服器
+            submission_method: submissionMethod === 'auto' ? 'auto' : 'manual'
         };
     };
 
@@ -1151,8 +1153,8 @@
                 return;
             }
 
-            // 判斷提交方式
-            const submissionMethod = this.autoSubmitManager && this.autoSubmitManager.isEnabled ? 'auto' : 'manual';
+            // 提交方式看這次提交是誰觸發的；倒數計時器在跑不代表這次是自動提交
+            const submissionMethod = feedbackData.submission_method || 'manual';
 
             // 建立訊息記錄資料
             const messageData = {
@@ -1619,7 +1621,7 @@
         window.MCPFeedback.Utils.showMessage(message, window.MCPFeedback.Utils.CONSTANTS.MESSAGE_INFO);
 
         // 執行提交
-        this.submitFeedback();
+        this.submitFeedback('auto');
 
         // 更新提示詞使用記錄
         this.promptManager.usePrompt(promptId);
