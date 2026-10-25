@@ -102,6 +102,17 @@ class ErrorHandler:
         },
     }
 
+    # format_user_error 的上下文前綴；未列出的語言用 zh-TW
+    _CONTEXT_LABELS = {
+        "zh-TW": {"operation": "操作：", "file": "檔案：", "technical": "技術細節："},
+        "zh-CN": {"operation": "操作：", "file": "文件：", "technical": "技术细节："},
+        "en": {
+            "operation": "Operation: ",
+            "file": "File: ",
+            "technical": "Technical details: ",
+        },
+    }
+
     @staticmethod
     def get_current_language() -> str:
         """獲取當前語言設置"""
@@ -214,8 +225,10 @@ class ErrorHandler:
         if error_type is None:
             error_type = ErrorHandler.classify_error(error)
 
-        # 獲取當前語言
-        language = ErrorHandler.get_current_language()
+        # 前綴依語言分開：簡中與繁中用字不同（文件／檔案、技术细节／技術細節）
+        labels = ErrorHandler._CONTEXT_LABELS.get(
+            ErrorHandler.get_current_language(), ErrorHandler._CONTEXT_LABELS["zh-TW"]
+        )
 
         # 獲取用戶友好的錯誤信息
         user_message = ErrorHandler.get_error_message(error_type)
@@ -226,23 +239,14 @@ class ErrorHandler:
         # 添加上下文信息
         if context:
             if context.get("operation"):
-                if language == "en":
-                    parts.append(f"Operation: {context['operation']}")
-                else:
-                    parts.append(f"操作：{context['operation']}")
+                parts.append(f"{labels['operation']}{context['operation']}")
 
             if context.get("file_path"):
-                if language == "en":
-                    parts.append(f"File: {context['file_path']}")
-                else:
-                    parts.append(f"檔案：{context['file_path']}")
+                parts.append(f"{labels['file']}{context['file_path']}")
 
         # 添加技術細節（如果需要）
         if include_technical:
-            if language == "en":
-                parts.append(f"Technical details: {type(error).__name__}: {error!s}")
-            else:
-                parts.append(f"技術細節：{type(error).__name__}: {error!s}")
+            parts.append(f"{labels['technical']}{type(error).__name__}: {error!s}")
 
         return "\n".join(parts)
 

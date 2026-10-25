@@ -132,6 +132,32 @@ class TestErrorHandler:
             result = ErrorHandler.format_user_error(ConnectionError("Network error"))
         assert result.startswith(f"❌ {expected}")
 
+    @pytest.mark.parametrize(
+        ("language", "expected_lines"),
+        [
+            ("zh-TW", ["操作：load", "檔案：/a.txt", "技術細節：ValueError: boom"]),
+            ("zh-CN", ["操作：load", "文件：/a.txt", "技术细节：ValueError: boom"]),
+            (
+                "en",
+                [
+                    "Operation: load",
+                    "File: /a.txt",
+                    "Technical details: ValueError: boom",
+                ],
+            ),
+        ],
+    )
+    def test_context_labels_follow_language(self, language, expected_lines):
+        """上下文前綴依介面語言分開：簡中不能出現繁中的「檔案：」「技術細節：」"""
+        with patch.object(ErrorHandler, "get_current_language", return_value=language):
+            result = ErrorHandler.format_user_error(
+                ValueError("boom"),
+                error_type=ErrorType.FILE_IO,
+                context={"operation": "load", "file_path": "/a.txt"},
+                include_technical=True,
+            )
+        assert result.splitlines()[1:] == expected_lines
+
     def test_error_severity_logging(self):
         """測試錯誤嚴重程度記錄"""
         error = Exception("Critical system error")
