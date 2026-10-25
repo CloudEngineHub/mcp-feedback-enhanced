@@ -1,9 +1,11 @@
-# Release v2.8.3 - 2026-10-25 - Session Status After Submit and Duplicate Submissions
+# Release v2.8.4 - 2026-10-25 - Session History Retention and Message Handling Fixes
 
 ## 🌟 Key Highlights
-- After you submit feedback, session history shows the session as "Submitted" instead of "Processing", and as "Completed" once the next MCP call arrives.
-- The "Current Session" card on the Session Management tab shows the session's actual status on the server, and updates on reload or 🔄.
-- After a page reload you can no longer submit feedback a second time, so a submission can no longer report success while never reaching the AI.
+- Session history keeps earlier sessions after the MCP server restarts (#177); sessions a previous process left waiting for feedback show as "Disconnected".
+- Session durations in history now come from the real creation and end times, and the retention period actually removes expired records.
+- Durations in the English UI get spaces and singular/plural units (`7 seconds`, `1 minute 5 seconds`).
+- A new-session notice is no longer swallowed by a heartbeat reply, so the page switches to the new session.
+- After switching languages, the current session card and session history change to the new language immediately.
 
 ## 🌐 Detailed Release Notes
 
@@ -25,7 +27,7 @@
 uvx mcp-feedback-enhanced@latest
 
 # This specific version / 此特定版本
-uvx mcp-feedback-enhanced@v2.8.3
+uvx mcp-feedback-enhanced@v2.8.4
 ```
 
 ## 🔗 Links
