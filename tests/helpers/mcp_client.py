@@ -7,6 +7,7 @@ import asyncio
 import json
 import os
 import subprocess
+import sys
 from pathlib import Path
 from typing import Any
 
@@ -45,8 +46,10 @@ class SimpleMCPClient:
     async def start_server(self) -> bool:
         """啟動 MCP 服務器"""
         try:
-            # 使用 uv run 啟動 MCP 服務器（先換掉開瀏覽器的函式）
-            cmd = ["uv", "run", "python", "-c", _SERVER_BOOTSTRAP]
+            # 用跑測試的同一個直譯器啟動 MCP 服務器（先換掉開瀏覽器的函式）。
+            # 不用 uv run：它會在 pyproject 有變動時同步 .venv、重寫 uv.lock，
+            # 動到開發者的環境，exe 被占用時同步失敗，伺服器就起不來
+            cmd = [sys.executable, "-c", _SERVER_BOOTSTRAP]
 
             self.server_process = subprocess.Popen(
                 cmd,
