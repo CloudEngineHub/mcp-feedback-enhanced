@@ -1,8 +1,9 @@
-# Release v2.8.2 - 2026-10-25 - Blocking Cross-Site Writes to /api/*
+# Release v2.8.3 - 2026-10-25 - Session Status After Submit and Duplicate Submissions
 
 ## 🌟 Key Highlights
-- Cross-origin pages can no longer rewrite settings, session history or the log level through `/api/*`, so they cannot turn on auto-submit for you.
-- Every field in the session details dialog is escaped, so tampered session history is no longer executed as HTML.
+- After you submit feedback, session history shows the session as "Submitted" instead of "Processing", and as "Completed" once the next MCP call arrives.
+- The "Current Session" card on the Session Management tab shows the session's actual status on the server, and updates on reload or 🔄.
+- After a page reload you can no longer submit feedback a second time, so a submission can no longer report success while never reaching the AI.
 
 ## 🌐 Detailed Release Notes
 
@@ -24,7 +25,7 @@
 uvx mcp-feedback-enhanced@latest
 
 # This specific version / 此特定版本
-uvx mcp-feedback-enhanced@v2.8.2
+uvx mcp-feedback-enhanced@v2.8.3
 ```
 
 ## 🔗 Links
