@@ -31,9 +31,9 @@
                     'timeout': '已逾時',
                     'error': '錯誤',
                     'expired': '已過期',
-                    'connecting': '連接中',
-                    'connected': '已連接',
-                    'disconnected': '已斷開',
+                    'connecting': '連線中',
+                    'connected': '已連線',
+                    'disconnected': '已斷線',
                     'processing': '處理中',
                     'ready': '就緒',
                     'closed': '已關閉'
@@ -70,11 +70,11 @@
             if (!window.i18nManager) {
                 // 回退到硬編碼文字
                 const fallbackMap = {
-                    'connecting': '連接中',
-                    'connected': '已連接',
-                    'disconnected': '已斷開',
-                    'reconnecting': '重連中',
-                    'error': '連接錯誤'
+                    'connecting': '連線中',
+                    'connected': '已連線',
+                    'disconnected': '已斷線',
+                    'reconnecting': '重新連線中',
+                    'error': '連線錯誤'
                 };
                 return fallbackMap[status] || status;
             }
@@ -373,19 +373,19 @@
          */
         getStatusDescription: function(status) {
             const descriptions = {
-                'waiting': '系統正在等待用戶提供回饋',
-                'waiting_for_feedback': '系統正在等待用戶提供回饋',
+                'waiting': '系統正在等待使用者提供回饋',
+                'waiting_for_feedback': '系統正在等待使用者提供回饋',
                 'active': '會話正在進行中',
-                'processing': '系統正在處理用戶的回饋',
-                'feedback_submitted': '用戶已提交回饋',
+                'processing': '系統正在處理使用者的回饋',
+                'feedback_submitted': '使用者已提交回饋',
                 'completed': '會話已成功完成',
-                'timeout': '會話因超時而結束',
+                'timeout': '會話因逾時而結束',
                 'error': '會話遇到錯誤',
                 'expired': '會話已過期',
-                'connecting': '正在建立連接',
-                'connected': '連接已建立',
-                'disconnected': '連接已斷開',
-                'reconnecting': '正在嘗試重新連接',
+                'connecting': '正在建立連線',
+                'connected': '連線已建立',
+                'disconnected': '連線已中斷',
+                'reconnecting': '正在嘗試重新連線',
                 'ready': '系統已就緒',
                 'closed': '會話已關閉'
             };

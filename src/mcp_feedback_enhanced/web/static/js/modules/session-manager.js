@@ -413,8 +413,8 @@
 
         if (!currentSession) {
             const message = window.i18nManager ? 
-                window.i18nManager.t('sessionHistory.noActiveSession', '目前沒有活躍的會話數據') : 
-                '目前沒有活躍的會話數據';
+                window.i18nManager.t('sessionHistory.noActiveSession', '目前沒有活躍的會話資料') : 
+                '目前沒有活躍的會話資料';
             this.showMessage(message, 'warning');
             return;
         }
@@ -733,7 +733,7 @@
         const i18n = window.i18nManager;
         const confirmMessage = i18n ?
             i18n.t('sessionHistory.userMessages.confirmClearAll') :
-            '確定要清空所有會話的用戶訊息記錄嗎？此操作無法復原。';
+            '確定要清空所有會話的使用者訊息記錄嗎？此操作無法復原。';
 
         if (!confirm(confirmMessage)) {
             return;
@@ -744,7 +744,7 @@
             if (success) {
                 const successMessage = i18n ?
                     i18n.t('sessionHistory.userMessages.clearSuccess') :
-                    '用戶訊息記錄已清空';
+                    '使用者訊息記錄已清空';
                 this.showMessage(successMessage, 'success');
             } else {
                 const errorMessage = window.i18nManager ?
@@ -816,16 +816,16 @@
             const currentSession = this.dataManager.getCurrentSession();
             if (!currentSession) {
                 const message = window.i18nManager ?
-                    window.i18nManager.t('sessionHistory.currentSession.noData', '沒有當前會話數據') :
-                    '沒有當前會話數據';
+                    window.i18nManager.t('sessionHistory.currentSession.noData', '沒有目前會話資料') :
+                    '沒有目前會話資料';
                 this.showMessage(message, 'error');
                 return;
             }
 
             const content = this.formatCurrentSessionContent(currentSession);
             const successMessage = window.i18nManager ?
-                window.i18nManager.t('sessionHistory.currentSession.copySuccess', '當前會話內容已複製到剪貼板') :
-                '當前會話內容已複製到剪貼板';
+                window.i18nManager.t('sessionHistory.currentSession.copySuccess', '目前會話內容已複製到剪貼簿') :
+                '目前會話內容已複製到剪貼簿';
             this.copyToClipboard(content, successMessage);
         } catch (error) {
             console.error('复制当前会话内容失败:', error);
@@ -847,8 +847,8 @@
             if (!this.dataManager) {
                 console.log('📝 dataManager 不存在，尝试其他方式获取数据');
                 const message = window.i18nManager ?
-                    window.i18nManager.t('sessionHistory.currentSession.dataManagerNotInit', '數據管理器未初始化') :
-                    '數據管理器未初始化';
+                    window.i18nManager.t('sessionHistory.currentSession.dataManagerNotInit', '資料管理器未初始化') :
+                    '資料管理器未初始化';
                 this.showMessage(message, 'error');
                 return;
             }
@@ -859,8 +859,8 @@
             if (!currentSession) {
                 console.log('📝 没有当前会话数据');
                 const message = window.i18nManager ?
-                    window.i18nManager.t('sessionHistory.currentSession.noData', '當前會話沒有數據') :
-                    '當前會話沒有數據';
+                    window.i18nManager.t('sessionHistory.currentSession.noData', '目前會話沒有資料') :
+                    '目前會話沒有資料';
                 this.showMessage(message, 'warning');
                 return;
             }
@@ -871,8 +871,8 @@
             if (!currentSession.user_messages || currentSession.user_messages.length === 0) {
                 console.log('📝 没有用户消息记录');
                 const message = window.i18nManager ?
-                    window.i18nManager.t('sessionHistory.currentSession.noUserMessages', '當前會話沒有用戶消息記錄') :
-                    '當前會話沒有用戶消息記錄';
+                    window.i18nManager.t('sessionHistory.currentSession.noUserMessages', '目前會話沒有使用者訊息記錄') :
+                    '目前會話沒有使用者訊息記錄';
                 this.showMessage(message, 'warning');
                 return;
             }
@@ -886,8 +886,8 @@
             console.log('📝 格式化后的内容预览:', content.substring(0, 200));
 
             const successMessage = window.i18nManager ?
-                window.i18nManager.t('sessionHistory.currentSession.userContentCopySuccess', '當前用戶內容已複製到剪貼板') :
-                '當前用戶內容已複製到剪貼板';
+                window.i18nManager.t('sessionHistory.currentSession.userContentCopySuccess', '目前使用者內容已複製到剪貼簿') :
+                '目前使用者內容已複製到剪貼簿';
             this.copyToClipboard(content, successMessage);
         } catch (error) {
             console.error('📝 复制当前用户内容失败:', error);
@@ -905,7 +905,7 @@
     SessionManager.prototype.formatCurrentSessionContent = function(sessionData) {
         const Utils = window.MCPFeedback.Utils;
         const lines = [];
-        lines.push('# ' + t('sessionHistory.copyContent.sessionTitle', 'MCP Feedback Enhanced - 當前會話內容'));
+        lines.push('# ' + t('sessionHistory.copyContent.sessionTitle', 'MCP Feedback Enhanced - 目前會話內容'));
         lines.push('');
         lines.push(`**${t('sessionManagement.sessionId', '會話 ID')}**: ${sessionData.session_id || 'N/A'}`);
         lines.push(`**${t('sessionManagement.sessionDetails.projectDirectory', '專案目錄')}**: ${sessionData.project_directory || 'N/A'}`);
@@ -915,7 +915,7 @@
         lines.push('');
 
         if (sessionData.user_messages && sessionData.user_messages.length > 0) {
-            lines.push('## ' + t('sessionHistory.userMessages.title', '用戶訊息記錄'));
+            lines.push('## ' + t('sessionHistory.userMessages.title', '使用者訊息記錄'));
             sessionData.user_messages.forEach(function(msg, index) {
                 lines.push.apply(lines, formatUserMessageLines(msg, index, '###'));
             });
@@ -929,7 +929,7 @@
      */
     SessionManager.prototype.formatCurrentUserContent = function(userMessages) {
         const lines = [];
-        lines.push('# ' + t('sessionHistory.copyContent.userTitle', 'MCP Feedback Enhanced - 用戶發送內容'));
+        lines.push('# ' + t('sessionHistory.copyContent.userTitle', 'MCP Feedback Enhanced - 使用者傳送內容'));
         lines.push('');
         userMessages.forEach(function(msg, index) {
             lines.push.apply(lines, formatUserMessageLines(msg, index, '##'));

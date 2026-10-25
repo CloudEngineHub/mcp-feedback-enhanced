@@ -358,7 +358,7 @@
             if (response.ok) {
                 return response.json();
             }
-            throw new Error('保存日誌等級失敗: ' + response.status);
+            throw new Error('儲存日誌等級失敗: ' + response.status);
         })
         .then(function(data) {
             console.log('📋 日誌等級已保存:', data.logLevel);

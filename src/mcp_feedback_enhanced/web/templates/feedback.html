@@ -413,7 +413,7 @@
             <span id="projectPathDisplay" class="project-path-display"
                   data-full-path="{{ project_directory }}"
                   data-i18n-title="app.clickToCopyPath"
-                  title="點擊複製完整路徑">{{ project_directory[-30:] if project_directory|length > 30 else project_directory }}</span>
+                  title="點選複製完整路徑">{{ project_directory[-30:] if project_directory|length > 30 else project_directory }}</span>
         </div>
 
         <!-- 分隔符 -->
@@ -425,7 +425,7 @@
             <span id="currentSessionId" class="session-id-display"
                   data-full-id="{{ session_id if session_id else 'loading' }}"
                   data-i18n-title="app.clickToCopySessionId"
-                  title="點擊複製完整會話ID">{{ session_id[:6] if session_id else '--' }}</span>
+                  title="點選複製完整會話ID">{{ session_id[:6] if session_id else '--' }}</span>
         </div>
 
         <!-- 倒數計時器（條件顯示） -->
@@ -447,7 +447,7 @@
         <div id="sessionTimeoutDisplay" class="countdown-display-compact session-timeout-display" style="display: none;">
             <span class="info-separator">·</span>
             <span>⏰</span>
-            <span class="timeout-label" data-i18n="sessionTimeout.label">會話超時:</span>
+            <span class="timeout-label" data-i18n="sessionTimeout.label">會話逾時:</span>
             <span id="sessionTimeoutTimer" class="countdown-timer">--:--</span>
         </div>
 
@@ -537,7 +537,7 @@
 
 💡 小提示：
 • 按 Ctrl+Enter/Cmd+Enter (支援數字鍵盤) 可快速提交
-• 按 Ctrl+V/Cmd+V 可直接貼上剪貼板圖片"
+• 按 Ctrl+V/Cmd+V 可直接貼上剪貼簿圖片"
                                 style="min-height: 150px;"
                             ></textarea>
 
@@ -569,7 +569,7 @@
             <!-- ===== 會話管理分頁 ===== -->
             <div id="tab-sessions" class="tab-content">
                 <div class="section-description" data-i18n="sessionManagement.description">
-                    管理當前會話和歷史會話記錄，查看會話統計資訊。
+                    管理目前會話和歷史會話記錄，查看會話統計資訊。
                 </div>
 
                 <!-- 面板標題和控制 -->
@@ -585,7 +585,7 @@
                 <div class="session-panel-content">
                     <!-- 當前活躍會話 -->
                     <div class="current-session-section">
-                        <h4 data-i18n="sessionManagement.currentSession">當前會話</h4>
+                        <h4 data-i18n="sessionManagement.currentSession">目前會話</h4>
                         <div class="session-card active" id="currentSessionCard">
                             <div class="session-header">
                                 <div class="session-id"><span data-i18n="sessionManagement.sessionId">會話 ID</span>: {{ session_id[:8] if session_id else 'loading' }}...</div>
@@ -658,7 +658,7 @@
                             </div>
                             <div class="stat-item">
                                 <div class="stat-value stat-average-duration">--</div>
-                                <div class="stat-label" data-i18n="sessionManagement.todayAverageDuration">今日平均時長</div>
+                                <div class="stat-label" data-i18n="sessionManagement.todayAverageDuration">今日平均持續時間</div>
                             </div>
                         </div>
                     </div>
@@ -675,7 +675,7 @@
                     <div class="settings-card-body">
                         <div class="setting-item">
                             <div class="setting-info">
-                                <div class="setting-label" data-i18n="settingsUI.layoutMode">界面佈局模式</div>
+                                <div class="setting-label" data-i18n="settingsUI.layoutMode">介面佈局模式</div>
                                 <div class="setting-description" data-i18n="settingsUI.layoutModeDesc">
                                     選擇 AI 摘要和回饋輸入的顯示方式
                                 </div>
@@ -684,14 +684,14 @@
                                 <div class="layout-option">
                                     <input type="radio" id="combinedVertical" name="layoutMode" value="combined-vertical" checked>
                                     <label for="combinedVertical">
-                                        <div class="layout-option-title" data-i18n="settingsUI.combinedVertical">垂直布局</div>
+                                        <div class="layout-option-title" data-i18n="settingsUI.combinedVertical">垂直佈局</div>
                                         <div class="layout-option-desc" data-i18n="settingsUI.combinedVerticalDesc">AI 摘要在上，回饋輸入在下，摘要和回饋在同一頁面</div>
                                     </label>
                                 </div>
                                 <div class="layout-option">
                                     <input type="radio" id="combinedHorizontal" name="layoutMode" value="combined-horizontal">
                                     <label for="combinedHorizontal">
-                                        <div class="layout-option-title" data-i18n="settingsUI.combinedHorizontal">水平布局</div>
+                                        <div class="layout-option-title" data-i18n="settingsUI.combinedHorizontal">水平佈局</div>
                                         <div class="layout-option-desc" data-i18n="settingsUI.combinedHorizontalDesc">AI 摘要在左，回饋輸入在右，增大摘要可視區域</div>
                                     </label>
                                 </div>
@@ -711,9 +711,9 @@
                     <div class="settings-card-body">
                         <div class="setting-item">
                             <div class="setting-info">
-                                <div class="setting-label" data-i18n="settingsUI.currentLanguage">當前語言</div>
+                                <div class="setting-label" data-i18n="settingsUI.currentLanguage">目前語言</div>
                                 <div class="setting-description" data-i18n="settingsUI.languageDesc">
-                                    選擇界面顯示語言
+                                    選擇介面顯示語言
                                 </div>
                             </div>
                             <div class="language-selector-dropdown">
@@ -850,12 +850,12 @@
                 <!-- 會話超時設定卡片 -->
                 <div class="settings-card">
                     <div class="settings-card-header">
-                        <h3 class="settings-card-title" data-i18n="settingsUI.sessionTimeoutTitle">⏱️ 會話超時設定</h3>
+                        <h3 class="settings-card-title" data-i18n="settingsUI.sessionTimeoutTitle">⏱️ 會話逾時設定</h3>
                     </div>
                     <div class="settings-card-body">
                         <div class="setting-item">
                             <div class="setting-info">
-                                <div class="setting-label" data-i18n="settingsUI.sessionTimeoutEnable">啟用會話超時</div>
+                                <div class="setting-label" data-i18n="settingsUI.sessionTimeoutEnable">啟用會話逾時</div>
                                 <div class="setting-description" data-i18n="settingsUI.sessionTimeoutEnableDesc">
                                     啟用後，會話將在指定時間後自動關閉
                                 </div>
@@ -870,9 +870,9 @@
 
                         <div class="setting-item">
                             <div class="setting-info">
-                                <div class="setting-label" data-i18n="settingsUI.sessionTimeoutDuration">超時時間（秒）</div>
+                                <div class="setting-label" data-i18n="settingsUI.sessionTimeoutDuration">逾時時間（秒）</div>
                                 <div class="setting-description" data-i18n="settingsUI.sessionTimeoutDurationDesc">
-                                    設定會話超時時間，範圍：300-86400 秒（5分鐘-24小時）
+                                    設定會話逾時時間，範圍：300-86400 秒（5分鐘-24小時）
                                 </div>
                             </div>
                             <div class="setting-control">
@@ -892,9 +892,9 @@
                     <div class="settings-card-body">
                         <div class="setting-item">
                             <div class="setting-info">
-                                <div class="setting-label" data-i18n="sessionHistory.management.retentionPeriod">保存期限</div>
+                                <div class="setting-label" data-i18n="sessionHistory.management.retentionPeriod">儲存期限</div>
                                 <div class="setting-description" data-i18n="sessionHistory.management.description">
-                                    管理本地儲存的會話歷史記錄，包括保存期限設定和資料匯出功能
+                                    管理本機儲存的會話歷史記錄，包括儲存期限設定和資料匯出功能
                                 </div>
                             </div>
                             <div class="setting-control">
@@ -945,7 +945,7 @@
                             <div class="setting-info">
                                 <div class="setting-label" data-i18n="sessionHistory.management.export">資料管理</div>
                                 <div class="setting-description" data-i18n="sessionHistory.management.exportDescription">
-                                    匯出或清空本地儲存的會話歷史記錄
+                                    匯出或清空本機儲存的會話歷史記錄
                                 </div>
                             </div>
                             <div class="setting-control" style="display: flex; gap: 8px; flex-wrap: wrap;">
@@ -981,13 +981,13 @@
                     <div class="settings-card-body">
                         <div class="setting-item" style="border-bottom: none;">
                             <div class="setting-info">
-                                <div class="setting-label" data-i18n="settingsUI.reset">重置設定</div>
+                                <div class="setting-label" data-i18n="settingsUI.reset">重設設定</div>
                                 <div class="setting-description" data-i18n="settingsUI.resetDesc">
-                                    清除所有已保存的設定，恢復到預設狀態
+                                    清除所有已儲存的設定，恢復到預設狀態
                                 </div>
                             </div>
                             <button id="resetSettingsBtn" class="btn btn-secondary" style="font-size: 12px; padding: 6px 16px;">
-                                <span data-i18n="settingsUI.reset">重置設定</span>
+                                <span data-i18n="settingsUI.reset">重設設定</span>
                             </button>
                         </div>
                     </div>
@@ -1040,7 +1040,7 @@
                                     https://discord.gg/ACjf9Q58
                                 </div>
                                 <div class="setting-description" data-i18n="about.contactDescription" style="color: var(--text-secondary); font-size: 12px; margin-left: 24px; margin-top: 8px;">
-                                    如需技術支援、問題回報或功能建議，歡迎透過 Discord 社群或 GitHub Issues 與我們聯繫。
+                                    如需技術支援、問題回報或功能建議，歡迎透過 Discord 社群或 GitHub Issues 與我們聯絡。
                                 </div>
                             </div>
                             <button class="btn" onclick="window.open('https://discord.gg/ACjf9Q58', '_blank')" style="background: #5865F2; color: white; font-size: 12px; padding: 6px 16px; border: none;">
@@ -1058,9 +1058,9 @@
                     <div class="settings-card-body">
                         <div class="setting-item" style="border-bottom: none;">
                             <div class="setting-info">
-                                <div class="text-input" data-i18n="about.thanksText" style="background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 4px; padding: 12px; color: var(--text-primary); font-size: 12px; line-height: 1.5; min-height: 140px; max-height: 200px; overflow-y: auto; white-space: pre-wrap;">感謝原作者 Fábio Ferreira (@fabiomlferreira) 創建了原始的 interactive-feedback-mcp 專案。
+                                <div class="text-input" data-i18n="about.thanksText" style="background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 4px; padding: 12px; color: var(--text-primary); font-size: 12px; line-height: 1.5; min-height: 140px; max-height: 200px; overflow-y: auto; white-space: pre-wrap;">感謝原作者 Fábio Ferreira (@fabiomlferreira) 建立了原始的 interactive-feedback-mcp 專案。
 
-本增強版本由 Minidoracat 開發和維護，大幅擴展了專案功能，新增了 Web UI 介面、圖片支援、多語言能力以及許多其他改進功能。
+本增強版本由 Minidoracat 開發和維護，大幅擴充了專案功能，新增了 Web UI 介面、圖片支援、多語言能力以及許多其他改進功能。
 
 同時感謝 sanshao85 的 mcp-feedback-collector 專案提供的 UI 設計靈感。
 
@@ -1233,7 +1233,7 @@
                 <span class="stats-item-value" id="statsConnectionTime">--:--</span>
             </div>
             <div class="stats-item-detailed">
-                <span class="stats-item-label" data-i18n="connectionMonitor.reconnectCount">重連次數</span>
+                <span class="stats-item-label" data-i18n="connectionMonitor.reconnectCount">重新連線次數</span>
                 <span class="stats-item-value" id="statsReconnectCount">0</span>
             </div>
             <!-- WebSocket 統計 -->

@@ -117,8 +117,8 @@
 
                         if (fullPath) {
                             const successMessage = window.i18nManager ?
-                                window.i18nManager.t('app.pathCopied', '專案路徑已複製到剪貼板') :
-                                '專案路徑已複製到剪貼板';
+                                window.i18nManager.t('app.pathCopied', '專案路徑已複製到剪貼簿') :
+                                '專案路徑已複製到剪貼簿';
                             const errorMessage = window.i18nManager ?
                                 window.i18nManager.t('app.pathCopyFailed', '複製路徑失敗') :
                                 '複製路徑失敗';
@@ -301,8 +301,8 @@
 
                     if (fullPath) {
                         const successMessage = window.i18nManager ?
-                            window.i18nManager.t('app.pathCopied', '專案路徑已複製到剪貼板') :
-                            '專案路徑已複製到剪貼板';
+                            window.i18nManager.t('app.pathCopied', '專案路徑已複製到剪貼簿') :
+                            '專案路徑已複製到剪貼簿';
                         const errorMessage = window.i18nManager ?
                             window.i18nManager.t('app.pathCopyFailed', '複製路徑失敗') :
                             '複製路徑失敗';
@@ -382,8 +382,8 @@
                     const fullId = this.getAttribute('data-full-id');
                     if (fullId) {
                         const successMessage = window.i18nManager ?
-                            window.i18nManager.t('app.sessionIdCopied', '會話ID已複製到剪貼板') :
-                            '會話ID已複製到剪貼板';
+                            window.i18nManager.t('app.sessionIdCopied', '會話ID已複製到剪貼簿') :
+                            '會話ID已複製到剪貼簿';
                         const errorMessage = window.i18nManager ?
                             window.i18nManager.t('app.sessionIdCopyFailed', '複製會話ID失敗') :
                             '複製會話ID失敗';

@@ -346,7 +346,7 @@
                     Utils.Time.formatTimestamp(this.lastSubmissionTime, { format: 'time' }) : '';
                 icon = '✅';
                 title = window.i18nManager ? window.i18nManager.t('status.submitted.title') : '回饋已提交';
-                message = window.i18nManager ? window.i18nManager.t('status.submitted.message') : '等待下次 MCP 調用';
+                message = window.i18nManager ? window.i18nManager.t('status.submitted.message') : '等待下次 MCP 呼叫';
                 if (timeStr) {
                     message += ' (' + timeStr + ')';
                 }

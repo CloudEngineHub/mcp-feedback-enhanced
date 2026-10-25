@@ -69,7 +69,7 @@
         const wsUrl = protocol + '//' + host + '/ws';
 
         console.log('嘗試連接 WebSocket:', wsUrl);
-        const connectingMessage = window.i18nManager ? window.i18nManager.t('connectionMonitor.connecting') : '連接中...';
+        const connectingMessage = window.i18nManager ? window.i18nManager.t('connectionMonitor.connecting') : '連線中...';
         this.updateConnectionStatus('connecting', connectingMessage);
 
         try {
@@ -87,7 +87,7 @@
 
         } catch (error) {
             console.error('WebSocket 連接失敗:', error);
-            const connectionFailedMessage = window.i18nManager ? window.i18nManager.t('connectionMonitor.connectionFailed') : '連接失敗';
+            const connectionFailedMessage = window.i18nManager ? window.i18nManager.t('connectionMonitor.connectionFailed') : '連線失敗';
             this.updateConnectionStatus('error', connectionFailedMessage);
         }
     };
@@ -121,7 +121,7 @@
     WebSocketManager.prototype.handleOpen = function() {
         this.isConnected = true;
         this.connectionReady = false; // 等待連接確認
-        const connectedMessage = window.i18nManager ? window.i18nManager.t('connectionMonitor.connected') : '已連接';
+        const connectedMessage = window.i18nManager ? window.i18nManager.t('connectionMonitor.connected') : '已連線';
         this.updateConnectionStatus('connected', connectedMessage);
         console.log('WebSocket 連接已建立');
 
@@ -191,7 +191,7 @@
             const noActiveSessionMessage = window.i18nManager ? window.i18nManager.t('connectionMonitor.noActiveSession') : '沒有活躍會話';
             this.updateConnectionStatus('disconnected', noActiveSessionMessage);
         } else {
-            const disconnectedMessage = window.i18nManager ? window.i18nManager.t('connectionMonitor.disconnected') : '已斷開';
+            const disconnectedMessage = window.i18nManager ? window.i18nManager.t('connectionMonitor.disconnected') : '已斷線';
             this.updateConnectionStatus('disconnected', disconnectedMessage);
             this.handleReconnection(event);
         }
@@ -207,7 +207,7 @@
      */
     WebSocketManager.prototype.handleError = function(error) {
         console.error('WebSocket 錯誤:', error);
-        const connectionErrorMessage = window.i18nManager ? window.i18nManager.t('connectionMonitor.connectionError') : '連接錯誤';
+        const connectionErrorMessage = window.i18nManager ? window.i18nManager.t('connectionMonitor.connectionError') : '連線錯誤';
         this.updateConnectionStatus('error', connectionErrorMessage);
 
         // 調用外部回調
@@ -233,7 +233,7 @@
             console.log(Math.round(this.reconnectDelay / 1000) + '秒後嘗試重連... (第' + this.reconnectAttempts + '次)');
 
             // 更新狀態為重連中
-            const reconnectingTemplate = window.i18nManager ? window.i18nManager.t('connectionMonitor.reconnecting') : '重連中... (第{attempt}次)';
+            const reconnectingTemplate = window.i18nManager ? window.i18nManager.t('connectionMonitor.reconnecting') : '重新連線中... (第{attempt}次)';
             const reconnectingMessage = reconnectingTemplate.replace('{attempt}', this.reconnectAttempts);
             this.updateConnectionStatus('reconnecting', reconnectingMessage);
 
@@ -244,7 +244,7 @@
             }, this.reconnectDelay);
         } else if (this.reconnectAttempts >= this.maxReconnectAttempts) {
             console.log('❌ 達到最大重連次數，停止重連');
-            const maxReconnectMessage = window.i18nManager ? window.i18nManager.t('connectionMonitor.maxReconnectReached') : 'WebSocket 連接失敗，請刷新頁面重試';
+            const maxReconnectMessage = window.i18nManager ? window.i18nManager.t('connectionMonitor.maxReconnectReached') : 'WebSocket 連線失敗，請重新整理頁面重試';
             Utils.showMessage(maxReconnectMessage, Utils.CONSTANTS.MESSAGE_ERROR);
         }
     };
@@ -423,8 +423,8 @@
 
             // 更新連接狀態
             const offlineMessage = window.i18nManager ?
-                window.i18nManager.t('connectionMonitor.offline', '網路已斷開') :
-                '網路已斷開';
+                window.i18nManager.t('connectionMonitor.offline', '網路已斷線') :
+                '網路已斷線';
             self.updateConnectionStatus('offline', offlineMessage);
         });
     };
@@ -533,8 +533,8 @@
                 
                 // 顯示超時訊息
                 const timeoutMessage = window.i18nManager ?
-                    window.i18nManager.t('sessionTimeout.triggered', '會話已超時，程序即將關閉') :
-                    '會話已超時，程序即將關閉';
+                    window.i18nManager.t('sessionTimeout.triggered', '會話已逾時，程式即將關閉') :
+                    '會話已逾時，程式即將關閉';
                 Utils.showMessage(timeoutMessage, Utils.CONSTANTS.MESSAGE_WARNING);
                 
                 // 延遲關閉，讓用戶看到訊息

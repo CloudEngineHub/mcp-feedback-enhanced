@@ -887,7 +887,7 @@
                 const i18n = window.i18nManager;
                 const confirmMessage = i18n ?
                     i18n.t('sessionHistory.userMessages.confirmClearAll') :
-                    '確定要清空所有會話的用戶訊息記錄嗎？此操作無法復原。';
+                    '確定要清空所有會話的使用者訊息記錄嗎？此操作無法復原。';
 
                 if (confirm(confirmMessage)) {
                     if (window.MCPFeedback && window.MCPFeedback.app && window.MCPFeedback.app.sessionManager) {
@@ -895,7 +895,7 @@
                         if (success) {
                             const successMessage = i18n ?
                                 i18n.t('sessionHistory.userMessages.clearSuccess') :
-                                '用戶訊息記錄已清空';
+                                '使用者訊息記錄已清空';
                             alert(successMessage);
                         }
                     }
@@ -981,7 +981,7 @@
         const resetBtn = Utils.safeQuerySelector('#resetSettingsBtn');
         if (resetBtn) {
             resetBtn.addEventListener('click', function() {
-                if (confirm('確定要重置所有設定嗎？')) {
+                if (confirm('確定要重設所有設定嗎？')) {
                     self.resetSettings();
                     self.applyToUI();
                 }

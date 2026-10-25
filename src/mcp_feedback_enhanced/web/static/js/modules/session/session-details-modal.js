@@ -44,7 +44,7 @@
      */
     SessionDetailsModal.prototype.showSessionDetails = function(sessionData) {
         if (!sessionData) {
-            this.showError(t('sessionManagement.sessionDetails.noData', '沒有可顯示的會話數據'));
+            this.showError(t('sessionManagement.sessionDetails.noData', '沒有可顯示的會話資料'));
             return;
         }
 
@@ -206,7 +206,7 @@
             return '';
         }
 
-        const sectionTitle = i18n ? i18n.t('sessionHistory.userMessages.title') : '用戶訊息記錄';
+        const sectionTitle = i18n ? i18n.t('sessionHistory.userMessages.title') : '使用者訊息記錄';
         const messageCountLabel = i18n ? i18n.t('sessionHistory.userMessages.messageCount') : '訊息數量';
 
         let messagesHtml = '';
@@ -474,15 +474,15 @@
             if (navigator.clipboard && window.isSecureContext) {
                 navigator.clipboard.writeText(summaryContent).then(function() {
                     // console.log('✅ 摘要內容已複製到剪貼板');
-                    self.showToast('✅ ' + t('sessionManagement.sessionDetails.summaryCopied', '摘要已複製到剪貼板'), 'success');
+                    self.showToast('✅ ' + t('sessionManagement.sessionDetails.summaryCopied', '摘要已複製到剪貼簿'), 'success');
                 }).catch(function(err) {
                     console.error('❌ 複製失敗:', err);
                     // 降級到傳統方法
-                    self.fallbackCopyTextToClipboard(summaryContent, '✅ ' + t('sessionManagement.sessionDetails.summaryCopied', '摘要已複製到剪貼板'));
+                    self.fallbackCopyTextToClipboard(summaryContent, '✅ ' + t('sessionManagement.sessionDetails.summaryCopied', '摘要已複製到剪貼簿'));
                 });
             } else {
                 // 降級到傳統方法
-                this.fallbackCopyTextToClipboard(summaryContent, '✅ ' + t('sessionManagement.sessionDetails.summaryCopied', '摘要已複製到剪貼板'));
+                this.fallbackCopyTextToClipboard(summaryContent, '✅ ' + t('sessionManagement.sessionDetails.summaryCopied', '摘要已複製到剪貼簿'));
             }
         } catch (error) {
             console.error('❌ 複製摘要時發生錯誤:', error);
@@ -506,15 +506,15 @@
             if (navigator.clipboard && window.isSecureContext) {
                 navigator.clipboard.writeText(messageContent).then(function() {
                     // console.log('✅ 用戶消息已複製到剪貼板');
-                    self.showToast('✅ ' + t('sessionManagement.sessionDetails.messageCopied', '訊息已複製到剪貼板'), 'success');
+                    self.showToast('✅ ' + t('sessionManagement.sessionDetails.messageCopied', '訊息已複製到剪貼簿'), 'success');
                 }).catch(function(err) {
                     console.error('❌ 複製失敗:', err);
                     // 降級到傳統方法
-                    self.fallbackCopyTextToClipboard(messageContent, '✅ ' + t('sessionManagement.sessionDetails.messageCopied', '訊息已複製到剪貼板'));
+                    self.fallbackCopyTextToClipboard(messageContent, '✅ ' + t('sessionManagement.sessionDetails.messageCopied', '訊息已複製到剪貼簿'));
                 });
             } else {
                 // 降級到傳統方法
-                this.fallbackCopyTextToClipboard(messageContent, '✅ ' + t('sessionManagement.sessionDetails.messageCopied', '訊息已複製到剪貼板'));
+                this.fallbackCopyTextToClipboard(messageContent, '✅ ' + t('sessionManagement.sessionDetails.messageCopied', '訊息已複製到剪貼簿'));
             }
         } catch (error) {
             console.error('❌ 複製用戶消息時發生錯誤:', error);

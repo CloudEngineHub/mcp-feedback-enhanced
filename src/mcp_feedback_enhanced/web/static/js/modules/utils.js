@@ -170,8 +170,8 @@
          */
         copyToClipboard: function(text, successMessage, errorMessage) {
             successMessage = successMessage || (window.i18nManager ? 
-                window.i18nManager.t('utils.copySuccess', '已複製到剪貼板') : 
-                '已複製到剪貼板');
+                window.i18nManager.t('utils.copySuccess', '已複製到剪貼簿') : 
+                '已複製到剪貼簿');
             errorMessage = errorMessage || (window.i18nManager ? 
                 window.i18nManager.t('utils.copyError', '複製失敗') : 
                 '複製失敗');

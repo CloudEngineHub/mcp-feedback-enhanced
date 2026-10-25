@@ -322,7 +322,7 @@
         
         // 更新重連次數
         if (this.reconnectCountDisplay) {
-            const reconnectLabel = window.i18nManager ? window.i18nManager.t('connectionMonitor.reconnectCount') : '重連';
+            const reconnectLabel = window.i18nManager ? window.i18nManager.t('connectionMonitor.reconnectCount') : '重新連線';
             const timesLabel = window.i18nManager ? window.i18nManager.t('connectionMonitor.times') : '次';
             this.reconnectCountDisplay.textContent = reconnectLabel + ': ' + this.reconnectCount + ' ' + timesLabel;
         }

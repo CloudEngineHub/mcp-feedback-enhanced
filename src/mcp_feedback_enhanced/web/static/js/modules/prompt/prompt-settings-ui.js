@@ -75,7 +75,7 @@
                     </button>
                 </div>
                 <div class="prompt-management-description" data-i18n="prompts.management.description">
-                    管理您的常用提示詞模板，可在回饋輸入時快速選用
+                    管理您的常用提示詞範本，可在回饋輸入時快速選用
                 </div>
                 <div class="prompt-settings-list" id="promptSettingsList">
                     <!-- 提示詞列表將在這裡動態生成 -->
@@ -158,7 +158,7 @@
                     尚未建立任何常用提示詞
                 </div>
                 <div style="font-size: 12px; color: var(--text-secondary); margin-top: 8px;" data-i18n="prompts.management.emptyHint">
-                    點擊上方「新增提示詞」按鈕開始建立您的第一個提示詞模板
+                    點選上方「新增提示詞」按鈕開始建立您的第一個提示詞範本
                 </div>
             </div>
         `;
