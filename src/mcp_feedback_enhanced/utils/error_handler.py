@@ -6,7 +6,6 @@
 - 錯誤類型分類
 - 用戶友好錯誤信息
 - 錯誤上下文記錄
-- 解決方案建議
 - 國際化支持
 
 注意：此模組不會影響 JSON RPC 通信，所有錯誤處理都在應用層進行。
@@ -102,63 +101,6 @@ class ErrorHandler:
         },
     }
 
-    # 錯誤解決建議
-    _ERROR_SOLUTIONS = {
-        ErrorType.NETWORK: {
-            "zh-TW": ["檢查網絡連接是否正常", "確認防火牆設置", "嘗試重新啟動應用程序"],
-            "zh-CN": ["检查网络连接是否正常", "确认防火墙设置", "尝试重新启动应用程序"],
-            "en": [
-                "Check network connection",
-                "Verify firewall settings",
-                "Try restarting the application",
-            ],
-        },
-        ErrorType.FILE_IO: {
-            "zh-TW": ["檢查文件是否存在", "確認文件權限", "檢查磁盤空間是否足夠"],
-            "zh-CN": ["检查文件是否存在", "确认文件权限", "检查磁盘空间是否足够"],
-            "en": [
-                "Check if file exists",
-                "Verify file permissions",
-                "Check available disk space",
-            ],
-        },
-        ErrorType.PROCESS: {
-            "zh-TW": [
-                "檢查進程是否正在運行",
-                "確認系統資源是否足夠",
-                "嘗試重新啟動相關服務",
-            ],
-            "zh-CN": [
-                "检查进程是否正在运行",
-                "确认系统资源是否足够",
-                "尝试重新启动相关服务",
-            ],
-            "en": [
-                "Check if process is running",
-                "Verify system resources",
-                "Try restarting related services",
-            ],
-        },
-        ErrorType.TIMEOUT: {
-            "zh-TW": ["增加超時時間設置", "檢查網絡延遲", "稍後重試操作"],
-            "zh-CN": ["增加超时时间设置", "检查网络延迟", "稍后重试操作"],
-            "en": [
-                "Increase timeout settings",
-                "Check network latency",
-                "Retry the operation later",
-            ],
-        },
-        ErrorType.PERMISSION: {
-            "zh-TW": ["以管理員身份運行", "檢查文件/目錄權限", "聯繫系統管理員"],
-            "zh-CN": ["以管理员身份运行", "检查文件/目录权限", "联系系统管理员"],
-            "en": [
-                "Run as administrator",
-                "Check file/directory permissions",
-                "Contact system administrator",
-            ],
-        },
-    }
-
     @staticmethod
     def get_current_language() -> str:
         """獲取當前語言設置"""
@@ -191,33 +133,6 @@ class ErrorHandler:
             return error_messages.get(
                 language, error_messages.get("zh-TW", "發生未知錯誤")
             )
-
-    @staticmethod
-    def get_i18n_error_solutions(error_type: ErrorType) -> list[str]:
-        """從國際化系統獲取錯誤解決方案"""
-        try:
-            from ..i18n import get_i18n_manager
-
-            i18n = get_i18n_manager()
-            key = f"errors.solutions.{error_type.value}"
-            i18n_result = i18n.t(key)
-
-            # 修復類型推斷問題 - 使用 Any 類型並明確檢查
-            from typing import Any
-
-            result: Any = i18n_result
-
-            # 檢查是否為列表類型且非空
-            if isinstance(result, list) and len(result) > 0:
-                return result
-
-            # 如果不是列表或為空，使用回退
-            raise Exception("Solutions not found or invalid format")
-        except Exception:
-            # 回退到內建映射
-            language = ErrorHandler.get_current_language()
-            solutions_dict = ErrorHandler._ERROR_SOLUTIONS.get(error_type, {})
-            return solutions_dict.get(language, solutions_dict.get("zh-TW", []))
 
     @staticmethod
     def classify_error(error: Exception) -> ErrorType:
@@ -347,19 +262,6 @@ class ErrorHandler:
         return "\n".join(parts)
 
     @staticmethod
-    def get_error_solutions(error_type: ErrorType) -> list[str]:
-        """
-        獲取錯誤解決建議
-
-        Args:
-            error_type: 錯誤類型
-
-        Returns:
-            List[str]: 解決建議列表
-        """
-        return ErrorHandler.get_i18n_error_solutions(error_type)
-
-    @staticmethod
     def log_error_with_context(
         error: Exception,
         context: dict[str, Any] | None = None,
@@ -398,52 +300,3 @@ class ErrorHandler:
             debug_log(f"錯誤堆棧 [{error_id}]:\n{traceback.format_exc()}")
 
         return error_id
-
-    @staticmethod
-    def create_error_response(
-        error: Exception,
-        context: dict[str, Any] | None = None,
-        error_type: ErrorType | None = None,
-        include_solutions: bool = True,
-        for_user: bool = True,
-    ) -> dict[str, Any]:
-        """
-        創建標準化的錯誤響應
-
-        Args:
-            error: Python 異常對象
-            context: 錯誤上下文
-            error_type: 錯誤類型
-            include_solutions: 是否包含解決建議
-            for_user: 是否為用戶界面使用
-
-        Returns:
-            Dict[str, Any]: 標準化錯誤響應
-        """
-        # 自動分類錯誤
-        if error_type is None:
-            error_type = ErrorHandler.classify_error(error)
-
-        # 記錄錯誤
-        error_id = ErrorHandler.log_error_with_context(error, context, error_type)
-
-        # 構建響應
-        response = {
-            "success": False,
-            "error_id": error_id,
-            "error_type": error_type.value,
-            "message": ErrorHandler.format_user_error(
-                error, error_type, context, include_technical=not for_user
-            ),
-        }
-
-        # 添加解決建議
-        if include_solutions:
-            solutions = ErrorHandler.get_error_solutions(error_type)
-            response["solutions"] = solutions  # 即使為空列表也添加
-
-        # 添加上下文（僅用於調試）
-        if context and not for_user:
-            response["context"] = context
-
-        return response

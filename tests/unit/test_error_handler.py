@@ -106,19 +106,6 @@ class TestErrorHandler:
         assert "ValueError" in result
         assert "Invalid input" in result
 
-    def test_get_error_solutions(self):
-        """測試獲取錯誤解決方案"""
-        solutions = ErrorHandler.get_error_solutions(ErrorType.NETWORK)
-
-        assert isinstance(solutions, list)
-        assert len(solutions) > 0
-        # 應該包含網絡相關的解決方案
-        solutions_text = " ".join(solutions).lower()
-        assert any(
-            keyword in solutions_text
-            for keyword in ["網絡", "网络", "network", "連接", "连接", "connection"]
-        )
-
     def test_log_error_with_context(self):
         """測試帶上下文的錯誤記錄"""
         error = Exception("Test error")
@@ -129,31 +116,6 @@ class TestErrorHandler:
         assert isinstance(error_id, str)
         assert error_id.startswith("ERR_")
         assert len(error_id.split("_")) == 3  # ERR_timestamp_id
-
-    def test_create_error_response(self):
-        """測試創建標準化錯誤響應"""
-        error = ConnectionError("Network error")
-        context = {"operation": "網絡請求"}
-
-        response = ErrorHandler.create_error_response(error, context=context)
-
-        assert isinstance(response, dict)
-        assert response["success"] is False
-        assert "error_id" in response
-        assert "error_type" in response
-        assert "message" in response
-        assert response["error_type"] == ErrorType.NETWORK.value
-        assert "solutions" in response
-
-    def test_create_error_response_for_user(self):
-        """測試為用戶界面創建錯誤響應"""
-        error = FileNotFoundError("File not found")
-
-        response = ErrorHandler.create_error_response(error, for_user=True)
-
-        assert response["success"] is False
-        assert "context" not in response  # 用戶界面不應包含技術上下文
-        assert "❌" in response["message"]  # 應該包含用戶友好的格式
 
     @patch(
         "mcp_feedback_enhanced.utils.error_handler.ErrorHandler.get_i18n_error_message"
@@ -209,10 +171,6 @@ class TestErrorHandler:
         assert isinstance(message, str)
         assert len(message) > 0
 
-        # 測試獲取解決方案
-        solutions = ErrorHandler.get_i18n_error_solutions(error_type)
-        assert isinstance(solutions, list)
-
     def test_error_context_preservation(self):
         """測試錯誤上下文保存"""
         error = Exception("Test error")
@@ -243,17 +201,14 @@ class TestErrorHandler:
         # 這些操作不應該影響 stdout
         error_id = ErrorHandler.log_error_with_context(error, context=context)
         user_message = ErrorHandler.format_user_error(error)
-        response = ErrorHandler.create_error_response(error)
 
         # 驗證返回值類型正確
         assert isinstance(error_id, str)
         assert isinstance(user_message, str)
-        assert isinstance(response, dict)
 
         # 驗證不會拋出異常
         assert error_id.startswith("ERR_")
         assert "❌" in user_message
-        assert response["success"] is False
 
 
 if __name__ == "__main__":
