@@ -539,7 +539,8 @@
 
         if (todayDurations.length > 0) {
             const totalDuration = todayDurations.reduce(function(sum, d) { return sum + d; }, 0);
-            this.sessionStats.averageDuration = Math.round(totalDuration / todayDurations.length);
+            // 不先四捨五入：顯示交給 formatDuration 無條件捨去，只有一個會話時與歷史卡片的持續時間一致
+            this.sessionStats.averageDuration = totalDuration / todayDurations.length;
         } else {
             this.sessionStats.averageDuration = 0;
         }
