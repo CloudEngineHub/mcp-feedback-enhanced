@@ -67,6 +67,7 @@
 - i18n 測試改用三個語系都存在的 key，並要求翻譯結果不是 key 本身：原本的 `common.*`、`error.connection` 等 key 在語系檔裡不存在，測試只因為找不到 key 時會回傳 key 本身才通過。帶參數的翻譯改測 `error.generic` 的 `{error}` 有被替換。
 - 錯誤訊息測試改為實際比對三種語言的內建訊息、檢查三個語系的文字各不相同，不再 mock 掉被測函式。
 - 新增測試：`MCP_GZIP_LEVEL` 的等級 1 與 9 會傳到 GZip 中介層，同一份 `styles.css` 壓出來的大小不同；後端以 `messageCode` 回給前端顯示的 16 個訊息代碼，三個語系都要有翻譯；mtime 在未來的暫存檔，`max_age=0` 仍會被清掉。
+- MCP 整合測試改用目前的 Python 直譯器啟動伺服器，不再透過 `uv run`：之前 `pyproject.toml` 有變動時，`uv run` 會先同步 `.venv` 並重寫本機的 `uv.lock`；`.venv` 裡的執行檔被編輯器的語言伺服器占用時同步失敗，`test_mcp_workflow.py` 的 9 個測試跟著失敗。
 - 刪除只測上述死碼的測試。
 
 ---

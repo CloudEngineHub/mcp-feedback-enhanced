@@ -67,6 +67,7 @@ This document records all version updates for **MCP Feedback Enhanced**.
 - The i18n tests now use keys that exist in all three locales and require the result to differ from the key. The previous `common.*`, `error.connection` and similar keys were missing from the locale files, and the tests only passed because a missing key is returned as-is. The parameter test now checks that `{error}` in `error.generic` is replaced.
 - The error message tests now check the built-in messages for all three languages, including that the three locales return different text, instead of mocking the function under test.
 - New tests: `MCP_GZIP_LEVEL` levels 1 and 9 reach the GZip middleware and produce different compressed sizes for the same `styles.css`; the 16 message codes the backend returns to the frontend as `messageCode` must be translated in all three locales; a temp file whose mtime is in the future is still removed with `max_age=0`.
+- The MCP integration tests now start the server with the current Python interpreter instead of `uv run`: when `pyproject.toml` had changed, `uv run` first synced `.venv` and rewrote the local `uv.lock`, and if an editor's language server was holding an executable in `.venv`, the sync failed and the 9 tests in `test_mcp_workflow.py` failed with it.
 - Removed tests that only covered the dead code above.
 
 ---
