@@ -2,15 +2,26 @@
 
 本文件记录了 **MCP Feedback Enhanced** 的所有版本更新内容。
 
-## [v2.8.3] - 未发布 - 提交后的会话显示正确状态
+## [v2.8.3] - 未发布 - 提交后的会话状态与重复提交
 
 ### 🌟 版本亮点
 - 提交反馈后，会话历史显示「反馈已提交」而不是「处理中」，下一次 MCP 调用到来后变为「已完成」。
+- 会话管理页的「当前会话」卡片显示服务器上的实际状态，重新加载或点 🔄 都会更新。
+- 刷新页面后不能再提交第二次反馈，不会再出现显示提交成功、内容却没送到 AI 的情况。
 
 ### 🐛 问题修复
 - **提交反馈后会话停在 `active`**：v2.6.0（#78）在 `waiting` 与 `feedback_submitted` 之间插入了 `active`，但没有任何代码把会话推进到 `active`，提交时只走一步，便停在 `active`。会话因此一直显示「处理中」，下一次调用时旧会话不会变成 `completed`，提交后的清理计时器也不会重置。现在从 `waiting` 提交会经过 `active` 进入 `feedback_submitted`，仍遵守单向流转规则。
 - **会话管理页的「当前会话」卡片停在默认值**：卡片只依赖前端记住的会话数据，重新加载后这份数据是空的，而服务器发来的 `feedback_submitted` 状态被当作「已完成」处理，只会更新已存在的数据，卡片便一直显示「等待中」、创建时间「--:--:--」、AI 摘要「加载中…」；右上角 🔄 只是等一秒，什么都没获取。现在卡片改用 `/api/all-sessions` 中标记为当前的会话：重新加载、点 🔄、提交反馈、下一个会话到来都会重新获取服务器数据。会话历史原本只在条数变化时重绘，提交后仍显示「等待中」，现在状态变化也会重绘。「反馈已提交」标签补上与「已完成」相同的绿色样式，切换语言时也会重新翻译。
 - **刷新后还能再提交一次反馈，第二次的内容送不到 AI**：重新加载页面后，前端的反馈状态重置为「等待中」，提交按钮又能点；Ctrl+Enter 也只检查 WebSocket 是否已连接，不刷新也能重复提交。服务器收到后照单全收，覆盖了反馈内容并把会话推进到 `completed`，但 MCP 调用早已拿着第一次的反馈返回，第二次的内容没人读取，界面却显示提交成功。现在服务器收到过反馈后会忽略之后的提交，不改内容也不推进状态，并回复「反馈已提交，请等待下次 MCP 调用」；前端重新加载时按服务器状态显示「已提交」，按钮与 Ctrl+Enter 都会拦下。下一次 MCP 调用的新会话照常提交。
+
+### ✅ 测试
+- `conftest.py` —— 整个测试阶段把 `USERPROFILE`／`HOME` 指向 pytest 临时目录（子进程一并继承），测试前后确认 `Path.home()`、语言设置文件与 `feedback_session.TEMP_DIR` 都不在真实的主目录下，否则直接失败；运行测试不再写入用户自己的设置。
+- `helpers/mcp_client.py` —— 启动 MCP 服务器前把 `smart_browser_open`／`webbrowser.open` 换成只记录网址的替身，不再打开真实的浏览器；子进程加上 `MCP_TEST_MODE=true` 与 `MCP_WEB_PORT=0`，改由系统分配端口，8765 被占用时不会再把用户正在使用的实例关掉。
+- `test_resource_manager.py` —— 原本把 pytest 自己的 PID 登记进 `ResourceManager`，它在 `atexit` 中的清理会在 pytest 结束时终止这个进程，Windows 上即使全部通过也以 exit code 15 结束；改为登记 fixture 启动的短命子进程，每个测试后清空登记。
+- `test_web_ui.py` —— 新增 `test_second_submission_is_ignored`：第二次提交不得覆盖反馈、图片与设置，也不得推进状态，只返回 `feedback.alreadySubmitted`。现有的 `test_session_feedback_submission` 断言提交后进入 `feedback_submitted`，修复前停在 `active` 而失败，现在通过。
+- 删除三个测试已移除实现的过时测试：`test_i18n_with_web_ui_manager`（`WebUIManager.i18n` 已移除）、`test_session_lifecycle`（`update_status` 已换成单向的 `next_step`，创建与切换会话由 `test_web_ui.py` 覆盖）、`test_status_update_resets_timer`（测的是内部 Timer 对象是否换新）。
+- `pytest.ini` 文件头从 `[tool:pytest]` 改为 `[pytest]`：原本整份配置都被忽略，现在 `testpaths`、strict markers／config、`asyncio_mode=auto`、`timeout=60`、`filterwarnings` 都会生效。
+- `pyproject.toml` 的 `dev` extras 补上 `pytest-timeout>=2.1.0`，用 `pip install -e ".[dev]"` 安装后运行测试，不再因 `timeout` 配置报 `Unknown config option`。
 
 ---
 

@@ -2,15 +2,26 @@
 
 This document records all version updates for **MCP Feedback Enhanced**.
 
-## [v2.8.3] - Unreleased - Submitted Sessions Show the Right Status
+## [v2.8.3] - Unreleased - Session Status After Submit and Duplicate Submissions
 
 ### 🌟 Highlights
 - After you submit feedback, session history shows the session as "Submitted" instead of "Processing", and as "Completed" once the next MCP call arrives.
+- The "Current Session" card on the Session Management tab shows the session's actual status on the server, and updates on reload or 🔄.
+- After a page reload you can no longer submit feedback a second time, so a submission can no longer report success while never reaching the AI.
 
 ### 🐛 Bug Fixes
 - **Submitting feedback left the session in `active`**: v2.6.0 (#78) inserted an `active` step between `waiting` and `feedback_submitted`, but nothing ever moves a session into `active`, so the single step taken on submit stopped at `active`. The session kept showing "Processing", the previous session was never marked `completed` on the next call, and the post-submit cleanup timer was not reset. Submitting from `waiting` now steps through `active` to `feedback_submitted`, keeping the one-way transition rule.
 - **The "Current Session" card on the Session Management tab stuck at its placeholders**: the card relied only on session data the page kept in memory. After a reload that data was empty, and the server's `feedback_submitted` status was handled as "completed", which only updates existing data, so the card kept showing "Waiting", created time "--:--:--" and AI summary "Loading…". The 🔄 button just waited a second and fetched nothing. The card now uses the session marked current in `/api/all-sessions`, refetched on reload, on 🔄, after submitting feedback and when the next session arrives. Session history only re-rendered when the number of sessions changed, so it still showed "Waiting" after submitting; it now re-renders when a status changes too. The "Submitted" badge gets the same green style as "Completed" and is retranslated when you switch languages.
 - **After a reload you could submit feedback a second time, and the second submission never reached the AI**: reloading the page reset the frontend's feedback state to "Waiting", so the submit button worked again; Ctrl+Enter only checked that the WebSocket was connected, so it resubmitted even without a reload. The server accepted it, overwrote the stored feedback and moved the session to `completed`, but the MCP call had already returned with the first submission, so nobody read the second one while the UI reported success. The server now ignores submissions once it has feedback, leaving the content and status untouched, and replies "Feedback already submitted, please wait for next MCP call". After a reload the frontend takes the server's status and shows "Submitted", and both the button and Ctrl+Enter are blocked. The next MCP call's new session submits as usual.
+
+### ✅ Tests
+- `conftest.py` — for the whole test run `USERPROFILE`/`HOME` point to a pytest temp directory (inherited by subprocesses), and before and after the tests it checks that `Path.home()`, the language settings file and `feedback_session.TEMP_DIR` are not under the real home directory, failing otherwise; running the tests no longer writes to your own settings.
+- `helpers/mcp_client.py` — before starting the MCP server, `smart_browser_open`/`webbrowser.open` are replaced with stand-ins that only record the URL, so no real browser opens; the subprocess gets `MCP_TEST_MODE=true` and `MCP_WEB_PORT=0` and takes a port from the OS, so a busy port 8765 no longer gets the instance you are using shut down.
+- `test_resource_manager.py` — registered pytest's own PID with `ResourceManager`, whose `atexit` cleanup then terminated pytest on exit, so on Windows the run ended with exit code 15 even when every test passed; it now registers a short-lived subprocess started by a fixture and clears the registry after each test.
+- `test_web_ui.py` — new `test_second_submission_is_ignored`: a second submission must not overwrite the feedback, images or settings or advance the status, and only gets `feedback.alreadySubmitted` back. The existing `test_session_feedback_submission` asserts the session reaches `feedback_submitted` after submitting; it failed before the fix, with the session stuck in `active`, and passes now.
+- Removed three outdated tests of implementations that no longer exist: `test_i18n_with_web_ui_manager` (`WebUIManager.i18n` was removed), `test_session_lifecycle` (`update_status` was replaced by the one-way `next_step`; creating and switching sessions is covered in `test_web_ui.py`) and `test_status_update_resets_timer` (it checked whether an internal Timer object was replaced).
+- The `pytest.ini` header changed from `[tool:pytest]` to `[pytest]`: the whole file used to be ignored, and now `testpaths`, strict markers/config, `asyncio_mode=auto`, `timeout=60` and `filterwarnings` all take effect.
+- The `dev` extras in `pyproject.toml` gain `pytest-timeout>=2.1.0`, so after `pip install -e ".[dev]"` the tests no longer fail with `Unknown config option` for the `timeout` setting.
 
 ---
 
