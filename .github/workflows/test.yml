@@ -27,5 +27,12 @@ jobs:
     - name: Install dependencies
       run: uv sync --dev
 
+    - name: Lint and type check
+      if: matrix.os == 'ubuntu-latest'
+      run: |
+        uv run ruff check .
+        uv run ruff format --check .
+        uv run mypy
+
     - name: Run tests
       run: uv run pytest
