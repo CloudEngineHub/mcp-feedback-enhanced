@@ -562,10 +562,9 @@
         timeContainer.appendChild(timeValue);
         info.appendChild(timeContainer);
 
-        // 歷史會話顯示持續時間
-        if (isHistory) {
-            const duration = this.calculateDisplayDuration(sessionData);
-            
+        // 歷史會話有開始與結束時間才顯示持續時間
+        const duration = isHistory ? this.calculateDisplayDuration(sessionData) : null;
+        if (duration) {
             // 持續時間容器
             const durationContainer = DOMUtils.createElement('div', {
                 className: 'session-duration'
@@ -593,18 +592,18 @@
     };
 
     /**
-     * 計算顯示用的持續時間
+     * 計算顯示用的持續時間：開始用 created_at，結束用 completed_at，
+     * 沒有就用最後一則使用者訊息的時間（送出回饋的時間）；缺一就回傳 null 不顯示
      */
     SessionUIRenderer.prototype.calculateDisplayDuration = function(sessionData) {
-        if (sessionData.duration && sessionData.duration > 0) {
-            return TimeUtils.formatDuration(sessionData.duration);
-        } else if (sessionData.created_at && sessionData.completed_at) {
-            const duration = sessionData.completed_at - sessionData.created_at;
-            return TimeUtils.formatDuration(duration);
-        } else if (sessionData.created_at) {
-            return TimeUtils.estimateSessionDuration(sessionData);
+        const messages = sessionData.user_messages || [];
+        const lastMessage = messages[messages.length - 1];
+        const start = TimeUtils.normalizeTimestamp(sessionData.created_at);
+        const end = TimeUtils.normalizeTimestamp(sessionData.completed_at || (lastMessage && lastMessage.timestamp));
+        if (!start || !end || end < start) {
+            return null;
         }
-        return window.i18nManager ? window.i18nManager.t('sessionManagement.sessionDetails.unknown') : '未知';
+        return TimeUtils.formatDuration(end - start);
     };
 
     /**

@@ -118,8 +118,7 @@
         "hours": "小時",
         "days": "天",
         "ago": "前",
-        "justNow": "剛剛",
-        "about": "約"
+        "justNow": "剛剛"
     },
     "status": {
         "connected": "已連線",

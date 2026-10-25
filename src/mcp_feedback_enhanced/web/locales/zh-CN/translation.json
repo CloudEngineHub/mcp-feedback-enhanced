@@ -113,8 +113,7 @@
         "hours": "小时",
         "days": "天",
         "ago": "前",
-        "justNow": "刚刚",
-        "about": "约"
+        "justNow": "刚刚"
     },
     "status": {
         "connected": "已连接",

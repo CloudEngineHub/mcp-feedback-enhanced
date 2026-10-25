@@ -103,8 +103,7 @@
                 'hours': '小時',
                 'days': '天',
                 'ago': '前',
-                'justNow': '剛剛',
-                'about': '約'
+                'justNow': '剛剛'
             };
 
             return fallbackUnits[unit] || unit;
@@ -385,49 +384,6 @@
             const todayEnd = todayStart + 86400; // 24小時後
             
             return normalizedTimestamp >= todayStart && normalizedTimestamp < todayEnd;
-        },
-
-        /**
-         * 估算會話持續時間（用於歷史會話）- 支援國際化
-         */
-        estimateSessionDuration: function(sessionData) {
-            // 基礎時間 2 分鐘
-            let estimatedMinutes = 2;
-
-            // 根據摘要長度調整
-            if (sessionData.summary) {
-                const summaryLength = sessionData.summary.length;
-                if (summaryLength > 100) {
-                    estimatedMinutes += Math.floor(summaryLength / 50);
-                }
-            }
-
-            // 根據會話 ID 的哈希值增加隨機性
-            if (sessionData.session_id) {
-                const hash = this.simpleHash(sessionData.session_id);
-                const variation = (hash % 5) + 1; // 1-5 分鐘的變化
-                estimatedMinutes += variation;
-            }
-
-            // 限制在合理範圍內
-            estimatedMinutes = Math.max(1, Math.min(estimatedMinutes, 15));
-
-            const aboutText = this.getTimeUnitText('about');
-            const minutesText = this.getTimeUnitText('minutes');
-            return `${aboutText} ${estimatedMinutes} ${minutesText}`;
-        },
-
-        /**
-         * 簡單哈希函數
-         */
-        simpleHash: function(str) {
-            let hash = 0;
-            for (let i = 0; i < str.length; i++) {
-                const char = str.charCodeAt(i);
-                hash = ((hash << 5) - hash) + char;
-                hash = hash & hash; // 轉換為 32 位整數
-            }
-            return Math.abs(hash);
         }
     };
 

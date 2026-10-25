@@ -112,8 +112,7 @@
         "hours": "hours",
         "days": "days",
         "ago": "ago",
-        "justNow": "just now",
-        "about": "about"
+        "justNow": "just now"
     },
     "status": {
         "connected": "Connected",

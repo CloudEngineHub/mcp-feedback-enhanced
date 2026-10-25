@@ -15,6 +15,18 @@
     const TimeUtils = window.MCPFeedback.Utils.Time;
     const StatusUtils = window.MCPFeedback.Utils.Status;
 
+    // /api/all-sessions 回傳毫秒，前端與 WebSocket 狀態用秒；歷史記錄一律存成秒
+    const HISTORY_TIME_FIELDS = ['created_at', 'completed_at', 'saved_at', 'last_activity', 'last_user_interaction'];
+
+    function normalizeHistoryTimes(session) {
+        HISTORY_TIME_FIELDS.forEach(function(field) {
+            if (session[field]) {
+                session[field] = TimeUtils.normalizeTimestamp(session[field]);
+            }
+        });
+        return session;
+    }
+
     /**
      * 會話數據管理器
      */
@@ -219,6 +231,7 @@
         }
 
         // 新增儲存時間戳記
+        normalizeHistoryTimes(sessionData);
         sessionData.saved_at = TimeUtils.getCurrentTimestamp();
 
         // 確保 user_messages 陣列存在（向後相容）
@@ -628,120 +641,76 @@
     };
 
     /**
-     * 從伺服器載入會話歷史（包含實時狀態）
+     * 從伺服器載入會話歷史：合併已存檔的歷史與目前行程的實時會話
+     *
+     * /api/all-sessions 只有目前行程記憶體裡的會話，重開伺服器後就沒有舊會話；
+     * 只用它蓋掉歷史，下一次存檔就會把檔案裡的舊會話洗掉（#177）。
      */
     SessionDataManager.prototype.loadFromServer = function() {
         const self = this;
-
-        // 首先嘗試獲取實時會話狀態
         const lang = window.i18nManager ? window.i18nManager.getCurrentLanguage() : 'zh-TW';
-        fetch('/api/all-sessions?lang=' + lang)
-            .then(function(response) {
-                if (response.ok) {
+
+        function fetchSessions(url) {
+            return fetch(url + '?lang=' + lang)
+                .then(function(response) {
+                    if (!response.ok) {
+                        throw new Error('伺服器回應錯誤: ' + response.status);
+                    }
                     return response.json();
-                } else {
-                    throw new Error('獲取實時會話狀態失敗: ' + response.status);
-                }
-            })
-            .then(function(data) {
-                if (data && Array.isArray(data.sessions)) {
-                    // 使用實時會話狀態
-                    self.sessionHistory = data.sessions;
-                    console.log('📊 從伺服器載入', self.sessionHistory.length, '個實時會話狀態');
-
-                    // 當前會話卡片以伺服器資料為準：重新載入、🔄、送出回饋、新會話進來都會走到這裡
-                    const serverCurrent = data.sessions.find(function(s) { return s.is_current; });
-                    if (serverCurrent) {
-                        const sameSession = self.currentSession && self.currentSession.session_id === serverCurrent.session_id;
-                        self.currentSession = self.normalizeSessionData(
-                            sameSession ? self.mergeSessionData(self.currentSession, serverCurrent) : serverCurrent
-                        );
+                })
+                .then(function(data) {
+                    if (!data || !Array.isArray(data.sessions)) {
+                        throw new Error('回應格式錯誤');
                     }
+                    return data.sessions;
+                })
+                .catch(function(error) {
+                    console.warn('📊 載入會話失敗:', url, error);
+                    return null;
+                });
+        }
 
-                    // 載入完成後進行清理和統計更新
-                    self.cleanupExpiredSessions();
-                    self.updateStats();
+        Promise.all([
+            fetchSessions('/api/load-session-history'),
+            fetchSessions('/api/all-sessions')
+        ]).then(function(results) {
+            const stored = results[0];
+            const live = results[1] || [];
 
-                    // 觸發歷史記錄變更回調
-                    if (self.onHistoryChange) {
-                        self.onHistoryChange(self.sessionHistory);
-                    }
-
-                    // 觸發資料變更回調
-                    if (self.onDataChanged) {
-                        self.onDataChanged();
-                    }
-                } else {
-                    console.warn('📊 實時會話狀態回應格式錯誤，回退到歷史文件');
-                    self.loadFromHistoryFile();
-                }
-            })
-            .catch(function(error) {
-                console.warn('📊 獲取實時會話狀態失敗，回退到歷史文件:', error);
-                self.loadFromHistoryFile();
+            // 依序疊上存檔、頁面記憶體裡的歷史、伺服器實時資料：同一個 session_id 以伺服器為準，
+            // 前面才有的欄位（completed_at、saved_at 等）保留
+            const byId = new Map();
+            (stored || []).concat(self.sessionHistory, live).forEach(function(s) {
+                byId.set(s.session_id, Object.assign({}, byId.get(s.session_id), s));
             });
-    };
+            self.sessionHistory = Array.from(byId.values())
+                .map(normalizeHistoryTimes)
+                .sort(function(a, b) { return (b.created_at || 0) - (a.created_at || 0); });
+            console.log('📊 載入', self.sessionHistory.length, '個會話（存檔', stored ? stored.length : 0, '、實時', live.length, '）');
 
-    /**
-     * 從歷史文件載入會話數據（備用方案）
-     */
-    SessionDataManager.prototype.loadFromHistoryFile = function() {
-        const self = this;
+            // 當前會話卡片以伺服器資料為準：重新載入、🔄、送出回饋、新會話進來都會走到這裡
+            const serverCurrent = live.find(function(s) { return s.is_current; });
+            if (serverCurrent) {
+                const sameSession = self.currentSession && self.currentSession.session_id === serverCurrent.session_id;
+                self.currentSession = self.normalizeSessionData(
+                    sameSession ? self.mergeSessionData(self.currentSession, serverCurrent) : serverCurrent
+                );
+            }
 
-        const lang = window.i18nManager ? window.i18nManager.getCurrentLanguage() : 'zh-TW';
-        fetch('/api/load-session-history?lang=' + lang)
-            .then(function(response) {
-                if (response.ok) {
-                    return response.json();
-                } else {
-                    throw new Error('伺服器回應錯誤: ' + response.status);
-                }
-            })
-            .then(function(data) {
-                if (data && Array.isArray(data.sessions)) {
-                    self.sessionHistory = data.sessions;
-                    console.log('📊 從歷史文件載入', self.sessionHistory.length, '個會話');
+            // 套用保存期限後存回去；存檔讀取失敗時不寫，以免用不完整的清單蓋掉檔案
+            const cleanedCount = self.cleanupExpiredSessions();
+            if (stored && !cleanedCount) {
+                self.saveToServer();
+            }
+            self.updateStats();
 
-                    // 載入完成後進行清理和統計更新
-                    self.cleanupExpiredSessions();
-                    self.updateStats();
-
-                    // 觸發歷史記錄變更回調
-                    if (self.onHistoryChange) {
-                        self.onHistoryChange(self.sessionHistory);
-                    }
-
-                    // 觸發資料變更回調
-                    if (self.onDataChanged) {
-                        self.onDataChanged();
-                    }
-                } else {
-                    console.warn('📊 歷史文件回應格式錯誤:', data);
-                    self.sessionHistory = [];
-                    self.updateStats();
-
-                    if (self.onHistoryChange) {
-                        self.onHistoryChange(self.sessionHistory);
-                    }
-
-                    if (self.onDataChanged) {
-                        self.onDataChanged();
-                    }
-                }
-            })
-            .catch(function(error) {
-                console.warn('📊 從歷史文件載入失敗:', error);
-                self.sessionHistory = [];
-                self.updateStats();
-
-                if (self.onHistoryChange) {
-                    self.onHistoryChange(self.sessionHistory);
-                }
-
-                if (self.onDataChanged) {
-                    self.onDataChanged();
-                }
-            });
+            if (self.onHistoryChange) {
+                self.onHistoryChange(self.sessionHistory);
+            }
+            if (self.onDataChanged) {
+                self.onDataChanged();
+            }
+        });
     };
 
     /**
@@ -885,21 +854,13 @@
 
 
     /**
-     * 清理過期的會話
+     * 清理過期的會話，回傳清掉的數量
      */
     SessionDataManager.prototype.cleanupExpiredSessions = function() {
-        if (!this.settingsManager) {
-            return;
-        }
-
-        const retentionHours = this.settingsManager.get('sessionHistoryRetentionHours', 72);
-        const retentionMs = retentionHours * 60 * 60 * 1000;
-        const now = TimeUtils.getCurrentTimestamp();
-
+        const self = this;
         const originalCount = this.sessionHistory.length;
         this.sessionHistory = this.sessionHistory.filter(function(session) {
-            const sessionAge = now - (session.saved_at || session.completed_at || session.created_at || 0);
-            return sessionAge < retentionMs;
+            return !self.isSessionExpired(session);
         });
 
         const cleanedCount = originalCount - this.sessionHistory.length;
@@ -907,22 +868,21 @@
             console.log('📊 清理了', cleanedCount, '個過期會話');
             this.saveToServer();
         }
+        return cleanedCount;
     };
 
     /**
-     * 檢查會話是否過期
+     * 檢查會話是否過期（時間一律以秒比較）
      */
     SessionDataManager.prototype.isSessionExpired = function(session) {
         if (!this.settingsManager) {
             return false;
         }
 
-        const retentionHours = this.settingsManager.get('sessionHistoryRetentionHours', 72);
-        const retentionMs = retentionHours * 60 * 60 * 1000;
-        const now = TimeUtils.getCurrentTimestamp();
-        const sessionTime = session.saved_at || session.completed_at || session.created_at || 0;
+        const retentionSeconds = this.settingsManager.get('sessionHistoryRetentionHours', 72) * 60 * 60;
+        const sessionTime = TimeUtils.normalizeTimestamp(session.saved_at || session.completed_at || session.created_at) || 0;
 
-        return (now - sessionTime) > retentionMs;
+        return (TimeUtils.getCurrentTimestamp() - sessionTime) > retentionSeconds;
     };
 
     /**
