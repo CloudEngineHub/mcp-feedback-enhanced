@@ -3,7 +3,6 @@
 測試配置和共用 fixtures
 """
 
-import asyncio
 import os
 import shutil
 import tempfile
@@ -52,14 +51,6 @@ def guard_real_home() -> Generator[None, None, None]:
     _assert_home_isolated()
     yield
     _assert_home_isolated()
-
-
-@pytest.fixture(scope="session")
-def event_loop():
-    """創建事件循環 fixture"""
-    loop = asyncio.new_event_loop()
-    yield loop
-    loop.close()
 
 
 @pytest.fixture
