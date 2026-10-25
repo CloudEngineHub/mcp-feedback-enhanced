@@ -2,7 +2,7 @@
 
 This document records all version updates for **MCP Feedback Enhanced**.
 
-## [v2.8.3] - Unreleased - Session Status After Submit and Duplicate Submissions
+## [v2.8.3] - 2026-10-25 - Session Status After Submit and Duplicate Submissions
 
 ### 🌟 Highlights
 - After you submit feedback, session history shows the session as "Submitted" instead of "Processing", and as "Completed" once the next MCP call arrives.
