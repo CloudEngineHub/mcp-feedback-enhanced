@@ -100,8 +100,7 @@
             "message": "Waiting for next MCP call"
         },
         "completed": {
-            "title": "Completed",
-            "message": "Session completed"
+            "title": "Completed"
         }
     },
     "buttons": {

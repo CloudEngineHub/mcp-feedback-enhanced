@@ -100,8 +100,7 @@
             "message": "等待下次 MCP 呼叫"
         },
         "completed": {
-            "title": "已完成",
-            "message": "會話已完成"
+            "title": "已完成"
         }
     },
     "buttons": {
