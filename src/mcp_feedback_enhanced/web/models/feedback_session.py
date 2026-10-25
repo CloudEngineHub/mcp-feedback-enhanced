@@ -555,7 +555,10 @@ class WebFeedbackSession:
             self.images = self._process_images(images)
             self.feedback_result = feedback
 
-            # 進入下一步：等待中 → 已提交反饋
+            # 等待中 →（進行中）→ 已提交反饋：沒有程式把會話推到 ACTIVE，
+            # 所以從 WAITING 提交時先走一步 ACTIVE，照單向流轉進入 FEEDBACK_SUBMITTED
+            if self.status == SessionStatus.WAITING:
+                self.next_step()
             self.next_step("已送出反饋，等待下次 MCP 調用")
 
             self.feedback_completed.set()

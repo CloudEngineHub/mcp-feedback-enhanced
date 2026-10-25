@@ -2,6 +2,16 @@
 
 This document records all version updates for **MCP Feedback Enhanced**.
 
+## [v2.8.3] - Unreleased - Submitted Sessions Show the Right Status
+
+### 🌟 Highlights
+- After you submit feedback, session history shows the session as "Submitted" instead of "Processing", and as "Completed" once the next MCP call arrives.
+
+### 🐛 Bug Fixes
+- **Submitting feedback left the session in `active`**: v2.6.0 (#78) inserted an `active` step between `waiting` and `feedback_submitted`, but nothing ever moves a session into `active`, so the single step taken on submit stopped at `active`. The session kept showing "Processing", the previous session was never marked `completed` on the next call, and the post-submit cleanup timer was not reset. Submitting from `waiting` now steps through `active` to `feedback_submitted`, keeping the one-way transition rule.
+
+---
+
 ## [v2.8.2] - 2026-10-25 - Blocking Cross-Site Writes to /api/*
 
 ### 🌟 Highlights
