@@ -153,13 +153,6 @@ class I18nManager:
         """獲取支援的語言列表"""
         return self._supported_languages.copy()
 
-    def get_language_info(self, language_code: str) -> dict[str, Any]:
-        """獲取語言的元資料信息"""
-        if language_code in self._translations:
-            meta = self._translations[language_code].get("meta", {})
-            return meta if isinstance(meta, dict) else {}
-        return {}
-
     def _get_nested_value(self, data: dict[str, Any], key_path: str) -> str | None:
         """從巢狀字典中獲取值，支援點分隔的鍵路徑"""
         keys = key_path.split(".")
@@ -200,34 +193,6 @@ class I18nManager:
                 pass
 
         return text
-
-    def get_language_display_name(self, language_code: str) -> str:
-        """獲取語言的顯示名稱"""
-        # 直接從當前語言的翻譯中獲取，避免遞歸
-        current_translations = self._translations.get(self._current_language, {})
-
-        # 根據語言代碼構建鍵值
-        lang_key = None
-        if language_code == "zh-TW":
-            lang_key = "languageNames.zhTw"
-        elif language_code == "zh-CN":
-            lang_key = "languageNames.zhCn"
-        elif language_code == "en":
-            lang_key = "languageNames.en"
-        else:
-            # 通用格式
-            lang_key = f"languageNames.{language_code.replace('-', '').lower()}"
-
-        # 直接獲取翻譯，避免調用 self.t() 產生遞歸
-        if lang_key:
-            display_name = self._get_nested_value(current_translations, lang_key)
-            if display_name:
-                return display_name
-
-        # 回退到元資料中的顯示名稱
-        meta = self.get_language_info(language_code)
-        display_name = meta.get("displayName", language_code)
-        return str(display_name) if display_name else language_code
 
     def reload_translations(self) -> None:
         """重新載入所有翻譯檔案（開發時使用）"""
