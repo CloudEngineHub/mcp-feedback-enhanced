@@ -2,7 +2,7 @@
 """
 訊息代碼驗證腳本
 
-驗證後端訊息代碼、前端常量和翻譯文件的一致性。
+驗證後端訊息代碼、前端備用訊息表（utils.js 的 fallbackMessages）和翻譯文件的一致性。
 確保所有訊息代碼都有對應的定義和翻譯。
 
 使用方式：
@@ -35,19 +35,8 @@ def extract_backend_codes():
 
 
 def extract_frontend_codes():
-    """從前端 JavaScript 文件中提取所有訊息代碼"""
+    """從前端 utils.js 的備用訊息表提取所有訊息代碼"""
     codes = set()
-
-    # 讀取 message-codes.js
-    message_codes_js = Path(
-        "src/mcp_feedback_enhanced/web/static/js/modules/constants/message-codes.js"
-    )
-    if message_codes_js.exists():
-        content = message_codes_js.read_text(encoding="utf-8")
-        # 匹配形如 FEEDBACK_SUBMITTED: 'session.feedbackSubmitted'
-        pattern = r'[A-Z_]+:\s*[\'"]([^\'"]+)[\'"]'
-        matches = re.findall(pattern, content)
-        codes.update(matches)
 
     # 讀取 utils.js 中的 fallback 訊息
     utils_js = Path("src/mcp_feedback_enhanced/web/static/js/modules/utils.js")
