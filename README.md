@@ -351,9 +351,6 @@ A: Debug output interference. Set `MCP_DEBUG=false` or remove the environment va
 **Q: Chinese character garbled text**
 A: Fixed in v2.0.3. Update to latest version: `uvx mcp-feedback-enhanced@latest`
 
-**Q: Window disappears or positioning errors in multi-screen environment**
-A: Fixed in v2.1.1. Go to "⚙️ Settings" tab, check "Always show window at primary screen center" to resolve. Especially suitable for T-shaped screen arrangements and other complex multi-screen configurations.
-
 **Q: Image upload failure**
 A: Check file format (PNG/JPG/JPEG/GIF/BMP/WebP). System supports any size image files.
 
