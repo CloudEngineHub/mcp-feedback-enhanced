@@ -384,23 +384,6 @@
     };
 
     /**
-     * 重置統計
-     */
-    ConnectionMonitor.prototype.resetStats = function() {
-        this.reconnectCount = 0;
-        this.messageCount = 0;
-        this.latencyHistory = [];
-        this.currentLatency = 0;
-        this.averageLatency = 0;
-        this.connectionQuality = 'unknown';
-        
-        this.updateDisplay();
-        this.updateSignalStrength();
-        
-        console.log('🔍 連線統計已重置');
-    };
-
-    /**
      * 清理資源
      */
     ConnectionMonitor.prototype.cleanup = function() {
