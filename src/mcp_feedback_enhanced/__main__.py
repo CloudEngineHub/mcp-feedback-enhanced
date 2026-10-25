@@ -50,9 +50,6 @@ def main():
     test_parser.add_argument(
         "--desktop", action="store_true", help="啟動桌面應用程式模式"
     )
-    test_parser.add_argument(
-        "--timeout", type=int, default=60, help="測試超時時間 (秒)"
-    )
 
     # 版本命令
     subparsers.add_parser("version", help="顯示版本資訊")
