@@ -675,21 +675,30 @@
             fetchSessions('/api/all-sessions')
         ]).then(function(results) {
             const stored = results[0];
-            const live = results[1] || [];
+            const live = results[1];
 
             // 依序疊上存檔、頁面記憶體裡的歷史、伺服器實時資料：同一個 session_id 以伺服器為準，
             // 前面才有的欄位（completed_at、saved_at 等）保留
             const byId = new Map();
-            (stored || []).concat(self.sessionHistory, live).forEach(function(s) {
+            (stored || []).concat(self.sessionHistory, live || []).forEach(function(s) {
                 byId.set(s.session_id, Object.assign({}, byId.get(s.session_id), s));
             });
+            // 實時清單讀得到時，不在裡面的未結束會話屬於已結束的伺服器行程，不會再有回饋，標成已關閉
+            if (live) {
+                const liveIds = new Set(live.map(function(s) { return s.session_id; }));
+                byId.forEach(function(s) {
+                    if (!liveIds.has(s.session_id) && !StatusUtils.isCompletedStatus(s.status)) {
+                        s.status = 'closed';
+                    }
+                });
+            }
             self.sessionHistory = Array.from(byId.values())
                 .map(normalizeHistoryTimes)
                 .sort(function(a, b) { return (b.created_at || 0) - (a.created_at || 0); });
-            console.log('📊 載入', self.sessionHistory.length, '個會話（存檔', stored ? stored.length : 0, '、實時', live.length, '）');
+            console.log('📊 載入', self.sessionHistory.length, '個會話（存檔', stored ? stored.length : 0, '、實時', live ? live.length : 0, '）');
 
             // 當前會話卡片以伺服器資料為準：重新載入、🔄、送出回饋、新會話進來都會走到這裡
-            const serverCurrent = live.find(function(s) { return s.is_current; });
+            const serverCurrent = (live || []).find(function(s) { return s.is_current; });
             if (serverCurrent) {
                 const sameSession = self.currentSession && self.currentSession.session_id === serverCurrent.session_id;
                 self.currentSession = self.normalizeSessionData(

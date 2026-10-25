@@ -20,6 +20,7 @@
   --session-completed: #4caf50;
   --session-error: #f44336;
   --session-timeout: #ff5722;
+  --session-closed: #757575;
   
   /* 面板色彩 - 與主要內容區域統一 */
   --panel-bg: var(--bg-secondary);
@@ -649,6 +650,12 @@
   background: rgba(244, 67, 54, 0.2);
   color: var(--session-error);
   border: 1px solid var(--session-error);
+}
+
+.status-badge.closed {
+  background: rgba(117, 117, 117, 0.2);
+  color: var(--session-closed);
+  border: 1px solid var(--session-closed);
 }
 
 .session-info {

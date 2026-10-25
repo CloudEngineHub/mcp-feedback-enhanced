@@ -263,7 +263,7 @@ class I18nManager {
         const statusBadges = document.querySelectorAll('.status-badge');
         statusBadges.forEach(badge => {
             const statusClass = Array.from(badge.classList).find(cls =>
-                ['waiting', 'active', 'feedback_submitted', 'completed', 'error', 'connecting', 'connected', 'disconnected'].includes(cls)
+                ['waiting', 'active', 'feedback_submitted', 'completed', 'error', 'closed', 'connecting', 'connected', 'disconnected'].includes(cls)
             );
             if (statusClass && window.MCPFeedback && window.MCPFeedback.Utils && window.MCPFeedback.Utils.Status) {
                 badge.textContent = window.MCPFeedback.Utils.Status.getStatusText(statusClass);
