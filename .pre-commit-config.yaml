@@ -34,8 +34,8 @@ repos:
         args: [--fix=lf]
 
   # Ruff - Python linting 和 formatting
-  # 版本與 uv.lock 的開發環境一致（uv run ruff、CI 用的都是 uv.lock 裡的版本），
-  # 升級 uv.lock 的 ruff 時一併改這裡
+  # 版本與 pyproject.toml [dependency-groups] dev 釘住的 ruff 一致（uv run ruff、
+  # CI 都用那個版本）；升級 ruff 時兩邊一起改
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.17.2
     hooks:

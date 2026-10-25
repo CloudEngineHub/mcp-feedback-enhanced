@@ -82,8 +82,10 @@ dev = [
     "pytest-timeout>=2.1.0",
     "pytest-cov>=7.0.0",
     "twine>=6.1.0",
-    "ruff>=0.11.0",
-    "mypy>=1.16.0",
+    # uv.lock 不進版控，CI 每次重新解析；lint 工具釘死版本，避免新版改規則讓 CI 無故失敗。
+    # ruff 升級時一併改 .pre-commit-config.yaml 的 ruff-pre-commit rev
+    "ruff==0.17.2",
+    "mypy==2.4.0",
     "pre-commit>=4.0.0",
     "maturin>=1.8.7",
     "setuptools-rust>=1.11.1",
