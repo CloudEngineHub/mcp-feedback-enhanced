@@ -600,15 +600,16 @@
                             </div>
                             <div class="session-actions">
                                 <button class="btn-small" id="viewSessionDetails" data-i18n="sessionManagement.viewDetails">詳細資訊</button>
+                                <!-- 按鈕本身不放 data-i18n：套用翻譯會把圖示與內層 span 整個換成純文字 -->
                                 <button class="btn-small btn-primary" id="copyCurrentSessionContent"
-                                        data-i18n="sessionManagement.copySessionContent"
                                         data-i18n-title="sessionManagement.copySessionContent"
+                                        data-i18n-aria-label="sessionManagement.copySessionContent"
                                         aria-label="複製會話內容">
                                     📋 <span data-i18n="sessionManagement.copySessionContent">複製會話內容</span>
                                 </button>
                                 <button class="btn-small btn-secondary" id="copyCurrentUserContent"
-                                        data-i18n="sessionManagement.copyUserContent"
                                         data-i18n-title="sessionManagement.copyUserContent"
+                                        data-i18n-aria-label="sessionManagement.copyUserContent"
                                         aria-label="複製使用者內容">
                                     📝 <span data-i18n="sessionManagement.copyUserContent">複製使用者內容</span>
                                 </button>
