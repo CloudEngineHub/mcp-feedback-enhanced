@@ -41,6 +41,54 @@ If you are on 2.6.0 or earlier, upgrade:
 uvx mcp-feedback-enhanced@latest
 ```
 
+## Issues fixed in v2.8.2
+
+### Cross-site writes to HTTP `/api/*` endpoints and stored XSS in session details
+
+Reported privately as `GHSA-x999-258q-h9mh`. Thanks to the reporter for the
+detailed write-up.
+
+**Affected:** all versions up to and including 2.8.1
+**Fixed in:** 2.8.2
+**Impact:** a malicious web page could overwrite the UI settings (including the
+auto-submit prompt and timeout, so feedback is submitted automatically over the
+legitimate WebSocket) and plant HTML that runs as script in the Web UI
+
+The v2.6.1 Origin check only covered `/ws`. The state-changing HTTP endpoints
+(`/api/save-settings`, `/api/save-session-history`, `/api/add-user-message`,
+`/api/clear-settings`, `/api/log-level`) checked neither `Origin` nor
+`Content-Type`, and `request.json()` parses the body whatever the declared type.
+A cross-origin `POST` with `Content-Type: text/plain` is a CORS *simple request*:
+the browser sends it without a preflight, so the page cannot read the response
+but the write still happens. Two further problems made this worse:
+
+1. The session details dialog interpolated `session_id`, `status`,
+   `project_directory` and other history fields into HTML without escaping,
+   so a tampered `session_history.json` became stored DOM XSS. The shared
+   `escapeHtml` helper also left quotes unescaped, so values placed in
+   attributes could break out.
+2. When bound to `0.0.0.0` or `::`, `Origin` validation only compared the port,
+   so any site served on the same port number passed — for `/ws` as well.
+
+**Resolution:**
+
+1. Every non-GET/HEAD/OPTIONS request to `/api/*` now goes through one middleware,
+   so endpoints added later are covered too. An `Origin` that fails the same
+   check as `/ws` gets **403**; a `Content-Type` other than `application/json`
+   gets **415**. Requiring JSON forces a cross-origin request into a preflight,
+   which the server never approves. Requests without an `Origin` header
+   (non-browser clients) and desktop WebView origins are still allowed, as for `/ws`.
+2. On a wildcard bind, the `Origin` host and port must now equal the request's
+   `Host` header instead of matching on port alone. Loopback origins on the
+   server's port are still allowed.
+3. All session-history fields in the details dialog are escaped, and the shared
+   `escapeHtml` now escapes `"` and `'`. Stored prompt and custom-sound IDs,
+   which also come from the settings file, are escaped in the same way.
+
+`tests/unit/test_cross_site_writes.py` replays the reported requests against every
+write endpoint and checks the files are left untouched;
+`tests/unit/test_websocket_origin.py` covers the wildcard-bind rule.
+
 ## Issues fixed in v2.6.1
 
 ### Unauthenticated command execution (issue [#219](https://github.com/Minidoracat/mcp-feedback-enhanced/issues/219))
@@ -112,9 +160,10 @@ tool as local, single-user development tooling:
   history) and submit feedback on your behalf. Origin validation stops malicious
   *web pages*, but it cannot stop a local process — an `Origin` header is only
   enforced by browsers.
-- **HTTP `/api/*` endpoints are unauthenticated.** Cross-origin pages cannot read
-  the responses (the same-origin policy does apply to `fetch`), but a local
-  process can.
+- **HTTP `/api/*` endpoints are unauthenticated.** Since v2.8.2, cross-origin pages
+  can no longer *write* through them (state-changing requests need a trusted
+  `Origin` and `Content-Type: application/json`), and they cannot read the
+  responses (the same-origin policy applies to `fetch`). A local process can do both.
 - **`MCP_WEB_HOST=0.0.0.0` is unsafe.** It exposes the above to anyone who can
   reach the port. Use SSH port forwarding instead.
 

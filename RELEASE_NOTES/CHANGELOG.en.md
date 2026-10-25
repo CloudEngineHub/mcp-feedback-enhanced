@@ -2,6 +2,25 @@
 
 This document records all version updates for **MCP Feedback Enhanced**.
 
+## [v2.8.2] - Unreleased - Blocking Cross-Site Writes to /api/*
+
+### 🌟 Highlights
+- Cross-origin pages can no longer rewrite settings, session history or the log level through `/api/*`, so they cannot turn on auto-submit for you.
+- Every field in the session details dialog is escaped, so tampered session history is no longer executed as HTML.
+
+### 🔒 Security
+- **Cross-site writes to HTTP `/api/*` and stored XSS in session details fixed**: reported privately as `GHSA-x999-258q-h9mh`. The v2.6.1 Origin check only covered `/ws`; `/api/save-settings`, `/api/save-session-history`, `/api/add-user-message`, `/api/clear-settings` and `/api/log-level` checked neither `Origin` nor `Content-Type`, and `request.json()` parses the body whatever the declared type. A cross-origin `POST` with `Content-Type: text/plain` is a CORS simple request that browsers send without a preflight: the page cannot read the response, but the write happens. An attacker could enable auto-submit and swap the prompt so the legitimate WebSocket connection submits feedback on its own.
+  - Every non-GET/HEAD/OPTIONS request to `/api/*` now goes through one middleware, so endpoints added later are covered too: an `Origin` that fails the same check as `/ws` gets **403**, and a `Content-Type` other than `application/json` gets **415**, which forces cross-origin requests into a preflight the server never approves. Non-browser clients without an `Origin` header and desktop WebView origins are still allowed.
+  - When bound to `0.0.0.0` or `::`, the `Origin` host:port must now equal the request's `Host` header instead of matching on port alone; previously any site on the same port passed, for `/ws` as well.
+  - The session details dialog interpolated `session_id`, `status`, `project_directory` and other fields into HTML unescaped, so a tampered `session_history.json` became stored DOM XSS; all of them are escaped now. The shared `escapeHtml` left quotes unescaped, letting attribute values break out; it now escapes `"` and `'` too. Stored prompt and custom-sound IDs, which also come from the settings file, are escaped the same way.
+  - Thanks to the reporter for the detailed analysis.
+
+### ✅ Tests
+- `test_cross_site_writes.py` — replays the reported cross-origin requests against every write endpoint and checks for 403/415 with the files unchanged; same-origin JSON, desktop WebView and Origin-less requests still succeed; on a `0.0.0.0` bind only an `Origin` equal to `Host` passes, and `/ws` follows the same rule. Settings files are always written under `tmp_path`.
+- `test_websocket_origin.py` — the case that locked in "port-only match on 0.0.0.0" now checks the `Host` header, with new cases for `::`, IPv6, and a missing or malformed `Host`.
+
+---
+
 ## [v2.8.1] - 2026-09-07 - Desktop Fallback Follow-ups
 
 ### 🌟 Highlights

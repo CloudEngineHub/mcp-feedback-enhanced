@@ -2,6 +2,25 @@
 
 本文件记录了 **MCP Feedback Enhanced** 的所有版本更新内容。
 
+## [v2.8.2] - 未发布 - 挡下跨站写入 /api/*
+
+### 🌟 版本亮点
+- 跨站网页不能再通过 `/api/*` 改写设置、会话历史或日志级别，也就无法替用户开启自动提交。
+- 会话详情弹窗的字段全部转义，被篡改的会话历史不会再被当成 HTML 执行。
+
+### 🔒 安全修复
+- **修复跨站写入 HTTP `/api/*` 与会话详情的 stored XSS**：私下报告的 `GHSA-x999-258q-h9mh`。v2.6.1 的 Origin 检查只覆盖 `/ws`；`/api/save-settings`、`/api/save-session-history`、`/api/add-user-message`、`/api/clear-settings`、`/api/log-level` 既不看 Origin 也不看 Content-Type，`request.json()` 又不管声明的类型照样解析。`Content-Type: text/plain` 的跨站 POST 是 CORS simple request，浏览器不做 preflight 直接发出：网页读不到响应，但写入会生效。攻击者可借此打开自动提交、换掉提示词，让合法的 WebSocket 连接自动发送反馈。
+  - 所有访问 `/api/*` 的非 GET／HEAD／OPTIONS 请求改走同一个 middleware，之后新增的端点也自动受保护：Origin 没通过与 `/ws` 相同的检查返回 **403**；Content-Type 不是 `application/json` 返回 **415**，迫使跨站请求先 preflight，而服务器不批准任何 CORS。未带 Origin 的非浏览器客户端与桌面 WebView 来源照旧放行。
+  - 绑定 `0.0.0.0` 或 `::` 时，Origin 的 host:port 必须等于请求的 Host header，不再只比较端口；旧版任何同端口的外站都能通过，`/ws` 也一样。
+  - 会话详情弹窗原本直接把 `session_id`、`status`、`project_directory` 等字段插进 HTML，被篡改的 `session_history.json` 会变成 stored DOM XSS；现在全部转义。共用的 `escapeHtml` 原本不转义引号，放进属性的值可以逃逸出去，改为连 `"`、`'` 一起转义；同样来自设置文件的提示词 ID、自定义音效 ID 也一并转义。
+  - 感谢报告者提供详尽的分析。
+
+### ✅ 测试
+- `test_cross_site_writes.py` —— 对每个写入端点重放报告中的跨站请求，确认返回 403／415 且文件不变；同源 JSON、桌面 WebView、未带 Origin 的请求照常成功；绑定 `0.0.0.0` 时 Origin 等于 Host 才放行，`/ws` 也走同一条规则。设置文件一律写在 `tmp_path`。
+- `test_websocket_origin.py` —— 原本把「绑定 0.0.0.0 只比较端口」锁成预期的用例改为 Host header 比对，新增 `::`、IPv6、Host 缺失或格式错误的用例。
+
+---
+
 ## [v2.8.1] - 2026-09-07 - 桌面回退的收尾修正
 
 ### 🌟 版本亮点
