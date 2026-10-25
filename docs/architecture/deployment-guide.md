@@ -456,11 +456,3 @@ uvx mcp-feedback-enhanced@latest version
 ```bash
 cp ~/.config/mcp-feedback-enhanced/ui_settings.json.backup ~/.config/mcp-feedback-enhanced/ui_settings.json
 ```
-
----
-
-**版本**: 2.4.3
-**最後更新**: 2025年6月14日
-**維護者**: Minidoracat
-**新功能**: 音效通知系統、會話管理重構、智能記憶功能、一鍵複製
-**完成**: 架構文檔體系已更新完成，包含 v2.4.3 版本的完整技術文檔和部署指南。

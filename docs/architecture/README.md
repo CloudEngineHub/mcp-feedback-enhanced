@@ -1,20 +1,18 @@
 # MCP Feedback Enhanced 架構文檔
 
-> ⚠️ **這些架構文件大多描述 v2.6.0 之前的架構，自 v2.6.1 起未全面更新。**
+> ⚠️ **這些架構文件只有部分段落對照過目前的實作。**
 >
 > 主要差異：**命令執行功能已於 v2.6.1 完整移除**（見 [#219](https://github.com/Minidoracat/mcp-feedback-enhanced/issues/219) 與 [SECURITY.md](../../SECURITY.md)）。
 > 文件中所有關於 `run_command`、命令輸出、自動執行命令、命令分頁、`command_logs` 欄位的敘述**皆已不適用**。
 >
-> 目前維護範圍聚焦在安全與相容性，因此這些文件暫不全面同步更新，保留作為歷史參考。
->
-> 例外：v2.8.5 已對照實作修正下列段落，其餘段落仍可能過時：
+> 下列段落已在 2026-10-25 對照 main（commit `34c1637`）的程式碼修正，以該時間點的實作為準；未列出的段落是較早版本留下的描述，可能過時：
 > - [部署指南](./deployment-guide.md)：安裝、環境偵測、各環境部署（本地／SSH／WSL）、命令列、環境變數、設定檔、運維與升級
 > - [API 參考文檔](./api-reference.md)：MCP 工具、HTTP、WebSocket、內部 API、狀態碼與安全限制
-> - [交互流程文檔](./interaction-flows.md)：調用流程、環境偵測、埠管理、連線建立、自動提交、提示詞、會話管理、音效、WebSocket 訊息、前端回饋狀態與超時處理；「連接斷線處理」未更新
-> - [組件詳細說明](./component-details.md)：各層的類別、方法、狀態、檔案路徑與流程圖；重連與會話統計的細節未更新
-> - [系統架構總覽](./system-overview.md)：只修正了環境偵測與資料存放位置
+> - [交互流程文檔](./interaction-flows.md)：調用流程、環境偵測、埠管理、連線建立、自動提交、提示詞、會話管理、音效、WebSocket 訊息、前端回饋狀態、連接斷線處理與超時處理
+> - [組件詳細說明](./component-details.md)：各層的類別、方法、狀態、檔案路徑與流程圖，含重連、連線監控與會話統計
+> - [系統架構總覽](./system-overview.md)：Web UI 與桌面模式、環境偵測、資料存放位置、前端模組清單
 >
-> 各文件結尾的「版本 2.4.3」標示沒有更新。
+> 文中標示的「v2.4.3 新增」等字樣是功能最初加入的版本，不代表文件內容的版本。
 
 ## 📋 文檔索引
 
@@ -51,8 +49,9 @@ MCP Feedback Enhanced 採用**單一活躍會話 + 持久化 Web UI**的創新�
 - **後端**: Python 3.11+, FastAPI, FastMCP
 - **前端**: HTML5, JavaScript ES6+, WebSocket, Web Audio API（v2.4.3）
 - **通信**: WebSocket, HTTP REST API
-- **存儲**: 伺服器端 `~/.config/mcp-feedback-enhanced/`：`ui_settings.json`（設定、提示詞、自訂音效、輸入框高度）、`session_history.json`（會話歷史）；瀏覽器 localStorage 只存介面語言、通知設定與分頁追蹤
+- **存儲**: 伺服器端 `~/.config/mcp-feedback-enhanced/`：`ui_settings.json`（設定、提示詞、自訂音效、輸入框高度）、`session_history.json`（會話歷史）；瀏覽器 localStorage 只存介面語言與通知設定
 - **部署**: uvicorn, 跨平台支援
+- **桌面模式**: `MCP_DESKTOP_MODE=true` 時以 Tauri 桌面殼載入同一個 Web 介面
 
 ### 🎯 快速導航
 
@@ -94,13 +93,3 @@ MCP Feedback Enhanced 採用**單一活躍會話 + 持久化 Web UI**的創新�
 - **一鍵複製**: 專案路徑和會話ID點擊複製
 - **設定持久化**: 用戶偏好自動保存
 - **國際化支援**: 複製提示支援多語言
-
----
-
-**版本**: 2.4.3
-**最後更新**: 2025年6月14日
-**維護者**: Minidoracat
-**架構類型**: Web-Only 四層架構
-**v2.4.3 新功能**: 音效通知系統、會話管理重構、智能記憶功能、一鍵複製
-**歷史功能**: 提示詞管理、自動提交、會話管理、語系切換優化
-**文檔狀態**: ✅ 已完成 v2.4.3 全面更新，包含所有新功能的詳細說明和架構分析
