@@ -16,25 +16,16 @@
 
 
 class MessageCodes:
-    """訊息代碼常量類"""
+    """訊息代碼常量類（只保留後端實際會送給前端的代碼）"""
 
     # ========== 系統相關 ==========
     SYSTEM_CONNECTION_ESTABLISHED = "system.connectionEstablished"
-    SYSTEM_CONNECTION_LOST = "system.connectionLost"
-    SYSTEM_CONNECTION_RECONNECTING = "system.connectionReconnecting"
-    SYSTEM_CONNECTION_RECONNECTED = "system.connectionReconnected"
-    SYSTEM_CONNECTION_FAILED = "system.connectionFailed"
-    SYSTEM_WEBSOCKET_ERROR = "system.websocketError"
-    SYSTEM_WEBSOCKET_READY = "system.websocketReady"
     SYSTEM_MEMORY_PRESSURE = "system.memoryPressure"
     SYSTEM_SHUTDOWN = "system.shutdown"
-    SYSTEM_PROCESS_KILLED = "system.processKilled"
-    SYSTEM_HEARTBEAT_STOPPED = "system.heartbeatStopped"
 
     # ========== 會話相關 ==========
     SESSION_NO_ACTIVE = "session.noActiveSession"
     SESSION_CREATED = "session.created"
-    SESSION_UPDATED = "session.updated"
     SESSION_EXPIRED = "session.expired"
     SESSION_TIMEOUT = "session.timeout"
     SESSION_CLEANED = "session.cleaned"
@@ -42,51 +33,23 @@ class MessageCodes:
     SESSION_FEEDBACK_ALREADY_SUBMITTED = "feedback.alreadySubmitted"
     SESSION_USER_MESSAGE_RECORDED = "session.userMessageRecorded"
     SESSION_HISTORY_SAVED = "session.historySaved"
-    SESSION_HISTORY_LOADED = "session.historyLoaded"
     SESSION_MANUAL_CLEANUP = "session.manualCleanup"
     SESSION_ERROR_CLEANUP = "session.errorCleanup"
 
     # ========== 設定相關 ==========
     SETTINGS_SAVED = "settingsAPI.saved"
-    SETTINGS_LOADED = "settingsAPI.loaded"
     SETTINGS_CLEARED = "settingsAPI.cleared"
     SETTINGS_SAVE_FAILED = "settingsAPI.saveFailed"
     SETTINGS_LOAD_FAILED = "settingsAPI.loadFailed"
     SETTINGS_CLEAR_FAILED = "settingsAPI.clearFailed"
     SETTINGS_SET_FAILED = "settingsAPI.setFailed"
-    SETTINGS_INVALID_VALUE = "settingsAPI.invalidValue"
     SETTINGS_LOG_LEVEL_UPDATED = "settingsAPI.logLevelUpdated"
     SETTINGS_INVALID_LOG_LEVEL = "settingsAPI.invalidLogLevel"
 
     # ========== 錯誤相關 ==========
-    ERROR_GENERIC = "error.generic"
-    ERROR_NETWORK = "error.network"
-    ERROR_SERVER = "error.server"
-    ERROR_TIMEOUT = "error.timeout"
-    ERROR_INVALID_INPUT = "error.invalidInput"
-    ERROR_OPERATION_FAILED = "error.operationFailed"
     ERROR_USER_MESSAGE_FAILED = "error.userMessageFailed"
     ERROR_GET_SESSIONS_FAILED = "error.getSessionsFailed"
     ERROR_GET_LOG_LEVEL_FAILED = "error.getLogLevelFailed"
-    ERROR_RESOURCE_CLEANUP = "error.resourceCleanup"
-    ERROR_PROCESSING = "error.processing"
-
-    # ========== 檔案相關 ==========
-    FILE_UPLOAD_SUCCESS = "file.uploadSuccess"
-    FILE_UPLOAD_FAILED = "file.uploadFailed"
-    FILE_SIZE_TOO_LARGE = "file.sizeTooLarge"
-    FILE_TYPE_NOT_SUPPORTED = "file.typeNotSupported"
-    FILE_PROCESSING = "file.processing"
-    FILE_REMOVED = "file.removed"
-
-    # ========== 提示詞相關 ==========
-    PROMPT_SAVED = "prompt.saved"
-    PROMPT_DELETED = "prompt.deleted"
-    PROMPT_APPLIED = "prompt.applied"
-    PROMPT_IMPORT_SUCCESS = "prompt.importSuccess"
-    PROMPT_IMPORT_FAILED = "prompt.importFailed"
-    PROMPT_EXPORT_SUCCESS = "prompt.exportSuccess"
-    PROMPT_VALIDATION_FAILED = "prompt.validationFailed"
 
 
 # 向後兼容的映射表（從舊的 key 到新的常量名稱）
@@ -100,11 +63,6 @@ LEGACY_KEY_MAPPING = {
     "MANUAL_CLEANUP": "SESSION_MANUAL_CLEANUP",
     "ERROR_CLEANUP": "SESSION_ERROR_CLEANUP",
     "SHUTDOWN_CLEANUP": "SYSTEM_SHUTDOWN",
-    "PROCESS_KILLED": "SYSTEM_PROCESS_KILLED",
-    "RESOURCE_CLEANUP_ERROR": "ERROR_RESOURCE_CLEANUP",
-    "HEARTBEAT_STOPPED": "SYSTEM_HEARTBEAT_STOPPED",
-    "PROCESSING_ERROR": "ERROR_PROCESSING",
-    "WEBSOCKET_READY": "SYSTEM_WEBSOCKET_READY",
     # main_routes.py 的舊 key
     "no_active_session": "SESSION_NO_ACTIVE",
     "websocket_connected": "SYSTEM_CONNECTION_ESTABLISHED",
