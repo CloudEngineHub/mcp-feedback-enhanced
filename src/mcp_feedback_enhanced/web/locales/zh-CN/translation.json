@@ -40,6 +40,7 @@
         },
         "submitSuccess": "反馈提交成功！",
         "submittedWaiting": "已送出反馈，等待下次 MCP 调用...",
+        "completed": "会话已完成",
         "waitingForUser": "等待用户反馈...",
         "alreadySubmitted": "反馈已提交，请等待下次 MCP 调用",
         "processingFeedback": "正在处理中，请稍候",
@@ -176,6 +177,7 @@
         "timeoutWarning": "会话即将超时",
         "timeoutDescription": "由于长时间无响应，会话已超时。界面将在 3 秒后自动关闭。",
         "closing": "正在关闭...",
+        "triggered": "会话已超时，程序即将关闭",
         "label": "会话超时:"
     },
     "autoRefresh": {
@@ -293,7 +295,10 @@
             "noData": "没有当前会话数据",
             "noUserMessages": "当前会话没有用户消息记录",
             "copyFailed": "复制失败，请重试",
-            "dataManagerNotInit": "数据管理器未初始化"
+            "dataManagerNotInit": "数据管理器未初始化",
+            "copySuccess": "当前会话内容已复制到剪贴板",
+            "userContentCopySuccess": "当前用户内容已复制到剪贴板",
+            "copyFailedManual": "复制失败，请手动复制"
         }
     },
     "connectionMonitor": {
@@ -326,7 +331,8 @@
             "sessions": "会话",
             "reconnects": "重连"
         },
-        "unknown": "未知"
+        "unknown": "未知",
+        "offline": "网络已断开"
     },
     "dynamic": {
         "aiSummary": "测试 Web UI 功能\n\n🎯 **功能测试项目：**\n- Web UI 服务器启动和运行\n- WebSocket 实时通讯\n- 反馈提交功能\n- 图片上传和预览\n- 智能 Ctrl+V 图片粘贴\n- 多语言界面功能\n\n📋 **测试步骤：**\n1. 测试图片上传（拖拽、选择文件、剪贴板）\n2. 在文本框内按 Ctrl+V 测试智能粘贴\n3. 尝试切换语言（繁中/简中/英文）\n4. 提交反馈和图片\n\n请测试这些功能并提供反馈！"
@@ -517,7 +523,12 @@
         "connectionReconnecting": "正在重新连接...",
         "connectionReconnected": "已重新连接",
         "connectionFailed": "连接失败",
-        "websocketError": "WebSocket 错误"
+        "websocketError": "WebSocket 错误",
+        "memoryPressure": "内存压力清理",
+        "shutdown": "系统关闭",
+        "processKilled": "进程已终止",
+        "heartbeatStopped": "心跳已停止",
+        "websocketReady": "WebSocket 已就绪"
     },
     "session": {
         "noActiveSession": "没有活跃会话",
@@ -538,6 +549,7 @@
         "saveFailed": "保存失败",
         "loadFailed": "加载失败",
         "clearFailed": "清除失败",
+        "setFailed": "设置失败",
         "invalidValue": "无效的设置值",
         "logLevelUpdated": "日志等级已更新",
         "invalidLogLevel": "无效的日志等级，必须是 DEBUG, INFO, WARN, ERROR 之一"
@@ -565,14 +577,21 @@
         "server": "服务器错误",
         "timeout": "操作超时",
         "invalidInput": "输入无效",
-        "operationFailed": "操作失败"
+        "operationFailed": "操作失败",
+        "userMessageFailed": "添加用户消息失败",
+        "getSessionsFailed": "获取会话列表失败",
+        "getLogLevelFailed": "获取日志等级失败",
+        "command": "命令执行错误",
+        "resourceCleanup": "资源清理错误",
+        "processing": "处理过程错误"
     },
     "commandStatus": {
         "executing": "正在执行命令...",
         "completed": "命令执行完成",
         "failed": "命令执行失败",
         "outputReceived": "已接收输出",
-        "invalid": "无效的命令"
+        "invalid": "无效的命令",
+        "error": "命令执行错误"
     },
     "utils": {
         "copySuccess": "已复制到剪贴板",

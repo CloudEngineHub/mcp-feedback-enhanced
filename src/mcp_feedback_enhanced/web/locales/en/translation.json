@@ -40,6 +40,7 @@
         },
         "submitSuccess": "Feedback submitted successfully!",
         "submittedWaiting": "Feedback submitted, waiting for next MCP call...",
+        "completed": "Session completed",
         "waitingForUser": "Waiting for user feedback...",
         "alreadySubmitted": "Feedback already submitted, please wait for next MCP call",
         "processingFeedback": "Processing, please wait",
@@ -89,6 +90,7 @@
         "timeout": "Connection Timeout (seconds)",
         "autorefresh": "Auto Refresh",
         "debug": "Debug Mode",
+        "autoCommitNoPrompt": "Please select a prompt as auto-submit content first",
         "sessionTimeoutTitle": "⏱️ Session Timeout Settings",
         "sessionTimeoutEnable": "Enable Session Timeout",
         "sessionTimeoutEnableDesc": "When enabled, the session will automatically close after the specified time",
@@ -175,6 +177,7 @@
         "timeoutWarning": "Session is about to timeout",
         "timeoutDescription": "Due to prolonged inactivity, the session has timed out. The interface will automatically close in 3 seconds.",
         "closing": "Closing...",
+        "triggered": "Session timed out, the program will close",
         "label": "Session Timeout:"
     },
     "autoRefresh": {
@@ -292,7 +295,10 @@
             "noData": "No current session data",
             "noUserMessages": "Current session has no user message records",
             "copyFailed": "Copy failed, please try again",
-            "dataManagerNotInit": "Data manager not initialized"
+            "dataManagerNotInit": "Data manager not initialized",
+            "copySuccess": "Current session content copied to clipboard",
+            "userContentCopySuccess": "Current user content copied to clipboard",
+            "copyFailedManual": "Copy failed, please copy manually"
         }
     },
     "connectionMonitor": {
@@ -325,7 +331,8 @@
             "sessions": "Sessions",
             "reconnects": "Reconnects"
         },
-        "unknown": "Unknown"
+        "unknown": "Unknown",
+        "offline": "Network disconnected"
     },
     "stats": {
         "detailedStats": "Detailed Statistics"

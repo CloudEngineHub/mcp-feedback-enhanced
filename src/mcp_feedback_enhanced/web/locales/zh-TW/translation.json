@@ -45,6 +45,7 @@
         },
         "submitSuccess": "回饋提交成功！",
         "submittedWaiting": "已送出反饋，等待下次 MCP 調用...",
+        "completed": "會話已完成",
         "waitingForUser": "等待用戶回饋...",
         "alreadySubmitted": "回饋已提交，請等待下次 MCP 調用",
         "processingFeedback": "正在處理中，請稍候",
@@ -299,7 +300,10 @@
             "noData": "沒有當前會話數據",
             "noUserMessages": "當前會話沒有用戶消息記錄",
             "copyFailed": "複製失敗，請重試",
-            "dataManagerNotInit": "數據管理器未初始化"
+            "dataManagerNotInit": "數據管理器未初始化",
+            "copySuccess": "當前會話內容已複製到剪貼板",
+            "userContentCopySuccess": "當前用戶內容已複製到剪貼板",
+            "copyFailedManual": "複製失敗，請手動複製"
         }
     },
     "connectionMonitor": {
@@ -332,7 +336,8 @@
             "sessions": "會話",
             "reconnects": "重連"
         },
-        "unknown": "未知"
+        "unknown": "未知",
+        "offline": "網路已斷開"
     },
     "dynamic": {
         "aiSummary": "測試 Web UI 功能\n\n🎯 **功能測試項目：**\n- Web UI 服務器啟動和運行\n- WebSocket 即時通訊\n- 回饋提交功能\n- 圖片上傳和預覽\n- 智能 Ctrl+V 圖片貼上\n- 多語言介面功能\n\n📋 **測試步驟：**\n1. 測試圖片上傳（拖拽、選擇檔案、剪貼簿）\n2. 在文字框內按 Ctrl+V 測試智能貼上\n3. 嘗試切換語言（繁中/簡中/英文）\n4. 提交回饋和圖片\n\n請測試這些功能並提供回饋！"
