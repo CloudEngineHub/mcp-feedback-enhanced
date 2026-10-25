@@ -457,10 +457,8 @@
 
             // 預設設定（優化後的值）
             DEFAULT_HEARTBEAT_FREQUENCY: 60000,  // 從 30 秒調整為 60 秒，減少網路負載
-            DEFAULT_TAB_HEARTBEAT_FREQUENCY: 10000,  // 從 5 秒調整為 10 秒，減少標籤頁檢查頻率
             DEFAULT_RECONNECT_DELAY: 1000,
             MAX_RECONNECT_ATTEMPTS: 5,
-            TAB_EXPIRED_THRESHOLD: 60000,  // 從 30 秒調整為 60 秒，與心跳頻率保持一致
 
             // 訊息類型
             MESSAGE_SUCCESS: 'success',

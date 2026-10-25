@@ -34,9 +34,6 @@
         this.onError = options.onError || null;
         this.onConnectionStatusChange = options.onConnectionStatusChange || null;
 
-        // 標籤頁管理器引用
-        this.tabManager = options.tabManager || null;
-
         // 連線監控器引用
         this.connectionMonitor = options.connectionMonitor || null;
 
@@ -280,7 +277,6 @@
                 }
                 break;
             case 'heartbeat_response':
-                this.handleHeartbeatResponse();
                 // 記錄 pong 時間到監控器
                 if (this.connectionMonitor) {
                     this.connectionMonitor.recordPong();
@@ -320,15 +316,6 @@
                     self.pendingSubmission = null;
                 }
             }, 100);
-        }
-    };
-
-    /**
-     * 處理心跳回應
-     */
-    WebSocketManager.prototype.handleHeartbeatResponse = function() {
-        if (this.tabManager) {
-            this.tabManager.updateLastActivity();
         }
     };
 
@@ -375,7 +362,6 @@
 
                 self.send({
                     type: 'heartbeat',
-                    tabId: self.tabManager ? self.tabManager.getTabId() : null,
                     timestamp: Date.now()
                 });
             }

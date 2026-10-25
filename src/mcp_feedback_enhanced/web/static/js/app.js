@@ -3,7 +3,7 @@
  * =================================
  *
  * 模組化重構版本，整合所有功能模組
- * 依賴模組載入順序：utils -> tab-manager -> websocket-manager -> connection-monitor ->
+ * 依賴模組載入順序：utils -> websocket-manager -> connection-monitor ->
  *                  session-manager -> image-handler -> settings-manager -> ui-manager -> app
  */
 
@@ -23,7 +23,6 @@
         this.currentSessionId = null;
 
         // 模組管理器
-        this.tabManager = null;
         this.webSocketManager = null;
         this.connectionMonitor = null;
         this.sessionManager = null;
@@ -196,7 +195,6 @@
 
                         // 7. 初始化 WebSocket 管理器
                         self.webSocketManager = new window.MCPFeedback.WebSocketManager({
-                            tabManager: self.tabManager,
                             connectionMonitor: self.connectionMonitor,
                             onOpen: function() {
                                 self.handleWebSocketOpen();
@@ -1811,10 +1809,6 @@
 
         if (this.autoSubmitManager) {
             this.autoSubmitManager.stop();
-        }
-
-        if (this.tabManager) {
-            this.tabManager.cleanup();
         }
 
         if (this.webSocketManager) {
