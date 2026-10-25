@@ -26,7 +26,7 @@ help: ## Show this help message
 	@echo "  test                 Run tests"
 	@echo "  test-cov             Run tests with coverage"
 	@echo "  test-fast            Run tests without slow tests"
-	@echo "  test-func            Run functional tests (standard)"
+	@echo "  test-func            Run Web UI test with the project .venv (continuous)"
 	@echo "  test-web             Run Web UI tests (continuous)"
 	@echo "  test-desktop-func    Run desktop application functional tests"
 	@echo "  clean                Clean up cache and temporary files"
@@ -100,8 +100,8 @@ test-fast: ## Run tests without slow tests
 	uv run pytest -m "not slow"
 
 # 功能測試命令
-test-func: ## Run functional tests (standard)
-	uv run python -m mcp_feedback_enhanced test
+test-func: ## Run Web UI test with the project .venv (continuous)
+	uv run python -m mcp_feedback_enhanced test --web
 
 test-web: ## Run Web UI tests (continuous)
 	uvx --no-cache --with-editable . mcp-feedback-enhanced test --web
