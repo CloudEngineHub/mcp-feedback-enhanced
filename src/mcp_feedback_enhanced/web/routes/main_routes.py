@@ -789,14 +789,3 @@ async def handle_websocket_message(manager: "WebUIManager", session, data: dict)
 
     else:
         debug_log(f"未知的消息類型: {message_type}")
-
-
-async def _delayed_server_stop(manager: "WebUIManager"):
-    """延遲停止服務器"""
-    import asyncio
-
-    await asyncio.sleep(5)  # 等待 5 秒讓前端有時間關閉
-    from ..main import stop_web_ui
-
-    stop_web_ui()
-    debug_log("Web UI 服務器已因用戶超時而停止")
