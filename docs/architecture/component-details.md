@@ -116,7 +116,7 @@ mcp: Any = FastMCP(SERVER_NAME)
 async def interactive_feedback(
     project_directory: Annotated[str, Field(description="專案目錄路徑")] = ".",
     summary: Annotated[str, Field(description="AI 工作完成的摘要說明")] = "我已完成了您請求的任務。",
-    timeout: Annotated[int, Field(description="等待用戶回饋的超時時間（秒）...")] = DEFAULT_FEEDBACK_TIMEOUT,  # 600
+    timeout: Annotated[int, Field(description="等待使用者回饋的逾時時間（秒）。有效範圍 60–86400；超出範圍會由伺服器端鉗制，因為使用者需要實際可用的回饋時間。")] = DEFAULT_FEEDBACK_TIMEOUT,  # 600
 ) -> list[TextContent | ImageContent]:
     # 1. 環境偵測（is_remote_environment／is_wsl_environment，只寫 debug log）
     # 2. 專案目錄不存在時改用目前工作目錄；timeout 經 resolve_feedback_timeout() 鉗制
@@ -173,7 +173,7 @@ flowchart TD
 ```python
 # 成功返回
 [
-    TextContent(type="text", text="=== 用戶回饋 ===\n..."),               # create_feedback_text()
+    TextContent(type="text", text="=== 使用者回饋 ===\n..."),             # create_feedback_text()
     ImageContent(type="image", data="<base64>", mime_type="image/png"),  # process_images()，可選
 ]
 
@@ -196,7 +196,7 @@ class I18nManager:
         self._locales_dir = Path(__file__).parent / "web" / "locales"
 
     def t(self, key: str, **kwargs) -> str:
-        """翻譯函數，支援巢狀鍵值、舊鍵值相容與 str.format 參數替換"""
+        """翻譯函數，支援巢狀鍵值與 str.format 參數替換；找不到時改查回退語言，再找不到回傳鍵本身"""
 
 def get_i18n_manager() -> I18nManager: ...
 ```
@@ -250,7 +250,6 @@ class WebUIManager:
         self.app = FastAPI(title="MCP Feedback Enhanced")
         self.current_session: WebFeedbackSession | None = None
         self.sessions: dict[str, WebFeedbackSession] = {}  # 保留用於向後兼容
-        self.global_active_tabs: dict[str, dict] = {}
         self.server_thread: threading.Thread | None = None
         self.desktop_app_instance: Any = None
 
@@ -268,7 +267,7 @@ def get_web_ui_manager() -> WebUIManager:
 - **服務器控制**: 在背景執行緒啟動 uvicorn（`start_server`），以及停止服務（`stop`）
 - **瀏覽器控制**: 智能開啟瀏覽器，避免重複視窗
 - **資源管理**: 自動清理過期資源和錯誤處理
-- **狀態同步**: 維護全局狀態和標籤頁追蹤
+- **活躍標籤頁偵測**: `_check_active_tabs()` 以目前會話 WebSocket 的心跳或 ping 判斷是否已有開著的頁面
 
 **關鍵方法**：
 ```python
@@ -387,13 +386,7 @@ class SessionStatus(Enum):
 
 ### models/ - 數據模型層
 
-**FeedbackResult 型別**：
-```python
-class FeedbackResult(TypedDict):
-    interactive_feedback: str
-    images: list[dict]
-```
-只定義型別並由 `models/__init__.py` 匯出，目前沒有其他程式使用；轉成 MCP 格式由 `server.py` 的 `create_feedback_text()` 與 `process_images()` 處理。
+`web/models/__init__.py` 只匯出 `WebFeedbackSession`、`SessionStatus`、`CleanupReason`，都定義在 `feedback_session.py`；沒有獨立的回饋結果型別，`wait_for_feedback()` 直接回傳 dict，轉成 MCP 格式由 `server.py` 的 `create_feedback_text()` 與 `process_images()` 處理。
 
 **CleanupReason 枚舉**：
 ```python
@@ -593,14 +586,14 @@ graph TB
 **v2.4.3 重構亮點**：
 - **從側邊欄遷移到頁籤**: 解決瀏覽器相容性問題
 - **伺服器端歷史存儲**: 存在 `session_history.json`，保存期限可選 24、72、168、720 小時（預設 72）
-- **隱私控制**: 三級用戶訊息記錄設定（完整/基本/停用）
+- **隱私控制**: 「使用者訊息記錄」的隱私等級分三級（完整記錄／基本統計／停用記錄）
 - **數據管理**: 匯出和清理功能
 - **UI 重新設計**: 專門的渲染器和詳情彈窗
 
 **核心功能**：
 - **SessionManager**: 當前會話的狀態管理和控制
 - **SessionDataManager**: 會話歷史記錄、統計數據，以及透過 `/api/load-session-history`、`/api/save-session-history` 讀寫伺服器端歷史。`updateStats()` 從會話歷史計算 `todayCount`（今日建立的會話數）與 `averageDuration`（這些會話的平均持續時間，秒）；持續時間與歷史卡片同一個定義 `TimeUtils.calculateSessionDuration()`：從 `created_at` 到 `completed_at`，沒有結束時間時用最後一則用戶訊息的時間，算不出來的會話不列入，也排除 24 小時以上的值
-- **SessionUIRenderer**: 專門的 UI 渲染器，負責會話列表和狀態顯示。`renderStats()` 更新會話頁籤的「今日會話」與「今日平均時長」；浮動統計面板（`#statsPanel`）的「會話」是歷史清單筆數（`renderSessionHistory()` 寫入 `#statsSessionCount`），「狀態」跟著當前會話（`renderCurrentSession()` 寫入 `#statsSessionStatus`）
+- **SessionUIRenderer**: 專門的 UI 渲染器，負責會話列表和狀態顯示。`renderStats()` 更新會話頁籤的「今日會話」與「今日平均持續時間」；浮動統計面板（`#statsPanel`）的「會話」是歷史清單筆數（`renderSessionHistory()` 寫入 `#statsSessionCount`），「狀態」跟著當前會話（`renderCurrentSession()` 寫入 `#statsSessionStatus`）
 - **SessionDetailsModal**: 會話詳情彈窗，提供完整的會話資訊查看
 
 #### 音效通知模組群組 (audio/) - v2.4.3 新增
@@ -860,8 +853,8 @@ WebSocketManager.prototype.send = function(data) {
 
 **connection-monitor.js - 連線監控**：
 - `ConnectionMonitor` 從 `WebSocketManager` 的 `onConnectionStatusChange` 接收連線狀態，更新右上角狀態與統計面板
-- `reconnectAttempt`：這次斷線後的重連次數，顯示在右上角「重連中... (第N次)」，恢復連線時歸零
-- `reconnectCount`：整頁累計的重連次數，顯示在統計面板「重連」
+- `reconnectAttempt`：這次斷線後的重連次數，顯示在右上角「重新連線中... (第N次)」，恢復連線時歸零
+- `reconnectCount`：整頁累計的重連次數，顯示在統計面板「重新連線」
 - 連線時間：連線時 `startMonitoring()` 記下開始時間並每秒更新顯示；斷線時 `stopMonitoring()` 停止並顯示 `--:--`，重連成功後從 0 起算
 - 延遲：送出心跳時 `recordPing()`、收到 `heartbeat_response` 時 `recordPong()`，以時間差計算延遲並保留最近 20 筆平均，換算成訊號強度
 
@@ -985,16 +978,16 @@ class ErrorHandler:
     @staticmethod
     def format_user_error(error, error_type=None, context=None,
                           include_technical=False) -> str:
-        """產生給使用者看的錯誤文字，語言跟隨 I18nManager 目前語言"""
+        """產生給使用者看的錯誤文字，語言跟隨 I18nManager 目前語言；
+        「操作／檔案／技術細節」前綴依語言取自 _CONTEXT_LABELS"""
 
     @staticmethod
-    def get_error_solutions(error_type: ErrorType) -> list[str]:
-        """取得解決建議"""
+    def get_current_language() -> str:
+        """取 I18nManager 目前語言，失敗時用 MCP_LANGUAGE，預設 zh-TW"""
 
     @staticmethod
-    def create_error_response(error, context=None, error_type=None,
-                              include_solutions=True, for_user=True) -> dict[str, Any]:
-        """產生標準化的錯誤回應 dict"""
+    def get_error_message(error_type: ErrorType) -> str:
+        """依目前語言取 _ERROR_MESSAGES 中的錯誤類型訊息，缺語言時用 zh-TW"""
 ```
 
 **典型用法**（`server.py` 的 `interactive_feedback`）：先 `log_error_with_context()` 取得錯誤 ID，再用 `format_user_error(e, include_technical=False)` 產生文字，包成 `TextContent` 回給 AI。
@@ -1036,19 +1029,16 @@ class ResourceManager:
     def create_temp_dir(self, suffix: str = "", prefix: str = "mcp_",
                         dir: str | None = None) -> str: ...
 
-    def register_process(self, process: subprocess.Popen | int,
-                         description: str = "", auto_cleanup: bool = True) -> int:
-        """註冊進程追蹤，回傳 PID"""
-
     def cleanup_temp_files(self, max_age: int | None = None) -> int: ...
-    def cleanup_processes(self, force: bool = False) -> int: ...
+    def cleanup_temp_dirs(self) -> int: ...
+    def cleanup_file_handles(self) -> int: ...
 
     def cleanup_all(self, force: bool = False) -> dict[str, int]:
-        """依序清理文件句柄、進程、臨時文件、臨時目錄，回傳各類清理數量"""
+        """依序清理文件句柄、全部臨時文件、臨時目錄，回傳各類清理數量"""
 ```
 
 **運作方式**：
-- 初始化時以 `atexit` 註冊 `cleanup_all`，並啟動每 300 秒執行一次的自動清理執行緒（清除超過 1 小時的臨時文件、檢查進程狀態）
+- 初始化時以 `atexit` 註冊 `cleanup_all`，並啟動每 300 秒執行一次的自動清理執行緒（清除超過 1 小時的臨時文件）；另向 `MemoryMonitor` 註冊清理回呼，記憶體達 `critical` 以上時清理臨時文件、臨時目錄與文件句柄
 - 實際呼叫端：`server.py` 的 `save_feedback_to_file()` 用模組函式 `create_temp_file(suffix=".json", prefix="feedback_")` 把每次回饋存成臨時 JSON
 
 ### web/utils/browser.py - 瀏覽器控制
@@ -1104,9 +1094,9 @@ class PortManager:
 
 **埠的決定順序**（`WebUIManager.__init__`）：`MCP_WEB_PORT` 環境變數（1024–65535，或 `0` 表示由系統分配）> 預設 8765，再交給 `find_free_port_enhanced()`；`MCP_TEST_MODE=true` 時不清理占用程序。`start_server()` 啟動前若埠又被占用，會以 `auto_cleanup=False` 再找一次；uvicorn 啟動時遇到「位址已在使用中」則改用下一個埠，最多重試 5 次。
 
-### web/utils/session_cleanup_manager.py - 會話清理
+### 會話清理流程
 
-這個檔案定義了 `SessionCleanupManager`（`CleanupPolicy`：`max_idle_time` 1800 秒、`cleanup_interval` 300 秒），但目前 src 內沒有任何地方建立它的實例，不會執行。實際的會話清理由下列路徑負責：
+沒有獨立的會話清理管理器；會話清理由下列路徑負責：
 
 ```mermaid
 graph TD
@@ -1131,13 +1121,13 @@ graph TD
 
 **過期判斷**（`is_expired`）：空閒超過 `max_idle_time`（預設 1800 秒）、狀態為 `EXPIRED`，或處於 `ERROR`／`TIMEOUT` 超過 300 秒。會話建立時即排定計時器（`auto_cleanup_delay` 預設 3600 秒），進入 `FEEDBACK_SUBMITTED` 時重新排定。
 
-### web/utils/compression_*.py - 壓縮工具
+### web/utils/compression_config.py - 壓縮工具
 
 **實際作用範圍**：
-- **HTTP Gzip**: `WebUIManager._setup_compression_middleware()` 加上 FastAPI 的 `GZipMiddleware`，`minimum_size` 取自 `CompressionConfig`（預設 1000 bytes，可用 `MCP_GZIP_MIN_SIZE` 調整）
+- **HTTP Gzip**: `WebUIManager._setup_compression_middleware()` 加上 FastAPI 的 `GZipMiddleware`，`minimum_size` 與 `compresslevel` 取自 `CompressionConfig`（預設 1000 bytes 與 6，可用 `MCP_GZIP_MIN_SIZE`、`MCP_GZIP_LEVEL` 調整）
 - **快取標頭**: 同一個中介層依 `CompressionConfig.get_cache_headers()` 設定：`/static/` 快取 3600 秒（`MCP_STATIC_CACHE_AGE`），`/api/` 預設不快取，其餘回應 `no-cache`；`/ws` 等路徑排除
 - **統計**: `CompressionManager.update_stats()` 累計請求數與壓縮比
-- **沒有**圖片壓縮，也不壓縮 WebSocket 訊息；`compression_monitor.py` 的 `CompressionMonitor` 目前沒有呼叫端
+- **沒有**圖片壓縮，也不壓縮 WebSocket 訊息
 
 ## 🧪 測試架構
 
@@ -1146,15 +1136,24 @@ graph TD
 ```
 tests/
 ├── unit/                    # 單元測試
+│   ├── test_cross_site_writes.py
+│   ├── test_desktop_fallback.py
 │   ├── test_error_handler.py
+│   ├── test_feedback_timeout.py
+│   ├── test_gzip_compression.py
+│   ├── test_i18n_core.py
+│   ├── test_image_content.py
 │   ├── test_memory_monitor.py
+│   ├── test_message_code_translations.py
+│   ├── test_no_command_execution.py
 │   ├── test_port_manager.py
 │   ├── test_resource_manager.py
 │   ├── test_session_cleanup.py
+│   ├── test_tool_contract.py
+│   ├── test_user_notice.py
 │   ├── test_web_ui.py
-│   ├── test_wsl_detection.py
 │   ├── test_websocket_origin.py
-│   └── ...                  # 其餘見 tests/unit/
+│   └── test_wsl_detection.py
 ├── integration/             # 集成測試
 │   ├── test_mcp_workflow.py
 │   ├── test_web_integration.py
@@ -1162,7 +1161,8 @@ tests/
 │   └── test_i18n_integration.py
 ├── helpers/                 # 測試輔助工具
 │   ├── mcp_client.py
-│   └── test_utils.py
+│   ├── test_utils.py
+│   └── manual_tooltip_test.html
 ├── fixtures/                # 測試數據
 │   └── test_data.py
 └── conftest.py             # pytest 配置
@@ -1192,29 +1192,31 @@ tests/
 
 ### 代碼品質工具
 
-**Ruff (Linting + Formatting)**：
-- 代碼風格檢查和自動修復
-- 安全漏洞檢測
-- 導入排序和優化
-- 複雜度控制
+**Ruff (Linting + Formatting)**：設定在 `pyproject.toml` 的 `[tool.ruff]`
+- 目標 `py311`、行長 88；規則集含 E/W/F、`I`（import 排序）、B、UP、`S`（bandit 安全規則）、PL、RUF 等
+- `C90` 雖在規則集內，但 `C901`（函式複雜度）列在 ignore，實際不檢查
+- 本機：`make lint`（`ruff check .`）、`make format-check`（`ruff format . --check`）
 
-**mypy (類型檢查)**：
-- 靜態類型檢查
-- 漸進式類型註解
-- 第三方庫類型支援
-- 錯誤預防
+**mypy (類型檢查)**：設定在 `pyproject.toml` 的 `[tool.mypy]`
+- 檢查 `src` 與 `tests`，`check_untyped_defs = true`，`disallow_untyped_defs = false`（漸進式）
+- `fastmcp`、`mcp`、`psutil`、`uvicorn` 等第三方模組設為 `ignore_missing_imports`
+- 本機：`make type-check`（`uv run mypy`）
+
+**CI（`.github/workflows/test.yml` 的 Tests workflow）**：
+- 在 ubuntu 執行 `uv run ruff check .`、`uv run ruff format --check .`、`uv run mypy`
+- 在 ubuntu 與 windows 執行 `uv run pytest`
 
 **pre-commit (提交檢查)**：
-- 通用檔案檢查：行尾空白、檔尾換行、合併衝突標記、YAML/TOML/JSON 語法、大檔案
-- `ruff --fix` 與 `ruff-format`
-- mypy 與 bandit hook 目前在設定檔中註解停用
+- 通用檔案檢查（pre-commit-hooks v5.0.0）：行尾空白、檔尾換行、合併衝突標記、YAML/TOML/JSON 語法、大檔案（1000 KB）、檔名大小寫衝突、可執行檔 shebang、統一 LF 行尾
+- ruff-pre-commit v0.17.2 的 `ruff-check`（`--fix`）與 `ruff-format`
+- mypy 與 bandit hook 目前在設定檔中註解停用（mypy 由 CI 執行）
 - 不執行測試
 
 ### 依賴管理
 
 **uv (現代 Python 包管理)**：
 - 快速依賴解析
-- 鎖定文件管理
+- `uv sync --dev` 安裝 `[dependency-groups]` 的開發依賴（ruff、mypy、pre-commit 等）；`uv.lock` 列在 `.gitignore`，不進版本控制
 - 開發環境隔離
 - 跨平台支援
 
