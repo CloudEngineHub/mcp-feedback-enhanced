@@ -13,8 +13,8 @@ import json
 from pathlib import Path
 
 import pytest
+from fastapi import WebSocketDisconnect
 from fastapi.testclient import TestClient
-from starlette.websockets import WebSocketDisconnect
 
 
 SETTINGS = {"language": "zh-TW", "autoSubmitEnabled": False}

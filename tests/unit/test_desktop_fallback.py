@@ -60,9 +60,12 @@ def desktop_env(monkeypatch, web_ui_manager, test_project_dir):
     )
 
     opened: list[str] = []
-    monkeypatch.setattr(
-        webbrowser, "open", lambda url, *a, **k: opened.append(url) or True
-    )
+
+    def fake_open(url, *_args, **_kwargs):
+        opened.append(url)
+        return True
+
+    monkeypatch.setattr(webbrowser, "open", fake_open)
     return web_ui_manager, str(test_project_dir), opened
 
 
@@ -172,9 +175,7 @@ def desktop_app(monkeypatch):
     """
     from mcp_feedback_enhanced.desktop_app import desktop_app as module
 
-    fake_asyncio = types.ModuleType("asyncio")
-    fake_asyncio.__dict__.update(vars(asyncio))
-    fake_asyncio.sleep = _no_sleep
+    fake_asyncio = types.SimpleNamespace(**{**vars(asyncio), "sleep": _no_sleep})
     monkeypatch.setattr(module, "asyncio", fake_asyncio)
     return module
 

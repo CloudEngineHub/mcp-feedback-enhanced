@@ -26,7 +26,7 @@ _home_patch = pytest.MonkeyPatch()
 @pytest.hookimpl(trylast=True)  # 等 tmpdir 外掛先建好 _tmp_path_factory
 def pytest_configure(config: pytest.Config) -> None:
     """整個測試階段把 USERPROFILE／HOME 指到 pytest 暫存目錄，子行程一併繼承"""
-    home = config._tmp_path_factory.mktemp("home", numbered=False)  # type: ignore[attr-defined]
+    home = config._tmp_path_factory.mktemp("home", numbered=False)
     _home_patch.setenv("USERPROFILE", str(home))
     _home_patch.setenv("HOME", str(home))
 
