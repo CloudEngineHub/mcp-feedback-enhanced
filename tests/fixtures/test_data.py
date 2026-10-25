@@ -39,7 +39,6 @@ class TestData:
             "message": "新會話已創建，正在更新頁面內容",
             "session_info": SAMPLE_SESSION,
         },
-        "feedback_received": {"type": "feedback_received", "message": "回饋已成功提交"},
         "status_update": {
             "type": "status_update",
             "status_info": {
