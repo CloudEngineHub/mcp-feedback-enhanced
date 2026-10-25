@@ -2,7 +2,7 @@
 
 This document records all version updates for **MCP Feedback Enhanced**.
 
-## [v2.8.2] - Unreleased - Blocking Cross-Site Writes to /api/*
+## [v2.8.2] - 2026-10-25 - Blocking Cross-Site Writes to /api/*
 
 ### 🌟 Highlights
 - Cross-origin pages can no longer rewrite settings, session history or the log level through `/api/*`, so they cannot turn on auto-submit for you.
