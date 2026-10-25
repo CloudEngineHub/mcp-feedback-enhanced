@@ -12,6 +12,24 @@ from typing import Any
 from .test_utils import PerformanceTimer
 
 
+# 伺服器子行程不得開真的瀏覽器：前端載入後會把預設設定寫進家目錄。
+# 開瀏覽器的兩條路（webbrowser.open、WSL 的 cmd.exe）都經過 smart_browser_open，
+# 一併換成只把網址記到（已隔離的）家目錄的替身，再照常啟動伺服器。
+BROWSER_LOG_NAME = "webbrowser-open.log"
+_SERVER_BOOTSTRAP = f"""
+import pathlib, runpy, webbrowser
+from mcp_feedback_enhanced.web.utils import browser
+
+def _fake_open(url, *args, **kwargs):
+    with open(pathlib.Path.home() / {BROWSER_LOG_NAME!r}, "a", encoding="utf-8") as f:
+        f.write(url + "\\n")
+    return True
+
+webbrowser.open = browser.smart_browser_open = _fake_open
+runpy.run_module("mcp_feedback_enhanced", run_name="__main__", alter_sys=True)
+"""
+
+
 class SimpleMCPClient:
     """簡化的 MCP 客戶端模擬器"""
 
@@ -26,8 +44,8 @@ class SimpleMCPClient:
     async def start_server(self) -> bool:
         """啟動 MCP 服務器"""
         try:
-            # 使用正確的 uv run 命令啟動 MCP 服務器
-            cmd = ["uv", "run", "python", "-m", "mcp_feedback_enhanced"]
+            # 使用 uv run 啟動 MCP 服務器（先換掉開瀏覽器的函式）
+            cmd = ["uv", "run", "python", "-c", _SERVER_BOOTSTRAP]
 
             self.server_process = subprocess.Popen(
                 cmd,
