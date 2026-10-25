@@ -2,6 +2,31 @@
 
 This document records all version updates for **MCP Feedback Enhanced**.
 
+## [v2.8.4] - Unreleased - Session History Retention and Message Handling Fixes
+
+### 🌟 Highlights
+- Session history keeps earlier sessions after the MCP server restarts (#177); sessions a previous process left waiting for feedback show as "Disconnected".
+- Session durations in history now come from the real creation and end times, and the retention period actually removes expired records.
+- Durations in the English UI get spaces and singular/plural units (`7 seconds`, `1 minute 5 seconds`).
+- A new-session notice is no longer swallowed by a heartbeat reply, so the page switches to the new session.
+- After switching languages, the current session card and session history change to the new language immediately.
+
+### 🐛 Bug Fixes
+- **Session history kept only the most recent session (#177)**: the history list was built only from `/api/all-sessions`, which holds just the sessions in the current server process's memory. After restarting the MCP server, older sessions disappeared, and the next save overwrote them in `session_history.json`. History now merges the saved records with the live sessions (server data wins for the same session, no duplicates), applies the retention period, and saves the result back.
+- **After a server restart, sessions left by the previous process showed "Waiting" indefinitely**: once history was merged with the saved records, a session that had not received feedback when its server process ended stayed in history as "Waiting" until the retention period expired, even though it can never receive feedback. When history loads and the live session list is read successfully, sessions that are not in it and have not finished are now marked "Disconnected" and saved back; submitted, completed, timed-out, error and expired sessions are left as they are, and nothing is marked if the live list cannot be read.
+- **"About N minutes" in session history was an estimate**: without an end time, the duration was a fixed number derived from a hash of the session ID. Durations are now computed only from the session's creation and end time (falling back to the feedback submission time); if either is missing, no duration is shown.
+- **Durations in the English UI ran together**: there were no spaces between numbers, units and parts, so session history and "Today's Average Duration" showed `7seconds` or `1minutes5seconds`. English now puts spaces between the number and unit and between parts, and uses the singular for a count of 1 (`1 minute 5 seconds`); Chinese stays compact (`7秒`, `1分鐘5秒`).
+- **Session history retention had no effect**: timestamps were a mix of seconds and milliseconds, so the 72-hour retention effectively never expired anything. Comparisons now use seconds consistently, and records past the retention period are removed.
+- **New-session notice could be swallowed by a heartbeat reply, leaving the page on the old session**: the frontend ran every WebSocket message through one shared 50ms debounce, so of two messages arriving within 50ms only the second was handled; a `session_updated` or `status_update` followed by `heartbeat_response` was dropped and the page never switched to the new session. Only the full-snapshot messages `status_update` and `session_updated` are now debounced, each by type, so bursts of the same type still collapse to the last one; `notification` and all other types are handled immediately, and different types no longer swallow each other.
+- **Current session card did not follow a language switch**: prefixes such as "Session ID / Created Time / Project / AI Summary" and the duration units in history stayed in the previous language until a status change or reload. They now switch immediately.
+
+### ✅ Tests
+- `conftest.py` — removed the session-scoped `event_loop` fixture: no test used it, and pytest-asyncio 1.x no longer treats it as the event loop.
+- Added `pytest-cov` to the dev dependencies: `make test-cov` from the README used to fail with `unrecognized arguments: --cov=...` (exit 4); after `uv sync --dev` it now prints the coverage table.
+- New `Tests` workflow: runs the full pytest suite on ubuntu-latest and windows-latest for pushes and PRs to main; `test_resource_manager.py` now spawns its child process with `sys.executable` instead of relying on `python` being on PATH.
+
+---
+
 ## [v2.8.3] - 2026-10-25 - Session Status After Submit and Duplicate Submissions
 
 ### 🌟 Highlights
