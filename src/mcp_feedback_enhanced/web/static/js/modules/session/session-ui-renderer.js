@@ -24,6 +24,11 @@
     // 調試模式標誌 - 生產環境應設為 false
     const DEBUG_MODE = false;
 
+    // 卡片上的前綴與單位是 JS 組好的字串，語言換了就要重繪
+    function currentLanguage() {
+        return window.i18nManager ? window.i18nManager.getCurrentLanguage() : '';
+    }
+
     /**
      * 會話 UI 渲染器
      */
@@ -55,7 +60,8 @@
         this.lastRenderedData = {
             stats: null,
             historyKey: null,
-            currentSessionId: null
+            currentSessionId: null,
+            currentSessionLanguage: null
         };
 
         this.initializeElements();
@@ -145,6 +151,7 @@
 
         // 檢查數據是否有變化
         if (!isNewSession && self.lastRenderedData.currentSessionId === sessionData.session_id &&
+            self.lastRenderedData.currentSessionLanguage === currentLanguage() &&
             self.currentSessionData &&
             self.currentSessionData.status === sessionData.status &&
             self.currentSessionData.summary === sessionData.summary) {
@@ -175,6 +182,7 @@
 
         // 更新快取
         this.lastRenderedData.currentSessionId = sessionData.session_id;
+        this.lastRenderedData.currentSessionLanguage = currentLanguage();
         this.currentSessionData = sessionData;
 
         // 如果是新會話，重置活躍時間定時器
@@ -388,7 +396,7 @@
     };
 
     function historyKeyOf(sessionHistory) {
-        return sessionHistory.map(function(s) { return s.session_id + ':' + s.status; }).join('|');
+        return currentLanguage() + '|' + sessionHistory.map(function(s) { return s.session_id + ':' + s.status; }).join('|');
     }
 
     /**
@@ -399,7 +407,7 @@
 
         const self = this;
 
-        // 會話 ID 與狀態都沒變才跳過；只比長度會讓「已提交 → 已完成」這類狀態變化不重繪
+        // 語言、會話 ID 與狀態都沒變才跳過；只比長度會讓「已提交 → 已完成」這類狀態變化不重繪
         const historyKey = historyKeyOf(sessionHistory);
         if (self.lastRenderedData.historyKey === historyKey) {
             return;
@@ -806,7 +814,8 @@
         this.lastRenderedData = {
             stats: null,
             historyKey: null,
-            currentSessionId: null
+            currentSessionId: null,
+            currentSessionLanguage: null
         };
 
         if (DEBUG_MODE) console.log('🎨 SessionUIRenderer 清理完成');
