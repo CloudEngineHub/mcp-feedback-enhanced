@@ -4,8 +4,7 @@
  *
  * 模組化重構版本，整合所有功能模組
  * 依賴模組載入順序：utils -> tab-manager -> websocket-manager -> connection-monitor ->
- *                  session-manager -> image-handler -> settings-manager -> ui-manager ->
- *                  auto-refresh-manager -> app
+ *                  session-manager -> image-handler -> settings-manager -> ui-manager -> app
  */
 
 (function() {
