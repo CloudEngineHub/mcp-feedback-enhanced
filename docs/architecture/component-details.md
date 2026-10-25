@@ -24,7 +24,7 @@ graph TB
     end
 
     subgraph "第二層：Web UI 管理層"
-        MANAGER[WebUIManager<br/>單例管理器<br/>會話控制]
+        MANAGER[WebUIManager<br/>全域單一實例<br/>會話控制]
         SESSION[WebFeedbackSession<br/>會話模型<br/>狀態管理]
         MODELS[models/<br/>數據模型<br/>類型定義]
     end
@@ -51,10 +51,9 @@ graph TB
     end
 
     subgraph "工具層 - Web 工具"
-        BROWSER[utils/browser.py<br/>瀏覽器控制<br/>智能開啟]
-        PORT[utils/port_manager.py<br/>埠管理<br/>動態分配]
-        COMPRESS[utils/compression_*.py<br/>壓縮工具<br/>數據優化]
-        CLEANUP[utils/session_cleanup_manager.py<br/>清理管理<br/>自動回收]
+        BROWSER[web/utils/browser.py<br/>瀏覽器控制<br/>依環境開啟]
+        PORT[web/utils/port_manager.py<br/>埠管理<br/>動態分配]
+        COMPRESS[web/utils/compression_config.py<br/>Gzip 與快取標頭<br/>HTTP 中介層]
     end
 
     %% 主要數據流
@@ -71,11 +70,12 @@ graph TB
     %% 新功能模組
     JS -->|載入模組| PROMPT_MODULES
     JS -->|載入模組| SESSION_MODULES
-    PROMPT_MODULES -->|提示詞管理| WS
-    SESSION_MODULES -->|會話追蹤| WS
+    PROMPT_MODULES -->|設定存檔 API| ROUTES
+    SESSION_MODULES -->|歷史記錄 API| ROUTES
 
     %% 支援服務
-    I18N -->|翻譯服務| ROUTES
+    I18N -->|錯誤訊息語言| ERROR
+    ROUTES -->|翻譯 API| LOCALES
     I18N -->|語言包| LOCALES
     DEBUG -->|日誌記錄| SERVER
     MODELS -->|數據結構| SESSION
@@ -86,8 +86,7 @@ graph TB
     RESOURCE -->|資源管理| SESSION
     BROWSER -->|開啟瀏覽器| MANAGER
     PORT -->|埠分配| MAIN
-    COMPRESS -->|數據壓縮| ROUTES
-    CLEANUP -->|清理會話| SESSION
+    COMPRESS -->|Gzip 中介層| MAIN
 
     %% 樣式定義
     classDef layer1 fill:#e3f2fd
@@ -100,7 +99,7 @@ graph TB
     class MANAGER,SESSION,MODELS layer2
     class MAIN,ROUTES,WS layer3
     class HTML,JS,CSS,LOCALES,PROMPT_MODULES,SESSION_MODULES layer4
-    class ERROR,MEMORY,RESOURCE,BROWSER,PORT,COMPRESS,CLEANUP tools
+    class ERROR,MEMORY,RESOURCE,BROWSER,PORT,COMPRESS tools
 ```
 
 ## 🔧 第一層：MCP 服務層
@@ -110,33 +109,30 @@ graph TB
 **架構實現**：
 ```python
 # 基於 FastMCP 的服務器實現
-mcp = FastMCP("mcp-feedback-enhanced")
+SERVER_NAME = "互動式回饋收集 MCP"
+mcp: Any = FastMCP(SERVER_NAME)
 
 @mcp.tool()
 async def interactive_feedback(
     project_directory: Annotated[str, Field(description="專案目錄路徑")] = ".",
     summary: Annotated[str, Field(description="AI 工作完成的摘要說明")] = "我已完成了您請求的任務。",
-    timeout: Annotated[int, Field(description="等待用戶回饋的超時時間（秒）")] = 600,
-) -> list:
-    """
-    收集用戶的互動回饋，支援文字和圖片
-    """
-    # 1. 參數驗證和環境檢測
-    # 2. 啟動 Web UI 管理器
-    # 3. 創建或更新會話
-    # 4. 等待用戶回饋
-    # 5. 處理和返回結果
+    timeout: Annotated[int, Field(description="等待用戶回饋的超時時間（秒）...")] = DEFAULT_FEEDBACK_TIMEOUT,  # 600
+) -> list[TextContent | ImageContent]:
+    # 1. 環境偵測（is_remote_environment／is_wsl_environment，只寫 debug log）
+    # 2. 專案目錄不存在時改用目前工作目錄；timeout 經 resolve_feedback_timeout() 鉗制
+    # 3. launch_web_feedback_ui()：建立會話、啟動 Web 服務、開啟介面並等待回饋
+    # 4. save_feedback_to_file() 把回饋存成臨時 JSON
+    # 5. 以 create_feedback_text() 與 process_images() 組成回傳內容
 ```
 
 **主要職責**：
 - **MCP 協議實現**: 基於 FastMCP 框架的標準實現
 - **工具註冊**: 註冊 `interactive_feedback` 和 `get_system_info` 工具
-- **環境檢測**: 自動識別 Local/SSH Remote/WSL 環境
+- **環境偵測**: `is_remote_environment()` 與 `is_wsl_environment()` 的結果只寫進 debug log 與 `get_system_info` 的回傳，不改變流程；WSL 判斷另用於選擇瀏覽器開啟方式（見 `web/utils/browser.py`）
 - **生命週期管理**: 控制 Web UI 的啟動、運行和清理
 - **接口層**: 作為 AI 助手與系統的主要通信接口
 
 **核心特性**：
-- 支援 MCP 2.0+ 協議標準
 - 異步處理提升性能
 - 完整的錯誤處理和日誌記錄
 - 參數類型驗證和文檔生成
@@ -146,42 +142,46 @@ async def interactive_feedback(
 **工具執行流程**：
 ```mermaid
 flowchart TD
-    START[AI 助手調用] --> VALIDATE[參數驗證]
-    VALIDATE --> ENV[環境檢測]
-    ENV --> MANAGER[獲取 WebUIManager]
-    MANAGER --> SESSION[創建/更新會話]
-    SESSION --> LAUNCH[啟動 Web 服務]
-    LAUNCH --> BROWSER[智能開啟瀏覽器]
-    BROWSER --> WAIT[等待用戶回饋]
-    WAIT --> TIMEOUT{超時檢查}
-    TIMEOUT -->|未超時| FEEDBACK[接收回饋]
-    TIMEOUT -->|超時| CLEANUP[清理資源]
-    FEEDBACK --> PROCESS[處理回饋數據]
-    PROCESS --> SAVE[保存回饋記錄]
-    SAVE --> RETURN[返回結果給 AI]
-    CLEANUP --> ERROR[返回超時錯誤]
-    ERROR --> RETURN
+    START[AI 助手調用] --> VALIDATE[整理參數<br/>目錄不存在改用 cwd<br/>timeout 鉗制在 60 到 86400 秒]
+    VALIDATE --> MANAGER[get_web_ui_manager]
+    MANAGER --> SESSION[create_session<br/>建立新會話]
+    SESSION --> LAUNCH[伺服器未啟動時 start_server]
+    LAUNCH --> MODE{桌面模式?}
+    MODE -->|是| DESKTOP[launch_desktop_app]
+    MODE -->|否| BROWSER[smart_open_browser]
+    DESKTOP -->|啟動失敗| BROWSER
+    DESKTOP -->|成功| WAIT[wait_for_feedback]
+    BROWSER --> WAIT
+    WAIT --> RESULT{結果}
+    RESULT -->|收到回饋| SAVE[save_feedback_to_file<br/>存成臨時 JSON]
+    RESULT -->|逾時或介面關閉| NORESP[回傳使用者未回應<br/>請 AI 結束任務]
+    SAVE --> PROCESS[create_feedback_text<br/>process_images]
+    PROCESS --> RETURN[返回結果給 AI]
+    NORESP --> RETURN
 
     style START fill:#e3f2fd
     style RETURN fill:#e8f5e8
-    style ERROR fill:#ffebee
+    style NORESP fill:#fff3e0
 ```
 
 **參數說明**：
-- `project_directory`: 專案目錄路徑，用於命令執行上下文
+- `project_directory`: 專案目錄路徑，顯示在介面上；路徑不存在時改用伺服器目前工作目錄
 - `summary`: AI 工作摘要，顯示給用戶確認
-- `timeout`: 等待超時時間，預設 600 秒（10 分鐘）
+- `timeout`: 等待超時時間，預設 600 秒（10 分鐘），伺服器端鉗制在 60–86400 秒
 
 **返回格式**：
 ```python
 # 成功返回
 [
-    TextContent(type="text", text="用戶回饋內容"),
-    MCPImage(data="base64_encoded_image", mimeType="image/png")  # 可選
+    TextContent(type="text", text="=== 用戶回饋 ===\n..."),               # create_feedback_text()
+    ImageContent(type="image", data="<base64>", mime_type="image/png"),  # process_images()，可選
 ]
 
+# 使用者未回應（逾時或關閉介面）
+[TextContent(type="text", text="使用者未回應（...）。請視為使用者已離開...")]  # no_response_text()
+
 # 錯誤返回
-[TextContent(type="text", text="錯誤描述")]
+[TextContent(type="text", text=ErrorHandler.format_user_error(e, include_technical=False))]
 ```
 
 ### i18n.py - 國際化支援
@@ -190,21 +190,24 @@ flowchart TD
 ```python
 class I18nManager:
     def __init__(self):
-        self._supported_languages = ["zh-TW", "en", "zh-CN"]
-        self._fallback_language = "en"
+        self._supported_languages = ["zh-CN", "zh-TW", "en"]
+        self._fallback_language = "zh-TW"
+        self._config_file = self._get_config_file_path()  # ~/.config/mcp-feedback-enhanced/language.json
         self._locales_dir = Path(__file__).parent / "web" / "locales"
 
     def t(self, key: str, **kwargs) -> str:
-        """翻譯函數，支援巢狀鍵值和參數替換"""
+        """翻譯函數，支援巢狀鍵值、舊鍵值相容與 str.format 參數替換"""
+
+def get_i18n_manager() -> I18nManager: ...
 ```
 
 **核心功能**：
 - **三語支援**: 繁體中文、簡體中文、英文
-- **智能檢測**: 基於系統語言自動選擇
-- **動態切換**: 運行時語言切換無需重啟
+- **語言偵測**: `MCP_LANGUAGE` > 介面儲存的 `language.json` > `LANG`、`LC_ALL` 等環境變數 > 系統 locale > `zh-TW`
+- **使用範圍**: 後端只有 `ErrorHandler` 用它決定錯誤訊息語言；Web 介面文字由前端 `i18n.js` 透過 `GET /api/translations` 載入同一批 `translation.json`，切換語言不需重啟
 - **巢狀翻譯**: 支援 `buttons.submit` 格式的鍵值
 - **參數替換**: 支援 `{name}` 格式的動態內容
-- **回退機制**: 翻譯缺失時自動使用英文
+- **回退機制**: 翻譯缺失時改用回退語言 `zh-TW`，仍找不到就回傳鍵本身
 
 **翻譯文件結構**：
 ```json
@@ -214,8 +217,8 @@ class I18nManager:
         "subtitle": "AI 輔助開發回饋收集器"
     },
     "buttons": {
-        "submit": "提交回饋",
-        "cancel": "取消"
+        "submit": "✅ 提交回饋",
+        "cancel": "❌ 取消"
     }
 }
 ```
@@ -223,10 +226,11 @@ class I18nManager:
 ### debug.py - 統一調試系統
 
 **調試功能**：
-- **條件輸出**: 只在 `MCP_DEBUG=true` 時輸出
+- **條件輸出**: 只在 `MCP_DEBUG` 為 `true`、`1`、`yes`、`on` 時輸出
 - **分類日誌**: 不同模組使用不同前綴
 - **安全輸出**: 輸出到 stderr 避免干擾 MCP 通信
-- **編碼處理**: 自動處理中文字符編碼問題
+- **編碼處理**: stderr 無法編碼時改以 ASCII 替代字元輸出，stderr 不存在時靜默略過
+- **使用者提示**: `user_notice()` 不受 `MCP_DEBUG` 控制，用於「請手動開啟網址」這類必須讓使用者看到的訊息
 
 **使用方式**：
 ```python
@@ -238,324 +242,302 @@ debug_log("伺服器啟動完成")  # [SERVER] 伺服器啟動完成
 
 ### WebUIManager - 核心管理器
 
-**單例模式實現**：
+**全域單一實例**（模組層級變數，不是 `__new__` 單例）：
 ```python
 class WebUIManager:
-    _instance: Optional['WebUIManager'] = None
-    _lock = threading.Lock()
+    def __init__(self, host: str = "127.0.0.1", port: int | None = None):
+        # host：MCP_WEB_HOST > 參數；port：參數 > MCP_WEB_PORT > 8765，再經 PortManager 找可用埠
+        self.app = FastAPI(title="MCP Feedback Enhanced")
+        self.current_session: WebFeedbackSession | None = None
+        self.sessions: dict[str, WebFeedbackSession] = {}  # 保留用於向後兼容
+        self.global_active_tabs: dict[str, dict] = {}
+        self.server_thread: threading.Thread | None = None
+        self.desktop_app_instance: Any = None
 
-    def __new__(cls, *args, **kwargs):
-        if cls._instance is None:
-            with cls._lock:
-                if cls._instance is None:
-                    cls._instance = super().__new__(cls)
-        return cls._instance
+_web_ui_manager: WebUIManager | None = None
 
-    def __init__(self, host: str = "127.0.0.1", port: int = 0):
-        self.current_session: Optional[WebFeedbackSession] = None
-        self.global_active_tabs: Dict[str, dict] = {}
-        self.app: Optional[FastAPI] = None
-        self.server_thread: Optional[threading.Thread] = None
-        self.port_manager = PortManager()
+def get_web_ui_manager() -> WebUIManager:
+    global _web_ui_manager
+    if _web_ui_manager is None:
+        _web_ui_manager = WebUIManager()
+    return _web_ui_manager
 ```
 
 **核心職責**：
 - **會話管理**: 單一活躍會話的創建、更新、清理
-- **服務器控制**: FastAPI 應用的啟動、停止、重啟
+- **服務器控制**: 在背景執行緒啟動 uvicorn（`start_server`），以及停止服務（`stop`）
 - **瀏覽器控制**: 智能開啟瀏覽器，避免重複視窗
 - **資源管理**: 自動清理過期資源和錯誤處理
 - **狀態同步**: 維護全局狀態和標籤頁追蹤
 
 **關鍵方法**：
 ```python
-async def create_session(self, project_dir: str, summary: str) -> str:
-    """創建新會話或更新現有會話"""
+def create_session(self, project_directory: str, summary: str) -> str:
+    """建立新會話並設為目前會話；舊會話若已提交則推進到 COMPLETED，WebSocket 連線轉移給新會話"""
+
+def start_server(self):
+    """在 daemon 執行緒以 uvicorn 啟動，埠被占用時換埠重試"""
 
 async def smart_open_browser(self, url: str) -> bool:
-    """智能開啟瀏覽器，檢測活躍標籤頁"""
+    """有活躍標籤頁就送 session_updated 通知，否則呼叫 open_browser()"""
 
-def cleanup_session(self, reason: CleanupReason = CleanupReason.MANUAL):
-    """清理會話資源"""
+def open_browser(self, url: str) -> bool:
+    """呼叫 smart_browser_open()；開不了時用 user_notice() 在 stderr 印出網址"""
+
+async def launch_desktop_app(self, url: str) -> bool:
+    """桌面模式啟動桌面殼"""
 
 def get_server_url(self) -> str:
-    """獲取服務器 URL"""
+    """回傳 http://{host}:{port}"""
+
+def cleanup_expired_sessions(self) -> int: ...
+def cleanup_sessions_by_memory_pressure(self, force: bool = False) -> int: ...
 ```
 
-**智能瀏覽器開啟機制**：
+**瀏覽器開啟機制**：
 ```mermaid
 flowchart TD
-    START[開啟瀏覽器請求] --> CHECK[檢查活躍標籤頁]
+    START[smart_open_browser] --> DESKTOP{MCP_DESKTOP_MODE?}
+    DESKTOP -->|是| SKIP[不開瀏覽器]
+    DESKTOP -->|否| CHECK[_check_active_tabs<br/>心跳或 ping 檢測]
     CHECK --> ACTIVE{有活躍標籤?}
-    ACTIVE -->|是| NOTIFY[發送會話更新通知]
-    ACTIVE -->|否| DETECT[檢測運行環境]
-    DETECT --> LOCAL{本地環境?}
-    LOCAL -->|是| DIRECT[直接開啟瀏覽器]
-    LOCAL -->|否| SSH{SSH Remote?}
-    SSH -->|是| TUNNEL[建立 SSH 隧道]
-    SSH -->|否| WSL[WSL 環境處理]
-    DIRECT --> SUCCESS[開啟成功]
-    TUNNEL --> SUCCESS
-    WSL --> SUCCESS
-    NOTIFY --> SUCCESS
-    SUCCESS --> TRACK[追蹤標籤頁狀態]
+    ACTIVE -->|是| NOTIFY[notify_existing_tab_to_refresh<br/>送出 session_updated]
+    ACTIVE -->|否| OPEN[open_browser]
+    OPEN --> WSL{is_wsl_environment?}
+    WSL -->|是| WSLOPEN[依序試 cmd.exe、powershell.exe、wslview]
+    WSL -->|否| STD[webbrowser.open]
+    WSLOPEN --> RESULT{開啟成功?}
+    STD --> RESULT
+    RESULT -->|否| NOTICE[user_notice<br/>在 stderr 印出網址]
 ```
+
+SSH 遠端沒有專門分支，不會建立 SSH 隧道；遠端主機開不了瀏覽器時只會印出網址。
 
 ### WebFeedbackSession - 會話模型
 
 **會話狀態機**：
 ```mermaid
 stateDiagram-v2
-    [*] --> WAITING: 會話創建
-    WAITING --> FEEDBACK_PROCESSING: 用戶提交回饋
-    FEEDBACK_PROCESSING --> FEEDBACK_SUBMITTED: 處理完成
-    FEEDBACK_SUBMITTED --> WAITING: AI 再次調用
-    FEEDBACK_SUBMITTED --> CLEANUP: 會話結束
-    CLEANUP --> [*]: 資源釋放
-
-    WAITING --> TIMEOUT: 超時檢測
-    TIMEOUT --> CLEANUP: 清理資源
+    [*] --> WAITING: 會話建立
+    WAITING --> ACTIVE: 提交時先走一步
+    ACTIVE --> FEEDBACK_SUBMITTED: submit_feedback
+    FEEDBACK_SUBMITTED --> COMPLETED: AI 再次呼叫 create_session
+    WAITING --> TIMEOUT: 逾時或使用者關閉介面
+    FEEDBACK_SUBMITTED --> EXPIRED: 過期清理
+    COMPLETED --> [*]
+    TIMEOUT --> [*]
+    EXPIRED --> [*]
+    ERROR --> [*]
 
     note right of WAITING
         - 顯示 AI 摘要
         - 等待用戶輸入
-        - 支援文字/圖片/命令
-    end note
-
-    note right of FEEDBACK_PROCESSING
-        - 驗證回饋數據
-        - 圖片壓縮處理
-        - 命令執行結果
+        - 支援文字與圖片
     end note
 
     note right of FEEDBACK_SUBMITTED
-        - 回饋已保存
-        - 等待 AI 處理
-        - 準備下次調用
+        - 回饋已交給 wait_for_feedback
+        - 等待 AI 下一次呼叫
     end note
 ```
 
+`next_step()` 只能單向推進（WAITING → ACTIVE → FEEDBACK_SUBMITTED → COMPLETED）；`TIMEOUT`、`EXPIRED`、`ERROR` 由清理流程依 `CleanupReason` 直接設定，`COMPLETED`、`ERROR`、`TIMEOUT`、`EXPIRED` 都是終態。
+
 **會話數據結構**：
 ```python
-@dataclass
 class WebFeedbackSession:
-    session_id: str
-    project_directory: str
-    summary: str
-    status: SessionStatus
-    created_at: datetime
-    timeout: int
-    feedback_future: Optional[asyncio.Future] = None
+    def __init__(self, session_id: str, project_directory: str, summary: str,
+                 auto_cleanup_delay: int = 3600, max_idle_time: int = 1800):
+        self.websocket: WebSocket | None = None
+        self.feedback_result: str | None = None
+        self.images: list[dict] = []
+        self.settings: dict[str, Any] = {}
+        self.feedback_completed = threading.Event()
+        self.user_messages: list[dict] = []
+        self.status = SessionStatus.WAITING
+        self.created_at = time.time()
+        self.last_activity = self.created_at
+        self.last_heartbeat = None
 
-    # 回饋數據
-    interactive_feedback: str = ""
-    command_logs: str = ""
-    images: List[Dict[str, Any]] = field(default_factory=list)
+    async def wait_for_feedback(self, timeout: int = 600) -> dict[str, Any]:
+        """等待 feedback_completed；收到回饋回傳 interactive_feedback、images、settings，
+        逾時或使用者關閉介面則清理資源並拋出 TimeoutError"""
 
-    async def wait_for_feedback(self, timeout: int) -> Dict[str, Any]:
-        """等待用戶回饋，支援超時處理"""
+    async def submit_feedback(self, feedback: str, images: list[dict[str, Any]],
+                              settings: dict[str, Any] | None = None):
+        """在鎖內原子寫入回饋並推進狀態；已收過回饋時忽略重複提交"""
 
-    def update_session(self, project_dir: str, summary: str, timeout: int):
-        """更新會話內容，支援 AI 多次調用"""
+    def next_step(self, message: str | None = None) -> bool:
+        """單向推進狀態，終態回傳 False"""
 ```
+
+AI 每次呼叫都由 `WebUIManager.create_session()` 建立新會話，不會更新既有會話。
 
 **狀態枚舉**：
 ```python
 class SessionStatus(Enum):
-    WAITING = "waiting"                    # 等待用戶回饋
-    FEEDBACK_PROCESSING = "processing"     # 處理回饋中
-    FEEDBACK_SUBMITTED = "submitted"       # 回饋已提交
-    TIMEOUT = "timeout"                    # 會話超時
-    ERROR = "error"                        # 發生錯誤
+    WAITING = "waiting"                         # 等待中
+    ACTIVE = "active"                           # 活躍狀態
+    FEEDBACK_SUBMITTED = "feedback_submitted"   # 已提交反饋
+    COMPLETED = "completed"                     # 已完成
+    ERROR = "error"                             # 錯誤（終態）
+    TIMEOUT = "timeout"                         # 超時（終態）
+    EXPIRED = "expired"                         # 已過期（終態）
 ```
 
 ### models/ - 數據模型層
 
-**FeedbackResult 模型**：
+**FeedbackResult 型別**：
 ```python
-@dataclass
-class FeedbackResult:
-    interactive_feedback: str = ""
-    command_logs: str = ""
-    images: List[Dict[str, Any]] = field(default_factory=list)
-    session_id: str = ""
-    timestamp: datetime = field(default_factory=datetime.now)
-
-    def to_mcp_response(self) -> List[Union[TextContent, MCPImage]]:
-        """轉換為 MCP 協議格式"""
+class FeedbackResult(TypedDict):
+    interactive_feedback: str
+    images: list[dict]
 ```
+只定義型別並由 `models/__init__.py` 匯出，目前沒有其他程式使用；轉成 MCP 格式由 `server.py` 的 `create_feedback_text()` 與 `process_images()` 處理。
 
 **CleanupReason 枚舉**：
 ```python
 class CleanupReason(Enum):
-    TIMEOUT = "timeout"        # 超時清理
-    MANUAL = "manual"          # 手動清理
-    ERROR = "error"            # 錯誤清理
-    SHUTDOWN = "shutdown"      # 系統關閉
+    TIMEOUT = "timeout"                  # 超時清理
+    EXPIRED = "expired"                  # 過期清理
+    MEMORY_PRESSURE = "memory_pressure"  # 內存壓力清理
+    MANUAL = "manual"                    # 手動清理
+    ERROR = "error"                      # 錯誤清理
+    SHUTDOWN = "shutdown"                # 系統關閉清理
 ```
 
-**WebSocket 消息模型**：
-```python
-@dataclass
-class WebSocketMessage:
-    type: str                  # 消息類型
-    data: Dict[str, Any]       # 消息數據
-    session_id: Optional[str] = None
-    timestamp: datetime = field(default_factory=datetime.now)
-```
+**WebSocket 消息**：沒有獨立的模型類別，直接以 dict 經 `send_json()` 傳送，類型見下方 routes 段。
 
 ## 🌐 第三層：Web 服務層
 
 ### main.py - FastAPI 應用
 
-**應用架構**：
+沒有 `create_app()`；FastAPI 應用在 `WebUIManager.__init__` 中建立並設定：
 ```python
-def create_app(manager: 'WebUIManager') -> FastAPI:
-    """創建 FastAPI 應用實例"""
-    app = FastAPI(
-        title="MCP Feedback Enhanced",
-        description="AI 輔助開發回饋收集系統",
-        version="2.3.0"
-    )
-
-    # 設置中間件
-    setup_middleware(app)
-
-    # 設置路由
-    setup_routes(manager)
-
-    # 設置 WebSocket
-    setup_websocket(app, manager)
-
-    return app
+self.app = FastAPI(title="MCP Feedback Enhanced")
+self._setup_compression_middleware()  # GZipMiddleware + 快取標頭中介層
+self._setup_memory_monitoring()       # 註冊記憶體警告與會話清理回呼
+...
+self._init_basic_components()
+#   ├─ _setup_static_files()  掛載 /static
+#   ├─ _setup_templates()     Jinja2Templates(templates/)
+#   └─ setup_routes(self)     routes/main_routes.py
 ```
 
-**中間件配置**：
-```python
-def setup_middleware(app: FastAPI):
-    # CORS 設定 - 允許本地開發
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origins=["http://127.0.0.1:*", "http://localhost:*"],
-        allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
-    )
-
-    # 靜態文件服務
-    app.mount("/static", StaticFiles(directory="static"), name="static")
-
-    # 錯誤處理中間件
-    @app.exception_handler(Exception)
-    async def global_exception_handler(request, exc):
-        return JSONResponse(
-            status_code=500,
-            content={"detail": f"內部服務器錯誤: {str(exc)}"}
-        )
-```
+**中介層與安全**：
+- 沒有 CORS 中介層，也沒有全域 exception handler
+- `setup_routes()` 註冊 `reject_cross_site_writes` 中介層：對 `/api/*` 的 GET/HEAD/OPTIONS 以外請求，`Origin` 不通過 `is_allowed_origin()` 回 403，`Content-Type` 不是 `application/json` 回 415
+- `/ws` 端點同樣先驗 `Origin`，不符以 code 4003 關閉
 
 **核心功能**：
-- **HTTP 路由處理**: RESTful API 端點
+- **HTTP 路由處理**: 頁面與 JSON API 端點
 - **WebSocket 連接管理**: 實時雙向通信
 - **靜態資源服務**: CSS、JS、圖片等資源
 - **模板渲染**: Jinja2 模板引擎
-- **錯誤處理**: 統一的異常處理機制
-- **安全配置**: CORS 和安全標頭設定
+- **伺服器執行**: `start_server()` 在 daemon 執行緒內以 uvicorn 啟動，同時執行 `_init_async_components()`
+- **安全配置**: 跨站寫入與 WebSocket 來源檢查
 
 ### routes/main_routes.py - 路由處理
 
 **路由架構圖**：
 ```mermaid
 graph TB
-    subgraph "HTTP 路由"
-        ROOT[GET /<br/>主頁重定向]
-        FEEDBACK[GET /feedback<br/>回饋頁面]
-        API_SESSION[GET /api/session<br/>會話資訊]
-        API_SETTINGS[GET/POST /api/settings<br/>設定管理]
-        API_I18N[GET /api/i18n<br/>翻譯資源]
-        STATIC[/static/*<br/>靜態資源]
+    subgraph "頁面"
+        ROOT[GET 根路徑<br/>有會話渲染 feedback.html<br/>無會話渲染 index.html]
+        STATIC[靜態資源 /static]
     end
 
-    subgraph "WebSocket 路由"
-        WS[/ws<br/>WebSocket 連接]
-        MSG_HANDLER[訊息處理器]
-        BROADCAST[廣播機制]
+    subgraph "會話 API"
+        SESSION_STATUS[GET /api/session-status]
+        CURRENT[GET /api/current-session]
+        ALL[GET /api/all-sessions]
+        ADD_MSG[POST /api/add-user-message]
+        HISTORY[GET /api/load-session-history<br/>POST /api/save-session-history]
     end
 
-    subgraph "API 端點"
-        SUBMIT[POST /api/submit-feedback<br/>提交回饋]
-        COMMAND[POST /api/execute-command<br/>執行命令]
-        UPLOAD[POST /api/upload-image<br/>圖片上傳]
-        STATUS[GET /api/status<br/>系統狀態]
+    subgraph "設定與其他 API"
+        SETTINGS[POST /api/save-settings<br/>GET /api/load-settings<br/>POST /api/clear-settings]
+        TRANS[GET /api/translations]
+        LOG[GET 與 POST /api/log-level]
     end
 
-    ROOT --> FEEDBACK
-    FEEDBACK --> API_SESSION
+    subgraph "WebSocket"
+        WS[WebSocket /ws]
+        MSG_HANDLER[handle_websocket_message]
+        SUBMIT[session.submit_feedback]
+    end
+
     WS --> MSG_HANDLER
-    MSG_HANDLER --> BROADCAST
-    SUBMIT --> MSG_HANDLER
-    COMMAND --> MSG_HANDLER
-    UPLOAD --> MSG_HANDLER
+    MSG_HANDLER -->|submit_feedback| SUBMIT
 ```
 
-**主要路由端點**：
+回饋（含圖片）只經 WebSocket 的 `submit_feedback` 訊息提交，沒有 HTTP 提交或圖片上傳端點；命令執行功能已在 v2.6.1 移除。
 
 **頁面路由**：
 ```python
-@app.get("/")
-async def root():
-    """主頁重定向到回饋頁面"""
-    return RedirectResponse(url="/feedback")
-
-@app.get("/feedback")
-async def feedback_page(request: Request):
-    """回饋收集頁面"""
-    return templates.TemplateResponse("feedback.html", {
-        "request": request,
-        "project_directory": session.project_directory,
-        "layout_mode": load_user_layout_settings()
-    })
-```
-
-**API 路由**：
-```python
-@app.get("/api/session")
-async def get_session():
-    """獲取當前會話資訊"""
-
-@app.post("/api/submit-feedback")
-async def submit_feedback(feedback_data: dict):
-    """提交用戶回饋"""
-
-@app.post("/api/execute-command")
-async def execute_command(command_data: dict):
-    """執行用戶命令"""
-
-@app.post("/api/upload-image")
-async def upload_image(file: UploadFile):
-    """處理圖片上傳"""
+@manager.app.get("/", response_class=HTMLResponse)
+async def index(request: Request):
+    current_session = manager.get_current_session()
+    if not current_session:
+        return manager.templates.TemplateResponse(
+            request, "index.html",
+            context={"title": "MCP Feedback Enhanced", "has_session": False, "version": __version__},
+        )
+    return manager.templates.TemplateResponse(
+        request, "feedback.html",
+        context={
+            "session_id": current_session.session_id,
+            "project_directory": current_session.project_directory,
+            "summary": current_session.summary,
+            "title": "Interactive Feedback - 回饋收集",
+            "version": __version__,
+            "has_session": True,
+            "layout_mode": load_user_layout_settings(),
+        },
+    )
 ```
 
 **WebSocket 訊息類型**：
-- `connection_established`: 連接建立確認
-- `session_updated`: 會話內容更新
-- `submit_feedback`: 提交回饋數據
-- `feedback_received`: 回饋接收確認
-- `status_update`: 系統狀態更新
-- `error_occurred`: 錯誤通知
-- `command_result`: 命令執行結果
-- `image_uploaded`: 圖片上傳完成
 
-**WebSocket 連接管理**：
+伺服器 → 前端：
+- `connection_established`: 連接建立確認
+- `session_updated`: 新會話建立通知（`action: "new_session_created"`）
+- `status_update`: 會話狀態（`status_info`）
+- `notification`: 以 `code` 帶訊息代碼、`severity` 區分等級；回饋已收到（`FEEDBACK_SUBMITTED`，`severity: "success"`）、重複提交（`warning`）、會話清理（`warning`）都走這個類型，沒有獨立的 `feedback_received` 訊息
+- `heartbeat_response`: 心跳回應
+- `ping`: 活躍標籤頁檢測，前端回 `pong`
+
+前端 → 伺服器（`handle_websocket_message()`）：
+- `submit_feedback`: 提交回饋（`feedback`、`images`、`settings`）
+- `get_status`: 請求會話狀態
+- `heartbeat`: 心跳，更新 `last_heartbeat`
+- `user_timeout`: 使用者設定的會話超時已到
+- `pong`: 回應伺服器的 `ping`
+- `update_timeout_settings`: 更新會話超時設定
+
+**WebSocket 連接管理**（節錄）：
 ```python
-@app.websocket("/ws")
-async def websocket_endpoint(websocket: WebSocket):
+@manager.app.websocket("/ws")
+async def websocket_endpoint(websocket: WebSocket, lang: str = "zh-TW"):
+    # 先驗 Origin（不符以 4003 關閉）；沒有活躍會話以 4004 關閉
     await websocket.accept()
+    session.websocket = websocket      # 只登記最新一條連線
+    session.on_client_connected()
     try:
         while True:
-            data = await websocket.receive_json()
-            await handle_websocket_message(websocket, data)
+            data = await websocket.receive_text()
+            message = json.loads(data)
+            current_session = manager.get_current_session()
+            if current_session and current_session.websocket == websocket:
+                await handle_websocket_message(manager, current_session, message)
+            else:
+                break
     except WebSocketDisconnect:
-        await handle_disconnect(websocket)
+        debug_log("WebSocket 連接正常斷開")
+    finally:
+        # 若仍是會話登記的連線：清掉並啟動斷線寬限計時器
+        current_session.websocket = None
+        current_session.on_client_disconnected()
 ```
 
 ## 🎨 第四層：前端交互層
@@ -629,8 +611,8 @@ graph TB
     subgraph "音效通知系統（v2.4.3 新增）"
         AM[audio-manager.js<br/>音效管理器<br/>播放控制]
         ASU[audio-settings-ui.js<br/>設定界面<br/>音效配置]
-        DA[DefaultAudios<br/>內建音效<br/>Base64 編碼]
-        CA[CustomAudios<br/>自訂音效<br/>用戶上傳]
+        DA[defaultAudios<br/>內建音效<br/>Base64 編碼]
+        CA[customAudios<br/>自訂音效<br/>用戶上傳]
     end
 
     subgraph "Web Audio API"
@@ -643,7 +625,7 @@ graph TB
     AM -->|自訂音效| CA
     AM -->|播放控制| AUDIO
     AUDIO -->|數據來源| BASE64
-    ASU -->|設定保存| SettingsManager
+    AM -->|設定保存| SettingsManager
 ```
 
 **核心功能**：
@@ -695,7 +677,7 @@ graph TB
 ```mermaid
 graph LR
     subgraph "自動提交功能"
-        ASM[AutoSubmitManager<br/>倒數計時器<br/>狀態控制]
+        ASM[autoSubmitManager<br/>app.js 內建立的倒數物件<br/>狀態控制]
         PM[PromptManager<br/>提示詞選擇<br/>自動標記]
         SM[SettingsManager<br/>設定存儲<br/>配置管理]
     end
@@ -708,113 +690,67 @@ graph LR
 
 ### templates/ - HTML 模板系統
 
-**模板結構**：
+**模板結構**（`feedback.html` 節錄；`GET /` 有活躍會話時渲染此頁，沒有會話時渲染 `index.html` 等待頁）：
 ```html
-<!-- feedback.html - 主回饋頁面 -->
 <!DOCTYPE html>
-<html lang="{{ current_language }}" id="html-root">
+<html lang="zh-CN" id="html-root">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ title }}</title>
-    <link rel="stylesheet" href="/static/css/styles.css">
+    <link rel="stylesheet" href="/static/css/styles.css?v=...">
+    <!-- 另載 session-management / prompt-management / audio-management / notification-settings.css -->
 </head>
 <body class="layout-{{ layout_mode }}">
+    <!-- 頂部狀態列：專案路徑 projectPathDisplay、會話 ID currentSessionId（皆可點擊複製）、
+         自動提交倒數 countdownDisplay、會話超時倒數 sessionTimeoutDisplay、連線狀態 connectionStatusMinimal -->
+    <div class="connection-monitor-bar compact">...</div>
+
     <div class="container">
-        <!-- 頁面頭部 -->
-        <header class="header">
-            <div class="header-content">
-                <h1 class="title" data-i18n="app.title">MCP Feedback Enhanced</h1>
-                <div class="project-info">
-                    <span data-i18n="app.projectDirectory">專案目錄</span>: {{ project_directory }}
-                </div>
-            </div>
-        </header>
-
-        <!-- 主要內容區域 -->
         <main class="main-content">
-            <!-- 標籤頁導航 -->
-            <div class="tab-container">
-                <div class="tab-buttons">
-                    <button class="tab-button active" data-tab="combined" data-i18n="tabs.combined">📝 工作區</button>
-                    <button class="tab-button" data-tab="settings" data-i18n="tabs.settings">⚙️ 設定</button>
-                    <button class="tab-button" data-tab="about" data-i18n="tabs.about">ℹ️ 關於</button>
-                </div>
+            <div class="tab-buttons">
+                <button class="tab-button active" data-tab="combined" data-i18n="tabs.combined">...</button>
+                <button class="tab-button" data-tab="summary" data-i18n="tabs.summary">...</button>
+                <button class="tab-button" data-tab="sessions" data-i18n="tabs.sessions">...</button>
+                <button class="tab-button" data-tab="settings" data-i18n="tabs.settings">...</button>
+                <button class="tab-button" data-tab="about" data-i18n="tabs.about">...</button>
             </div>
 
-            <!-- 標籤頁內容 -->
-            <div class="tab-content active" id="combined-tab">
-                <!-- AI 摘要區域 -->
-                <section class="ai-summary-section">
-                    <h2 data-i18n="tabs.summary">📋 AI 摘要</h2>
-                    <div id="ai-summary" class="ai-summary-content"></div>
-                </section>
-
-                <!-- 回饋表單區域 -->
-                <section class="feedback-section">
-                    <h2 data-i18n="tabs.feedback">💬 回饋</h2>
-                    <form id="feedback-form">
-                        <textarea id="feedback-text" placeholder="請輸入您的回饋..."></textarea>
-                        <div class="form-actions">
-                            <button type="submit" data-i18n="buttons.submit">提交回饋</button>
-                        </div>
-                    </form>
-                </section>
-
-                <!-- 圖片上傳區域 -->
-                <section class="image-upload-section">
-                    <h2 data-i18n="images.title">🖼️ 圖片上傳</h2>
-                    <div id="image-upload-area" class="upload-area">
-                        <input type="file" id="image-input" multiple accept="image/*">
-                        <div class="upload-prompt" data-i18n="images.dragDrop">拖拽圖片到此處或點擊選擇</div>
-                    </div>
-                    <div id="image-preview" class="image-preview"></div>
-                </section>
-
-                <!-- 命令執行區域 -->
-                <section class="command-section">
-                    <h2 data-i18n="tabs.commands">⚡ 命令</h2>
-                    <div class="command-input-group">
-                        <input type="text" id="command-input" placeholder="輸入要執行的命令...">
-                        <button id="execute-command" data-i18n="commands.execute">執行</button>
-                    </div>
-                    <div id="command-output" class="command-output"></div>
-                </section>
+            <div id="tab-summary" class="tab-content">...</div>
+            <div id="tab-combined" class="tab-content active">
+                <!-- AI 摘要、回饋輸入框 combinedFeedbackText、圖片上傳 -->
+                {% include 'components/image-upload.html' %}
             </div>
+            <div id="tab-sessions" class="tab-content">...</div>
+            <div id="tab-settings" class="tab-content">...</div>
+            <div id="tab-about" class="tab-content">...</div>
         </main>
-
-        <!-- 狀態指示器 -->
-        <footer class="footer">
-            <div class="status-indicators">
-                <div id="connection-status" class="connection-indicator">
-                    <span data-i18n="status.connecting">連接中...</span>
-                </div>
-                <div id="session-status" class="session-indicator">
-                    <span data-i18n="status.waiting">等待中...</span>
-                </div>
-            </div>
-        </footer>
     </div>
 
-    <!-- JavaScript 模組載入 -->
-    <script src="/static/js/i18n.js"></script>
-    <script src="/static/js/modules/utils.js"></script>
-    <script src="/static/js/modules/tab-manager.js"></script>
-    <script src="/static/js/modules/websocket-manager.js"></script>
-    <script src="/static/js/modules/image-handler.js"></script>
-    <script src="/static/js/modules/settings-manager.js"></script>
-    <script src="/static/js/modules/ui-manager.js"></script>
-    <script src="/static/js/modules/auto-refresh-manager.js"></script>
-    <script src="/static/js/app.js"></script>
+    <script src="/static/js/vendor/marked.min.js"></script>
+    <script src="/static/js/vendor/purify.min.js"></script>
+    <script src="/static/js/i18n.js?v=..."></script>
+    <script src="/static/js/modules/logger.js?v=..."></script>
+    <!-- modules/utils/、session/、prompt/、audio/、notification/ 子模組 -->
+    <script src="/static/js/modules/utils.js?v=..."></script>
+    <script src="/static/js/modules/tab-manager.js?v=..."></script>
+    <script src="/static/js/modules/websocket-manager.js?v=..."></script>
+    <script src="/static/js/modules/connection-monitor.js?v=..."></script>
+    <script src="/static/js/modules/session-manager.js?v=..."></script>
+    <script src="/static/js/modules/file-upload-manager.js?v=..."></script>
+    <script src="/static/js/modules/image-handler.js?v=..."></script>
+    <script src="/static/js/modules/settings-manager.js?v=..."></script>
+    <script src="/static/js/modules/ui-manager.js?v=..."></script>
+    <script src="/static/js/modules/textarea-height-manager.js?v=..."></script>
+    <script src="/static/js/app.js?v=..."></script>
+    <!-- 內嵌腳本：等 marked/DOMPurify 載入後以 {{ session_id }} 建立 FeedbackApp -->
 </body>
 </html>
 ```
 
 **模板特性**：
-- **Jinja2 模板引擎**: 支援變數替換和條件渲染
-- **響應式設計**: 適配桌面和移動設備
-- **國際化支援**: `data-i18n` 屬性自動翻譯
-- **模組化載入**: JavaScript 模組按需載入
+- **Jinja2 模板引擎**: 支援變數替換和條件渲染；`components/` 下有 `image-upload.html` 等可重用片段
+- **佈局模式**: `layout_mode` 由 `load_user_layout_settings()` 從 `ui_settings.json` 讀出，套到 `<body>` 的 class
+- **國際化支援**: `data-i18n` 屬性由前端 `i18n.js` 翻譯
+- **Markdown 摘要**: 以 marked 轉換、DOMPurify 過濾後顯示
 - **無障礙設計**: 支援鍵盤導航和螢幕閱讀器
 
 ### static/js/ - JavaScript 模組系統
@@ -822,145 +758,120 @@ graph LR
 **模組化架構**：
 ```mermaid
 graph TD
-    subgraph "核心模組"
-        UTILS[utils.js<br/>工具函數]
+    subgraph "基礎模組"
         I18N[i18n.js<br/>國際化]
+        LOGGER[logger.js<br/>日誌等級]
+        UTILS[utils.js 與 utils 子目錄<br/>DOM、時間、狀態工具]
     end
 
     subgraph "功能模組"
         TAB[tab-manager.js<br/>標籤頁管理]
         WS[websocket-manager.js<br/>WebSocket 通信]
-        IMG[image-handler.js<br/>圖片處理]
+        MONITOR[connection-monitor.js<br/>連線監控]
+        SESSION[session-manager.js<br/>會話控制]
+        UPLOAD[file-upload-manager.js<br/>檔案上傳]
+        IMG[image-handler.js<br/>圖片設定]
         SETTINGS[settings-manager.js<br/>設定管理]
         UI[ui-manager.js<br/>UI 控制]
-        REFRESH[auto-refresh-manager.js<br/>自動刷新]
+        HEIGHT[textarea-height-manager.js<br/>輸入框高度]
     end
 
     subgraph "主應用"
-        APP[app.js<br/>主應用程式]
+        APP[app.js<br/>FeedbackApp]
     end
 
     UTILS --> TAB
     UTILS --> WS
-    UTILS --> IMG
+    MONITOR --> WS
+    UPLOAD --> IMG
     I18N --> UI
+    LOGGER --> APP
     TAB --> APP
     WS --> APP
+    SESSION --> APP
     IMG --> APP
     SETTINGS --> APP
     UI --> APP
-    REFRESH --> APP
+    HEIGHT --> APP
 ```
 
 **主要模組說明**：
 
-**app.js - 主應用程式**：
+**app.js - 主應用程式**（節錄，實際以 prototype 與 Promise 鏈實作）：
 ```javascript
-class FeedbackApp {
-    constructor(sessionId) {
-        this.sessionId = sessionId;
-        this.currentSessionId = null;
+function FeedbackApp(sessionId) {
+    this.sessionId = sessionId;
+    this.currentSessionId = null;
 
-        // 模組管理器
-        this.tabManager = null;
-        this.webSocketManager = null;
-        this.imageHandler = null;
-        this.settingsManager = null;
-        this.uiManager = null;
-        this.autoRefreshManager = null;
+    // 模組管理器
+    this.tabManager = null;
+    this.webSocketManager = null;
+    this.connectionMonitor = null;
+    this.sessionManager = null;
+    this.imageHandler = null;
+    this.settingsManager = null;
+    this.uiManager = null;
+    // 另有 promptManager、audioManager、notificationManager、autoSubmitManager 等
 
-        this.isInitialized = false;
-    }
-
-    async init() {
-        // 等待國際化系統
-        await this.waitForI18n();
-
-        // 初始化管理器
-        await this.initializeManagers();
-
-        // 設置事件監聽器
-        await this.setupEventListeners();
-
-        // 設置清理處理器
-        await this.setupCleanupHandlers();
-
-        this.isInitialized = true;
-    }
+    this.isInitialized = false;
 }
+
+FeedbackApp.prototype.init = function() {
+    const self = this;
+    return self.waitForI18n()
+        .then(function() { return self.initializeManagers(); })
+        .then(function() { return self.setupEventListeners(); })
+        .then(function() { return self.setupCleanupHandlers(); })
+        .then(function() { self.isInitialized = true; });
+};
 ```
 
-**websocket-manager.js - WebSocket 通信**：
+提交回饋時，`submitFeedbackInternal()` 先以 `recordUserMessage()` 寫入會話歷史，再透過 WebSocket 送出 `{type: 'submit_feedback', feedback, images, settings}`。
+
+**websocket-manager.js - WebSocket 通信**（節錄）：
 ```javascript
-class WebSocketManager {
-    constructor(app) {
-        this.app = app;
-        this.websocket = null;
-        this.reconnectAttempts = 0;
-        this.maxReconnectAttempts = 5;
-        this.reconnectDelay = 1000;
-    }
-
-    async connect() {
-        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-        const wsUrl = `${protocol}//${window.location.host}/ws`;
-
-        this.websocket = new WebSocket(wsUrl);
-        this.setupEventHandlers();
-    }
-
-    async sendMessage(type, data) {
-        if (this.websocket?.readyState === WebSocket.OPEN) {
-            this.websocket.send(JSON.stringify({ type, data }));
-        }
-    }
+function WebSocketManager(options) {
+    this.websocket = null;
+    this.isConnected = false;
+    this.connectionReady = false;
+    this.heartbeatFrequency = options.heartbeatFrequency || Utils.CONSTANTS.DEFAULT_HEARTBEAT_FREQUENCY;
+    this.tabManager = options.tabManager || null;
+    this.connectionMonitor = options.connectionMonitor || null;
+    // 另有重連與會話超時相關欄位
 }
+
+WebSocketManager.prototype.connect = function() {
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsUrl = protocol + '//' + window.location.host + '/ws';
+    const language = window.i18nManager ? window.i18nManager.getCurrentLanguage() : 'zh-TW';
+    this.websocket = new WebSocket(wsUrl + '?lang=' + language);
+    this.setupWebSocketEvents();
+};
+
+WebSocketManager.prototype.send = function(data) {
+    if (this.websocket && this.websocket.readyState === WebSocket.OPEN) {
+        this.websocket.send(JSON.stringify(data));
+        return true;
+    }
+    return false;
+};
 ```
 
-**image-handler.js - 圖片處理**：
-```javascript
-class ImageHandler {
-    constructor(app) {
-        this.app = app;
-        this.maxFileSize = 1024 * 1024; // 1MB
-        this.supportedFormats = ['image/png', 'image/jpeg', 'image/gif', 'image/webp'];
-    }
+`processMessage()` 自行處理 `connection_established`、`heartbeat_response`、`ping`（回 `pong`）與 `update_timeout_settings`，所有訊息再交給 `onMessage` 回呼（`FeedbackApp.handleWebSocketMessage()`）；`startHeartbeat()` 依 `heartbeatFrequency` 定期送出 `heartbeat`。
 
-    async handleImageUpload(files) {
-        for (const file of files) {
-            if (this.validateImage(file)) {
-                const compressedImage = await this.compressImage(file);
-                await this.uploadImage(compressedImage);
-            }
-        }
-    }
-
-    async compressImage(file) {
-        // 圖片壓縮邏輯
-        return new Promise((resolve) => {
-            const canvas = document.createElement('canvas');
-            const ctx = canvas.getContext('2d');
-            const img = new Image();
-
-            img.onload = () => {
-                // 壓縮處理
-                resolve(canvas.toBlob());
-            };
-
-            img.src = URL.createObjectURL(file);
-        });
-    }
-}
-```
+**image-handler.js / file-upload-manager.js - 圖片處理**：
+- `ImageHandler` 管圖片設定（大小上限 `imageSizeLimit`、`enableBase64Detail`），實際的檔案處理交給它建立的 `FileUploadManager`；對外提供 `getImages()`、`clearImages()`、`updateSettings()`
+- `FileUploadManager` 處理點擊選檔、拖放、全域貼上；`processFiles()` 只收 `image/*`，檢查大小上限（`0` 表示不限制）與數量上限（預設 10 張），`fileToBase64()` 以 `FileReader` 轉成 Base64
+- 前端與後端都**不壓縮**圖片；後端 `WebFeedbackSession._process_images()` 再依 `image_size_limit` 過濾並解碼成 bytes
 
 **前端特性總結**：
 - **模組化設計**: 清晰的職責分離和依賴管理
 - **響應式 UI**: 適配不同螢幕尺寸和設備
 - **實時通信**: WebSocket 雙向數據同步
-- **圖片處理**: 自動壓縮和格式轉換
+- **圖片處理**: 大小與數量限制、轉成 Base64 傳送（不壓縮、不轉格式）
 - **國際化**: 動態語言切換和本地化
 - **錯誤處理**: 優雅的錯誤恢復機制
-- **性能優化**: 延遲載入和資源快取
+- **性能優化**: 靜態資源快取標頭、WebSocket 訊息防抖
 - **無障礙支援**: 鍵盤導航和螢幕閱讀器支援
 
 ### static/css/ - 樣式系統（v2.4.3 擴展）
@@ -968,318 +879,259 @@ class ImageHandler {
 **樣式文件結構**：
 ```
 static/css/
-├── styles.css                  # 主樣式文件
+├── styles.css                  # 主樣式文件（:root 色彩變數）
 ├── prompt-management.css       # 提示詞管理樣式
 ├── session-management.css      # 會話管理樣式
-└── audio-management.css        # 音效管理樣式（v2.4.3 新增）
+├── audio-management.css        # 音效管理樣式（v2.4.3 新增）
+└── notification-settings.css   # 瀏覽器通知設定樣式
 ```
 
 **v2.4.3 新增樣式特性**：
 
-**audio-management.css - 音效管理樣式**：
+**audio-management.css - 音效管理樣式**（節錄）：
 ```css
-/* 音效管理區塊樣式 */
-.audio-management-section {
-    background: var(--bg-tertiary);
-    border: 1px solid var(--border-color);
-    border-radius: 12px;
-    padding: 20px;
-    margin-bottom: 20px;
-    transition: all 0.3s ease;
-}
-
 /* 音效設定控制項 */
 .audio-setting-item {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 16px;
-    padding: 12px 0;
-    border-bottom: 1px solid var(--border-color);
+    flex-direction: column;
+    gap: 8px;
 }
 
 /* 音量控制滑桿 */
 .audio-volume-slider {
-    width: 120px;
+    flex: 1;
     height: 6px;
     background: var(--bg-secondary);
     border-radius: 3px;
     outline: none;
-}
-
-/* 自訂音效列表 */
-.audio-custom-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 12px;
-    background: var(--bg-primary);
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
-    margin-bottom: 8px;
+    cursor: pointer;
 }
 ```
+其他主要選擇器：`.audio-volume-control`、`.audio-select`、`.audio-test-btn`、`.audio-upload-btn`、`.audio-custom-list`、`.audio-custom-item`、`.audio-name-modal`。
 
-**session-management.css - 會話管理樣式增強**：
+**session-management.css - 會話管理樣式**（節錄）：
 ```css
-/* v2.4.3 頁籤化設計 */
-.session-tab-content {
-    padding: 20px;
-    background: var(--bg-primary);
-    border-radius: 8px;
-    margin-top: 16px;
-}
-
 /* 會話卡片樣式 */
 .session-card {
-    background: var(--bg-secondary);
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
-    padding: 16px;
-    margin-bottom: 12px;
-    transition: all 0.3s ease;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 12px;
+  transition: all var(--transition-fast) ease;
+  cursor: pointer;
 }
 
 .session-card:hover {
-    border-color: var(--accent-color);
-    box-shadow: 0 2px 8px rgba(0, 122, 204, 0.1);
+  border-color: var(--accent-color);
+  box-shadow: 0 2px 8px rgba(0, 122, 204, 0.2);
 }
 
-/* 一鍵複製按鈕樣式 */
-.copy-button {
-    background: transparent;
-    border: none;
-    color: var(--accent-color);
-    cursor: pointer;
-    padding: 2px 6px;
-    border-radius: 4px;
-    transition: background-color 0.2s ease;
-}
-
-.copy-button:hover {
-    background: var(--bg-tertiary);
+/* 一鍵複製的提示訊息 */
+.copy-toast {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  transition: all 0.3s ease;
 }
 ```
 
 **響應式設計增強**：
-- **移動設備優化**: 音效控制項在小螢幕下垂直排列
+- **移動設備優化**: 768px 以下音量、音效選擇與自訂音效項目改為垂直排列
 - **觸控友好**: 按鈕和滑桿適配觸控操作
 - **視覺反饋**: 懸停和點擊狀態的視覺提示
-- **深色主題**: 完整的深色主題支援
+- **深色配色**: 固定使用 `styles.css` `:root` 的深色變數，沒有主題切換
 
 ## 🛠️ 工具層組件
 
 ### utils/error_handler.py - 錯誤處理框架
 
-**統一錯誤處理**：
+**統一錯誤處理**：全部是 `ErrorHandler` 的 `@staticmethod`，只寫 debug log、產生給使用者看的文字，不影響 MCP 的 JSON-RPC 回應。
 ```python
+class ErrorType(Enum):
+    NETWORK = "network"
+    FILE_IO = "file_io"
+    PROCESS = "process"
+    TIMEOUT = "timeout"
+    USER_CANCEL = "user_cancel"
+    SYSTEM = "system"
+    PERMISSION = "permission"
+    VALIDATION = "validation"
+    DEPENDENCY = "dependency"
+    CONFIGURATION = "config"
+
+class ErrorSeverity(Enum):
+    LOW = "low"
+    MEDIUM = "medium"
+    HIGH = "high"
+    CRITICAL = "critical"
+
 class ErrorHandler:
     @staticmethod
-    def handle_error(error_type: ErrorType, error: Exception, context: str = "") -> dict:
-        """統一錯誤處理入口"""
-        error_info = {
-            "type": error_type.value,
-            "message": str(error),
-            "context": context,
-            "timestamp": datetime.now().isoformat(),
-            "suggestions": ErrorHandler._get_suggestions(error_type)
-        }
+    def classify_error(error: Exception) -> ErrorType:
+        """依例外類型與訊息自動分類"""
 
-        # 記錄錯誤日誌
-        debug_log(f"錯誤處理: {error_info}")
+    @staticmethod
+    def log_error_with_context(error, context=None, error_type=None,
+                               severity=ErrorSeverity.MEDIUM) -> str:
+        """寫入 debug log 並回傳錯誤 ID（ERR_<時間戳>_<編號>）；HIGH/CRITICAL 另記堆疊"""
 
-        return error_info
+    @staticmethod
+    def format_user_error(error, error_type=None, context=None,
+                          include_technical=False) -> str:
+        """產生給使用者看的錯誤文字，語言跟隨 I18nManager 目前語言"""
 
-class ErrorType(Enum):
-    NETWORK_ERROR = "network_error"
-    VALIDATION_ERROR = "validation_error"
-    TIMEOUT_ERROR = "timeout_error"
-    SYSTEM_ERROR = "system_error"
-    USER_ERROR = "user_error"
+    @staticmethod
+    def get_error_solutions(error_type: ErrorType) -> list[str]:
+        """取得解決建議"""
+
+    @staticmethod
+    def create_error_response(error, context=None, error_type=None,
+                              include_solutions=True, for_user=True) -> dict[str, Any]:
+        """產生標準化的錯誤回應 dict"""
 ```
+
+**典型用法**（`server.py` 的 `interactive_feedback`）：先 `log_error_with_context()` 取得錯誤 ID，再用 `format_user_error(e, include_technical=False)` 產生文字，包成 `TextContent` 回給 AI。
 
 ### utils/memory_monitor.py - 記憶體監控
 
 **資源監控**：
 ```python
 class MemoryMonitor:
-    def __init__(self):
-        self.process = psutil.Process()
-        self.baseline_memory = self.get_memory_usage()
+    def __init__(self, warning_threshold: float = 0.8, critical_threshold: float = 0.9,
+                 emergency_threshold: float = 0.95, monitoring_interval: int = 30,
+                 max_snapshots: int = 1000): ...
 
-    def get_memory_usage(self) -> dict:
-        """獲取當前記憶體使用情況"""
-        memory_info = self.process.memory_info()
-        return {
-            "rss": memory_info.rss,  # 實際記憶體使用
-            "vms": memory_info.vms,  # 虛擬記憶體使用
-            "percent": self.process.memory_percent(),
-            "available": psutil.virtual_memory().available
-        }
+    def start_monitoring(self) -> bool: ...
+    def stop_monitoring(self) -> bool: ...
+    def get_current_memory_info(self) -> dict[str, Any]:
+        """系統與本程序的記憶體用量（GB/MB 與百分比）"""
+    def get_memory_stats(self) -> MemoryStats: ...
+    def add_cleanup_callback(self, callback: Callable): ...
+    def add_alert_callback(self, callback: Callable[[MemoryAlert], None]): ...
 
-    def check_memory_threshold(self, threshold_mb: int = 100) -> bool:
-        """檢查記憶體使用是否超過閾值"""
-        current_memory = self.get_memory_usage()
-        memory_mb = current_memory["rss"] / 1024 / 1024
-        return memory_mb > threshold_mb
+def get_memory_monitor() -> MemoryMonitor:
+    """取得全域實例"""
 ```
+
+**運作方式**：
+- 背景執行緒每 30 秒取一次快照，依**系統**記憶體使用率判斷：≥ 80% 發 `warning` 警告；≥ 90% 發 `critical` 並執行 `gc.collect()` 與清理回呼；≥ 95% 發 `emergency`，強制回收並以 `force=True` 呼叫清理回呼
+- `WebUIManager._setup_memory_monitoring()` 註冊回呼：`critical` 時呼叫 `cleanup_expired_sessions()`，`emergency` 時呼叫 `cleanup_sessions_by_memory_pressure(force=True)`
 
 ### utils/resource_manager.py - 資源管理
 
-**生命週期管理**：
+**生命週期管理**：`ResourceManager` 是單例（`__new__` 加鎖），透過 `get_resource_manager()` 取得。
 ```python
 class ResourceManager:
-    def __init__(self):
-        self.temp_files: List[Path] = []
-        self.active_processes: List[subprocess.Popen] = []
-        self.cleanup_callbacks: List[Callable] = []
+    def create_temp_file(self, suffix: str = "", prefix: str = "mcp_",
+                         dir: str | None = None, text: bool = True) -> str:
+        """建立並追蹤臨時文件"""
 
-    def register_temp_file(self, file_path: Path):
-        """註冊臨時文件以便清理"""
-        self.temp_files.append(file_path)
+    def create_temp_dir(self, suffix: str = "", prefix: str = "mcp_",
+                        dir: str | None = None) -> str: ...
 
-    def register_process(self, process: subprocess.Popen):
-        """註冊進程以便清理"""
-        self.active_processes.append(process)
+    def register_process(self, process: subprocess.Popen | int,
+                         description: str = "", auto_cleanup: bool = True) -> int:
+        """註冊進程追蹤，回傳 PID"""
 
-    def cleanup_all(self):
-        """清理所有註冊的資源"""
-        # 清理臨時文件
-        for file_path in self.temp_files:
-            try:
-                if file_path.exists():
-                    file_path.unlink()
-            except Exception as e:
-                debug_log(f"清理臨時文件失敗: {e}")
+    def cleanup_temp_files(self, max_age: int | None = None) -> int: ...
+    def cleanup_processes(self, force: bool = False) -> int: ...
 
-        # 終止進程
-        for process in self.active_processes:
-            try:
-                process.terminate()
-                process.wait(timeout=5)
-            except Exception as e:
-                debug_log(f"終止進程失敗: {e}")
+    def cleanup_all(self, force: bool = False) -> dict[str, int]:
+        """依序清理文件句柄、進程、臨時文件、臨時目錄，回傳各類清理數量"""
 ```
 
-### utils/browser.py - 瀏覽器控制
+**運作方式**：
+- 初始化時以 `atexit` 註冊 `cleanup_all`，並啟動每 300 秒執行一次的自動清理執行緒（清除超過 1 小時的臨時文件、檢查進程狀態）
+- 實際呼叫端：`server.py` 的 `save_feedback_to_file()` 用模組函式 `create_temp_file(suffix=".json", prefix="feedback_")` 把每次回饋存成臨時 JSON
 
-**智能瀏覽器開啟**：
+### web/utils/browser.py - 瀏覽器控制
+
+**瀏覽器開啟**：沒有類別，都是模組函式。
 ```python
-class BrowserOpener:
-    @staticmethod
-    def open_browser(url: str) -> bool:
-        """智能開啟瀏覽器，支援多種環境"""
-        try:
-            # 檢測運行環境
-            environment = detect_environment()
+def is_wsl_environment() -> bool:
+    """非 Linux 一律 False；Linux 上檢查 /proc/version、WSL 環境變數等"""
 
-            if environment == "local":
-                return BrowserOpener._open_local(url)
-            elif environment == "ssh":
-                return BrowserOpener._open_ssh(url)
-            elif environment == "wsl":
-                return BrowserOpener._open_wsl(url)
-            else:
-                return BrowserOpener._open_fallback(url)
+def is_desktop_mode() -> bool:
+    """MCP_DESKTOP_MODE=true 時為桌面模式"""
 
-        except Exception as e:
-            debug_log(f"開啟瀏覽器失敗: {e}")
-            return False
+def open_browser_in_wsl(url: str) -> None:
+    """依序試 cmd.exe /c start、powershell.exe Start-Process、wslview；全部失敗拋例外"""
 
-    @staticmethod
-    def _open_local(url: str) -> bool:
-        """本地環境開啟瀏覽器"""
-        webbrowser.open(url)
+def smart_browser_open(url: str) -> bool:
+    if is_desktop_mode():
+        return True               # 桌面殼本身就是介面，不開瀏覽器
+    if is_wsl_environment():
+        open_browser_in_wsl(url)
         return True
+    return webbrowser.open(url)   # 其他環境（含 SSH 遠端）都用標準 webbrowser
 
-    @staticmethod
-    def _open_ssh(url: str) -> bool:
-        """SSH 環境處理"""
-        # 提供 SSH 隧道建立指引
-        print(f"請在本地終端執行: ssh -L 8765:127.0.0.1:8765 user@host")
-        print(f"然後在本地瀏覽器開啟: {url}")
-        return True
-
-    @staticmethod
-    def _open_wsl(url: str) -> bool:
-        """WSL 環境處理"""
-        try:
-            subprocess.run(["cmd.exe", "/c", "start", url], check=True)
-            return True
-        except Exception:
-            return BrowserOpener._open_fallback(url)
+def get_browser_opener() -> Callable[[str], bool]:
+    return smart_browser_open
 ```
 
-### utils/port_manager.py - 埠管理
+**SSH 遠端**：沒有專門處理，不會建立 SSH 隧道。在無桌面的遠端主機上 `webbrowser.open` 通常回傳 False，`WebUIManager.open_browser()` 便用 `user_notice()` 在 stderr 印出網址，由使用者自行轉發埠後開啟。
 
-**動態埠分配**：
+### web/utils/port_manager.py - 埠管理
+
+**動態埠分配**：`PortManager` 全部是 `@staticmethod`，沒有實例狀態，也沒有「釋放埠」的方法。
 ```python
 class PortManager:
-    def __init__(self, start_port: int = 8765, end_port: int = 8865):
-        self.start_port = start_port
-        self.end_port = end_port
-        self.allocated_ports: Set[int] = set()
+    @staticmethod
+    def is_port_available(host: str, port: int) -> bool:
+        """先嘗試 bind；失敗時再用 psutil 確認是否真的有程序在 LISTEN"""
 
-    def find_available_port(self) -> int:
-        """尋找可用埠"""
-        for port in range(self.start_port, self.end_port + 1):
-            if self.is_port_available(port):
-                self.allocated_ports.add(port)
-                return port
-        raise RuntimeError("無可用埠")
+    @staticmethod
+    def find_free_port_enhanced(preferred_port: int = 8765, auto_cleanup: bool = True,
+                                host: str = "127.0.0.1", max_attempts: int = 100) -> int:
+        """偏好埠可用就用；被占用且 auto_cleanup 時，只終止本專案或 uvicorn/fastapi 的
+        Python 程序；仍不可用就往上找 max_attempts 個，再往下找（不低於 1024），
+        都找不到拋 RuntimeError"""
 
-    def is_port_available(self, port: int) -> bool:
-        """檢查埠是否可用"""
-        try:
-            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
-                sock.bind(('127.0.0.1', port))
-                return True
-        except OSError:
-            return False
-
-    def release_port(self, port: int):
-        """釋放埠"""
-        self.allocated_ports.discard(port)
+    @staticmethod
+    def find_process_using_port(port: int) -> dict[str, Any] | None: ...
+    @staticmethod
+    def kill_process_on_port(port: int, force: bool = False) -> bool: ...
+    @staticmethod
+    def get_port_status(port: int, host: str = "127.0.0.1") -> dict[str, Any]: ...
 ```
 
-### utils/session_cleanup_manager.py - 會話清理
+**埠的決定順序**（`WebUIManager.__init__`）：`MCP_WEB_PORT` 環境變數（1024–65535，或 `0` 表示由系統分配）> 預設 8765，再交給 `find_free_port_enhanced()`；`MCP_TEST_MODE=true` 時不清理占用程序。`start_server()` 啟動前若埠又被占用，會以 `auto_cleanup=False` 再找一次；uvicorn 啟動時遇到「位址已在使用中」則改用下一個埠，最多重試 5 次。
 
-**自動清理機制**：
+### web/utils/session_cleanup_manager.py - 會話清理
+
+這個檔案定義了 `SessionCleanupManager`（`CleanupPolicy`：`max_idle_time` 1800 秒、`cleanup_interval` 300 秒），但目前 src 內沒有任何地方建立它的實例，不會執行。實際的會話清理由下列路徑負責：
+
 ```mermaid
 graph TD
-    START[啟動清理管理器] --> TIMER[設置定時器]
-    TIMER --> CHECK[檢查會話狀態]
-    CHECK --> ACTIVE{會話活躍?}
-    ACTIVE -->|是| TIMEOUT{超時檢查}
-    ACTIVE -->|否| SKIP[跳過清理]
-    TIMEOUT -->|超時| CLEANUP[執行清理]
-    TIMEOUT -->|未超時| WAIT[等待下次檢查]
-    CLEANUP --> WEBSOCKET[關閉 WebSocket]
-    WEBSOCKET --> RESOURCES[清理資源]
-    RESOURCES --> MEMORY[釋放記憶體]
-    MEMORY --> NOTIFY[通知清理完成]
-    NOTIFY --> WAIT
-    SKIP --> WAIT
-    WAIT --> TIMER
+    NEW[AI 再次呼叫<br/>create_session] --> SYNC[舊會話 _cleanup_sync<br/>保留 WebSocket]
+    TIMER[會話自身計時器<br/>_schedule_auto_cleanup] --> EXPIRED{is_expired}
+    EXPIRED -->|是| ENHANCED[_cleanup_resources_enhanced<br/>EXPIRED]
+    EXPIRED -->|否| TIMER
+    WAIT[wait_for_feedback 逾時<br/>或使用者關閉介面] --> TIMEOUT_CLEAN[_cleanup_resources_on_timeout<br/>TIMEOUT]
+    MEM_CRIT[記憶體 critical] --> EXP_ALL[WebUIManager<br/>cleanup_expired_sessions]
+    MEM_EMER[記憶體 emergency] --> PRESSURE[WebUIManager<br/>cleanup_sessions_by_memory_pressure]
 
-    style CLEANUP fill:#ffcdd2
-    style NOTIFY fill:#c8e6c9
+    style ENHANCED fill:#ffcdd2
+    style TIMEOUT_CLEAN fill:#ffcdd2
 ```
 
-**清理策略**：
-- **定時檢查**: 每 30 秒檢查一次會話狀態
-- **超時清理**: 會話超時自動觸發清理
-- **資源回收**: WebSocket 連接、進程、記憶體
-- **優雅關閉**: 確保資源正確釋放
-- **錯誤恢復**: 清理失敗時的備用方案
+**清理內容**（`WebFeedbackSession._cleanup_resources_enhanced`）：
+- 取消自動清理、使用者超時、斷線寬限三種計時器
+- 透過 WebSocket 送出 `notification`（訊息代碼依 `CleanupReason` 而定）後關閉連線
+- 設定 `feedback_completed` 事件，清空圖片與設定
+- 依原因把狀態設為 `EXPIRED`／`TIMEOUT`／`ERROR`，其餘設為 `COMPLETED`
+- 執行已註冊的清理回呼並記錄清理統計
 
-### utils/compression_*.py - 壓縮工具
+**過期判斷**（`is_expired`）：空閒超過 `max_idle_time`（預設 1800 秒）、狀態為 `EXPIRED`，或處於 `ERROR`／`TIMEOUT` 超過 300 秒。會話建立時即排定計時器（`auto_cleanup_delay` 預設 3600 秒），進入 `FEEDBACK_SUBMITTED` 時重新排定。
 
-**數據壓縮優化**：
-- **圖片壓縮**: 自動壓縮上傳圖片至 1MB 以下
-- **JSON 壓縮**: 大型 JSON 數據的 gzip 壓縮
-- **傳輸優化**: WebSocket 消息的選擇性壓縮
-- **快取機制**: 壓縮結果快取避免重複處理
+### web/utils/compression_*.py - 壓縮工具
+
+**實際作用範圍**：
+- **HTTP Gzip**: `WebUIManager._setup_compression_middleware()` 加上 FastAPI 的 `GZipMiddleware`，`minimum_size` 取自 `CompressionConfig`（預設 1000 bytes，可用 `MCP_GZIP_MIN_SIZE` 調整）
+- **快取標頭**: 同一個中介層依 `CompressionConfig.get_cache_headers()` 設定：`/static/` 快取 3600 秒（`MCP_STATIC_CACHE_AGE`），`/api/` 預設不快取，其餘回應 `no-cache`；`/ws` 等路徑排除
+- **統計**: `CompressionManager.update_stats()` 累計請求數與壓縮比
+- **沒有**圖片壓縮，也不壓縮 WebSocket 訊息；`compression_monitor.py` 的 `CompressionMonitor` 目前沒有呼叫端
 
 ## 🧪 測試架構
 
@@ -1291,10 +1143,16 @@ tests/
 │   ├── test_error_handler.py
 │   ├── test_memory_monitor.py
 │   ├── test_port_manager.py
-│   └── test_web_ui.py
+│   ├── test_resource_manager.py
+│   ├── test_session_cleanup.py
+│   ├── test_web_ui.py
+│   ├── test_wsl_detection.py
+│   ├── test_websocket_origin.py
+│   └── ...                  # 其餘見 tests/unit/
 ├── integration/             # 集成測試
 │   ├── test_mcp_workflow.py
 │   ├── test_web_integration.py
+│   ├── test_web_ui_boot.py
 │   └── test_i18n_integration.py
 ├── helpers/                 # 測試輔助工具
 │   ├── mcp_client.py
@@ -1341,10 +1199,10 @@ tests/
 - 錯誤預防
 
 **pre-commit (提交檢查)**：
-- 提交前自動檢查
-- 代碼格式化
-- 測試執行
-- 文檔更新
+- 通用檔案檢查：行尾空白、檔尾換行、合併衝突標記、YAML/TOML/JSON 語法、大檔案
+- `ruff --fix` 與 `ruff-format`
+- mypy 與 bandit hook 目前在設定檔中註解停用
+- 不執行測試
 
 ### 依賴管理
 
