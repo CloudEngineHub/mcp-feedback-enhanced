@@ -172,12 +172,14 @@
         const lastUsedDate = prompt.lastUsedAt ? this.formatDate(prompt.lastUsedAt) : null;
         const truncatedContent = this.truncateText(prompt.content, 80);
         const isAutoSubmit = prompt.isAutoSubmit || false;
+        // 自動提交是圖示按鈕：說明放在 title／aria-label；用 data-i18n 會在套用翻譯時把圖示換成文字
+        const autoSubmitKey = isAutoSubmit ? 'prompts.management.cancelAutoSubmit' : 'prompts.management.setAutoSubmit';
 
         return `
             <div class="prompt-settings-item ${isAutoSubmit ? 'auto-submit-prompt' : ''}" data-prompt-id="${Utils.escapeHtml(prompt.id)}">
                 <div class="prompt-settings-info">
                     <div class="prompt-settings-name">
-                        ${isAutoSubmit ? '<span class="auto-submit-badge" title="自動提交提示詞">⏰</span>' : ''}
+                        ${isAutoSubmit ? `<span class="auto-submit-badge" title="${Utils.escapeHtml(this.t('prompts.management.autoSubmit', '自動提交'))}" data-i18n-title="prompts.management.autoSubmit">⏰</span>` : ''}
                         ${Utils.escapeHtml(prompt.name)}
                     </div>
                     <div class="prompt-settings-content">${Utils.escapeHtml(truncatedContent)}</div>
@@ -190,8 +192,8 @@
                 <div class="prompt-settings-actions">
                     <button type="button" class="prompt-action-btn auto-submit-btn ${isAutoSubmit ? 'active' : ''}"
                             data-prompt-id="${Utils.escapeHtml(prompt.id)}"
-                            title="${isAutoSubmit ? '取消自動提交' : '設定為自動提交'}"
-                            data-i18n="${isAutoSubmit ? 'prompts.management.cancelAutoSubmit' : 'prompts.management.setAutoSubmit'}">
+                            title="${Utils.escapeHtml(this.t(autoSubmitKey, isAutoSubmit ? '取消自動提交' : '設定為自動提交'))}" data-i18n-title="${autoSubmitKey}"
+                            aria-label="${Utils.escapeHtml(this.t(autoSubmitKey, isAutoSubmit ? '取消自動提交' : '設定為自動提交'))}" data-i18n-aria-label="${autoSubmitKey}">
                         ${isAutoSubmit ? '⏸️' : '⏰'}
                     </button>
                     <button type="button" class="prompt-action-btn edit-btn" data-prompt-id="${Utils.escapeHtml(prompt.id)}" data-i18n="prompts.management.edit">
