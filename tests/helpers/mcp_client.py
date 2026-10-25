@@ -5,6 +5,7 @@ MCP 客戶端模擬器 - 簡化版本
 
 import asyncio
 import json
+import os
 import subprocess
 from pathlib import Path
 from typing import Any
@@ -57,6 +58,9 @@ class SimpleMCPClient:
                 cwd=Path.cwd(),
                 encoding="utf-8",  # 明確指定 UTF-8 編碼
                 errors="replace",  # 處理編碼錯誤
+                # 預設埠 8765 被佔用時，非測試模式會把 cmdline 含 mcp_feedback_enhanced
+                # 的行程（可能是使用者正在用的實例）關掉；測試模式關掉清理，埠交給系統分配
+                env={**os.environ, "MCP_TEST_MODE": "true", "MCP_WEB_PORT": "0"},
             )
 
             self.stdin = self.server_process.stdin
