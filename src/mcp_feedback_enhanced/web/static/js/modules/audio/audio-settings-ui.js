@@ -450,15 +450,15 @@
      * 創建自訂音效項目 HTML
      */
     AudioSettingsUI.prototype.createCustomAudioItemHTML = function(audio) {
-        const createdDate = new Date(audio.createdAt).toLocaleDateString();
+        const createdDate = Utils.Time.timestampHTML(audio.createdAt, 'date');
         
         return `
             <div class="audio-custom-item" data-audio-id="${Utils.escapeHtml(audio.id)}">
                 <div class="audio-custom-info">
                     <div class="audio-custom-name">${Utils.escapeHtml(audio.name)}</div>
                     <div class="audio-custom-meta">
-                        <span data-i18n="audio.notification.created">建立於</span>: ${createdDate}
-                        | <span data-i18n="audio.notification.format">格式</span>: ${Utils.escapeHtml(audio.mimeType)}
+                        <span data-i18n="audio.notification.created">${Utils.escapeHtml(this.t('audio.notification.created', '建立於'))}</span>: ${createdDate}
+                        | <span data-i18n="audio.notification.format">${Utils.escapeHtml(this.t('audio.notification.format', '格式'))}</span>: ${Utils.escapeHtml(audio.mimeType)}
                     </div>
                 </div>
                 <div class="audio-custom-actions">

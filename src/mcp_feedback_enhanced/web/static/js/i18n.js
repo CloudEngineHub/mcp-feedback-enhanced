@@ -203,6 +203,16 @@ class I18nManager {
             }
         });
 
+        // 依新語言重新格式化 TimeUtils.timestampHTML 產生的時間
+        const TimeUtils = window.MCPFeedback && window.MCPFeedback.Utils && window.MCPFeedback.Utils.Time;
+        if (TimeUtils) {
+            document.querySelectorAll('[data-timestamp]').forEach(element => {
+                element.textContent = TimeUtils.formatTimestamp(Number(element.getAttribute('data-timestamp')), {
+                    format: element.getAttribute('data-time-format')
+                });
+            });
+        }
+
         // 更新動態內容
         this.updateDynamicContent();
 

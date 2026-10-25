@@ -896,31 +896,12 @@
             console.log(`📝 消息 ${index + 1} 完整对象:`, msg);
             console.log(`📝 消息 ${index + 1} 所有属性:`, Object.keys(msg));
 
-            // 添加时间戳信息 - 简化版本，直接使用当前时间
-            let timeStr = '未知时间';
-
-            // 检查是否有时间戳字段
-            if (msg.timestamp) {
-                // 如果时间戳看起来不正常（太小），直接使用当前时间
-                if (msg.timestamp < 1000000000) { // 小于2001年的时间戳，可能是相对时间
-                    timeStr = new Date().toLocaleString('zh-CN');
-                    console.log('📝 时间戳异常，使用当前时间:', msg.timestamp);
-                } else {
-                    // 正常处理时间戳
-                    let timestamp = msg.timestamp;
-                    if (timestamp > 1e12) {
-                        // 毫秒时间戳
-                        timeStr = new Date(timestamp).toLocaleString('zh-CN');
-                    } else {
-                        // 秒时间戳
-                        timeStr = new Date(timestamp * 1000).toLocaleString('zh-CN');
-                    }
-                }
-            } else {
-                // 没有时间戳，使用当前时间
-                timeStr = new Date().toLocaleString('zh-CN');
-                console.log('📝 没有时间戳字段，使用当前时间');
-            }
+            // 時間格式與會話詳情視窗相同（YYYY/MM/DD HH:MM:SS，秒或毫秒皆可）；
+            // 沒有時間戳或小於 2001 年（可能是相對時間）時用目前時間
+            const TimeUtils = window.MCPFeedback.Utils.Time;
+            const timeStr = TimeUtils.formatTimestamp(
+                msg.timestamp && msg.timestamp >= 1000000000 ? msg.timestamp : Date.now()
+            );
 
             lines.push(`**时间**: ${timeStr}`);
 

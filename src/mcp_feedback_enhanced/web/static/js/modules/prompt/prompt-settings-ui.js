@@ -493,17 +493,10 @@
     };
 
     /**
-     * 格式化日期
+     * 格式化日期（回傳 HTML，跟介面語言，切換語言時重新格式化）
      */
     PromptSettingsUI.prototype.formatDate = function(dateString) {
-        if (!dateString) return '';
-        
-        try {
-            const date = new Date(dateString);
-            return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-        } catch (error) {
-            return dateString;
-        }
+        return dateString ? Utils.Time.timestampHTML(dateString, 'datetime') : '';
     };
 
     /**

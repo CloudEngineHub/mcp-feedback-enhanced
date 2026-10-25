@@ -195,7 +195,7 @@
                     <span class="prompt-item-date">${this.formatDate(prompt.createdAt)}</span>
                 </div>
                 <div class="prompt-item-content">${Utils.escapeHtml(this.truncateText(prompt.content, 100))}</div>
-                ${prompt.lastUsedAt ? `<div class="prompt-item-used">最近使用：${this.formatDate(prompt.lastUsedAt)}</div>` : ''}
+                ${prompt.lastUsedAt ? `<div class="prompt-item-used">${Utils.escapeHtml(this.t('prompts.management.lastUsed', '最近使用'))}: ${this.formatDate(prompt.lastUsedAt)}</div>` : ''}
             </div>
         `).join('');
 
@@ -427,17 +427,10 @@
     };
 
     /**
-     * 格式化日期
+     * 格式化日期（回傳 HTML，跟介面語言，切換語言時重新格式化）
      */
     PromptModal.prototype.formatDate = function(dateString) {
-        if (!dateString) return '';
-        
-        try {
-            const date = new Date(dateString);
-            return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-        } catch (error) {
-            return dateString;
-        }
+        return dateString ? Utils.Time.timestampHTML(dateString, 'datetime') : '';
     };
 
     /**

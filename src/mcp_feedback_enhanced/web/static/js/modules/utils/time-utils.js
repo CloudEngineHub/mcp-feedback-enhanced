@@ -44,6 +44,9 @@
                 } else if (options.format === 'date') {
                     // 只返回日期部分
                     return date.toLocaleDateString(locale);
+                } else if (options.format === 'datetime') {
+                    // 日期加時:分
+                    return date.toLocaleDateString(locale) + ' ' + date.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' });
                 } else if (options.format === 'iso') {
                     // ISO 格式
                     return date.toISOString();
@@ -62,6 +65,17 @@
                 console.warn('時間格式化失敗:', timestamp, error);
                 return '格式錯誤';
             }
+        },
+
+        /**
+         * 動態產生的 HTML 裡要顯示的時間：回傳帶 data-timestamp 的 span，
+         * 切換語言時 i18nManager.applyTranslations 會依新語言重新格式化。dateValue 是 ISO 字串或毫秒
+         */
+        timestampHTML: function(dateValue, format) {
+            const ms = new Date(dateValue).getTime();
+            if (isNaN(ms)) return '';
+            return '<span data-timestamp="' + ms + '" data-time-format="' + format + '">' +
+                this.formatTimestamp(ms, { format: format }) + '</span>';
         },
 
         /**
