@@ -16,6 +16,11 @@
     const TimeUtils = window.MCPFeedback.Utils.Time;
     const StatusUtils = window.MCPFeedback.Utils.Status;
 
+    // 翻譯；i18n 還沒載入或缺 key 時用繁中預設字串
+    function t(key, fallback) {
+        return window.i18nManager ? window.i18nManager.t(key, fallback) : fallback;
+    }
+
     /**
      * 會話詳情彈窗管理器
      */
@@ -39,7 +44,7 @@
      */
     SessionDetailsModal.prototype.showSessionDetails = function(sessionData) {
         if (!sessionData) {
-            this.showError('沒有可顯示的會話數據');
+            this.showError(t('sessionManagement.sessionDetails.noData', '沒有可顯示的會話數據'));
             return;
         }
 
@@ -64,25 +69,26 @@
     SessionDetailsModal.prototype.formatSessionDetails = function(sessionData) {
         // console.log('🔍 格式化會話詳情:', sessionData);
 
+        const unknownText = t('sessionManagement.sessionDetails.unknown', '未知');
+
         // 處理會話 ID - 顯示完整 session ID
-        const sessionId = sessionData.session_id || '未知';
+        const sessionId = sessionData.session_id || unknownText;
 
         // 處理建立時間
         const createdTime = sessionData.created_at ?
             TimeUtils.formatTimestamp(sessionData.created_at) :
-            '未知';
+            unknownText;
 
-        // 處理持續時間
-        let duration = '進行中';
-        if (sessionData.duration && sessionData.duration > 0) {
-            duration = TimeUtils.formatDuration(sessionData.duration);
-        } else if (sessionData.created_at && sessionData.completed_at) {
-            const durationSeconds = sessionData.completed_at - sessionData.created_at;
+        // 處理持續時間：與歷史卡片同一個定義；還沒結束就顯示目前經過時間並標示進行中
+        const inProgressText = t('sessionManagement.sessionDetails.inProgress', '進行中');
+        const durationSeconds = TimeUtils.calculateSessionDuration(sessionData);
+        let duration = inProgressText;
+        if (durationSeconds !== null) {
             duration = TimeUtils.formatDuration(durationSeconds);
         } else if (sessionData.created_at) {
             const elapsed = TimeUtils.calculateElapsedTime(sessionData.created_at);
             if (elapsed > 0) {
-                duration = TimeUtils.formatDuration(elapsed) + ' (進行中)';
+                duration = TimeUtils.formatDuration(elapsed) + ' (' + inProgressText + ')';
             }
         }
 
@@ -101,7 +107,7 @@
             statusColor: statusColor,
             createdTime: createdTime,
             duration: duration,
-            projectDirectory: sessionData.project_directory || (window.i18nManager ? window.i18nManager.t('sessionManagement.sessionDetails.unknown') : '未知'),
+            projectDirectory: sessionData.project_directory || unknownText,
             summary: sessionData.summary || (window.i18nManager ? window.i18nManager.t('sessionManagement.sessionDetails.noSummary') : '暫無摘要'),
             userMessages: userMessages,
             userMessageCount: userMessageCount
@@ -173,7 +179,7 @@
                             <span class="detail-label">${i18n ? i18n.t('sessionManagement.aiSummary') : 'AI 摘要'}:</span>
                             <div class="detail-value summary">
                                 <div class="summary-actions">
-                                    <button class="btn-copy-summary" title="複製摘要" aria-label="複製摘要">📋</button>
+                                    <button class="btn-copy-summary" title="${esc(t('sessionManagement.sessionDetails.copySummary', '複製摘要'))}" aria-label="${esc(t('sessionManagement.sessionDetails.copySummary', '複製摘要'))}">📋</button>
                                 </div>
                                 <div class="summary-content">${this.renderMarkdownSafely(details.summary)}</div>
                             </div>
@@ -206,7 +212,7 @@
         let messagesHtml = '';
 
         userMessages.forEach((message, index) => {
-            const timestamp = message.timestamp ? TimeUtils.formatTimestamp(message.timestamp) : '未知時間';
+            const timestamp = message.timestamp ? TimeUtils.formatTimestamp(message.timestamp) : t('sessionManagement.sessionDetails.unknown', '未知');
             const submissionMethod = message.submission_method === 'auto' ?
                 (i18n ? i18n.t('sessionHistory.userMessages.auto') : '自動提交') :
                 (i18n ? i18n.t('sessionHistory.userMessages.manual') : '手動提交');
@@ -220,7 +226,7 @@
                     message.content;
                 contentHtml = `
                     <div class="message-content">
-                        <strong>內容:</strong> ${this.escapeHtml(contentPreview)}
+                        <strong>${esc(t('sessionManagement.sessionDetails.content', '內容'))}:</strong> ${this.escapeHtml(contentPreview)}
                     </div>
                 `;
 
@@ -238,7 +244,7 @@
                 const imageCountLabel = i18n ? i18n.t('sessionHistory.userMessages.imageCount') : '圖片數量';
                 contentHtml = `
                     <div class="message-stats">
-                        <strong>${contentLengthLabel}:</strong> ${esc(message.content_length)} 字元<br>
+                        <strong>${contentLengthLabel}:</strong> ${esc(t('sessionManagement.sessionDetails.characters', '{count} 字元').replace('{count}', message.content_length))}<br>
                         <strong>${imageCountLabel}:</strong> ${esc(message.image_count || 0)}
                     </div>
                 `;
@@ -246,7 +252,7 @@
                 // 隱私保護模式
                 contentHtml = `
                     <div class="message-privacy">
-                        <em style="color: var(--text-secondary);">內容記錄已停用（隱私設定）</em>
+                        <em style="color: var(--text-secondary);">${esc(t('sessionManagement.sessionDetails.recordingDisabled', '內容記錄已停用（隱私設定）'))}</em>
                     </div>
                 `;
             }
@@ -257,7 +263,7 @@
                         <span class="message-index">#${index + 1}</span>
                         <span class="message-time">${esc(timestamp)}</span>
                         <span class="message-method">${submissionMethod}</span>
-                        <button class="btn-copy-message" title="複製消息內容" aria-label="複製消息內容" data-message-content="${this.escapeHtml(message.content)}">📋</button>
+                        <button class="btn-copy-message" title="${esc(t('sessionManagement.sessionDetails.copyMessage', '複製訊息內容'))}" aria-label="${esc(t('sessionManagement.sessionDetails.copyMessage', '複製訊息內容'))}" data-message-content="${this.escapeHtml(message.content)}">📋</button>
                     </div>
                     ${contentHtml}
                 </div>
@@ -438,11 +444,11 @@
                 self.showToast(successMessage, 'success');
             } else {
                 console.error('❌ 複製失敗（傳統方法）');
-                self.showToast('❌ 複製失敗，請手動複製', 'error');
+                self.showToast('❌ ' + t('sessionManagement.sessionDetails.copyFailed', '複製失敗，請手動複製'), 'error');
             }
         } catch (err) {
             console.error('❌ 複製失敗:', err);
-            self.showToast('❌ 複製失敗，請手動複製', 'error');
+            self.showToast('❌ ' + t('sessionManagement.sessionDetails.copyFailed', '複製失敗，請手動複製'), 'error');
         } finally {
             document.body.removeChild(textArea);
         }
@@ -468,19 +474,19 @@
             if (navigator.clipboard && window.isSecureContext) {
                 navigator.clipboard.writeText(summaryContent).then(function() {
                     // console.log('✅ 摘要內容已複製到剪貼板');
-                    self.showToast('✅ 摘要已複製到剪貼板', 'success');
+                    self.showToast('✅ ' + t('sessionManagement.sessionDetails.summaryCopied', '摘要已複製到剪貼板'), 'success');
                 }).catch(function(err) {
                     console.error('❌ 複製失敗:', err);
                     // 降級到傳統方法
-                    self.fallbackCopyTextToClipboard(summaryContent, '✅ 摘要已複製到剪貼板');
+                    self.fallbackCopyTextToClipboard(summaryContent, '✅ ' + t('sessionManagement.sessionDetails.summaryCopied', '摘要已複製到剪貼板'));
                 });
             } else {
                 // 降級到傳統方法
-                this.fallbackCopyTextToClipboard(summaryContent, '✅ 摘要已複製到剪貼板');
+                this.fallbackCopyTextToClipboard(summaryContent, '✅ ' + t('sessionManagement.sessionDetails.summaryCopied', '摘要已複製到剪貼板'));
             }
         } catch (error) {
             console.error('❌ 複製摘要時發生錯誤:', error);
-            this.showToast('❌ 複製失敗，請手動複製', 'error');
+            this.showToast('❌ ' + t('sessionManagement.sessionDetails.copyFailed', '複製失敗，請手動複製'), 'error');
         }
     };
 
@@ -500,19 +506,19 @@
             if (navigator.clipboard && window.isSecureContext) {
                 navigator.clipboard.writeText(messageContent).then(function() {
                     // console.log('✅ 用戶消息已複製到剪貼板');
-                    self.showToast('✅ 消息已複製到剪貼板', 'success');
+                    self.showToast('✅ ' + t('sessionManagement.sessionDetails.messageCopied', '訊息已複製到剪貼板'), 'success');
                 }).catch(function(err) {
                     console.error('❌ 複製失敗:', err);
                     // 降級到傳統方法
-                    self.fallbackCopyTextToClipboard(messageContent, '✅ 消息已複製到剪貼板');
+                    self.fallbackCopyTextToClipboard(messageContent, '✅ ' + t('sessionManagement.sessionDetails.messageCopied', '訊息已複製到剪貼板'));
                 });
             } else {
                 // 降級到傳統方法
-                this.fallbackCopyTextToClipboard(messageContent, '✅ 消息已複製到剪貼板');
+                this.fallbackCopyTextToClipboard(messageContent, '✅ ' + t('sessionManagement.sessionDetails.messageCopied', '訊息已複製到剪貼板'));
             }
         } catch (error) {
             console.error('❌ 複製用戶消息時發生錯誤:', error);
-            this.showToast('❌ 複製失敗，請手動複製', 'error');
+            this.showToast('❌ ' + t('sessionManagement.sessionDetails.copyFailed', '複製失敗，請手動複製'), 'error');
         }
     };
 

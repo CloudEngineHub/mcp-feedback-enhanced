@@ -101,14 +101,7 @@
      */
     ConnectionMonitor.prototype.updateConnectionStatus = function(status, message) {
         console.log('🔍 連線狀態更新:', status, message);
-
-        // 更新狀態顯示
-        if (this.statusText) {
-            // 使用 i18n 翻譯或提供的訊息
-            const displayText = message || (window.MCPFeedback && window.MCPFeedback.Utils && window.MCPFeedback.Utils.Status ?
-                window.MCPFeedback.Utils.Status.getConnectionStatusText(status) : status);
-            this.statusText.textContent = displayText;
-        }
+        this.status = status;
 
         // 更新狀態圖示
         if (this.statusIcon) {
@@ -133,34 +126,10 @@
             indicator.className = 'connection-indicator ' + status;
         }
         
-        // 更新精簡的頂部狀態指示器（現在是緊湊版）
+        // 更新精簡的頂部狀態指示器（現在是緊湊版）；文字在 updateDisplay 依目前語言重繪
         const minimalIndicator = document.getElementById('connectionStatusMinimal');
         if (minimalIndicator) {
             minimalIndicator.className = 'connection-status-compact ' + status;
-            const statusText = minimalIndicator.querySelector('.status-text');
-            if (statusText) {
-                let statusKey = '';
-                switch (status) {
-                    case 'connected':
-                        statusKey = 'connectionMonitor.connected';
-                        break;
-                    case 'connecting':
-                        statusKey = 'connectionMonitor.connecting';
-                        break;
-                    case 'disconnected':
-                        statusKey = 'connectionMonitor.disconnected';
-                        break;
-                    case 'reconnecting':
-                        statusKey = 'connectionMonitor.reconnecting';
-                        break;
-                    default:
-                        statusKey = 'connectionMonitor.unknown';
-                }
-                statusText.setAttribute('data-i18n', statusKey);
-                if (window.i18nManager) {
-                    statusText.textContent = window.i18nManager.t(statusKey);
-                }
-            }
         }
         
         // 處理特殊狀態
@@ -362,18 +331,27 @@
             statsMessageCount.textContent = this.messageCount.toString();
         }
         
-        // 更新統計面板中的會話數和狀態
-        const sessionCount = document.getElementById('sessionCount');
-        const statsSessionCount = document.getElementById('statsSessionCount');
-        if (sessionCount && statsSessionCount) {
-            statsSessionCount.textContent = sessionCount.textContent;
-        }
-        
-        const sessionStatusText = document.getElementById('sessionStatusText');
-        const statsSessionStatus = document.getElementById('statsSessionStatus');
-        if (sessionStatusText && statsSessionStatus) {
-            statsSessionStatus.textContent = sessionStatusText.textContent;
-        }
+        this.updateStatusText();
+    };
+
+    /**
+     * 依目前狀態與語言重繪頂部連線狀態文字（狀態變更與切換語言都會經過 updateDisplay）
+     */
+    ConnectionMonitor.prototype.updateStatusText = function() {
+        if (!this.statusText || !this.status || !window.i18nManager) return;
+
+        const statusKeys = {
+            'connected': 'connectionMonitor.connected',
+            'connecting': 'connectionMonitor.connecting',
+            'disconnected': 'connectionMonitor.disconnected',
+            'reconnecting': 'connectionMonitor.reconnecting'
+        };
+        // 文字由這裡管；留著 data-i18n 的話，切換語言會先套上沒代入 {attempt} 的原字串
+        this.statusText.removeAttribute('data-i18n');
+        // reconnectCount 在恢復連線時歸零，斷線期間等於 WebSocketManager 的重連次數
+        this.statusText.textContent = window.i18nManager.t(statusKeys[this.status] || 'connectionMonitor.unknown', {
+            attempt: this.reconnectCount
+        });
     };
 
     /**

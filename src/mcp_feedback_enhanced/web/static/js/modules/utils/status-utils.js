@@ -84,7 +84,7 @@
                 'connecting': 'connectionMonitor.connecting',
                 'connected': 'connectionMonitor.connected',
                 'disconnected': 'connectionMonitor.disconnected',
-                'reconnecting': 'connectionMonitor.reconnecting',
+                'reconnecting': 'status.reconnecting', // connectionMonitor.reconnecting 含 {attempt}，這裡沒有次數可代入
                 'error': 'status.error'
             };
 

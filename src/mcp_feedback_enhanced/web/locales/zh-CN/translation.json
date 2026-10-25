@@ -217,7 +217,17 @@
             "projectDirectory": "项目目录",
             "summary": "总结",
             "noSummary": "暂无总结",
-            "unknown": "未知"
+            "unknown": "未知",
+            "inProgress": "进行中",
+            "noData": "没有可显示的会话数据",
+            "content": "内容",
+            "characters": "{count} 字符",
+            "recordingDisabled": "内容记录已停用（隐私设置）",
+            "copySummary": "复制总结",
+            "copyMessage": "复制消息内容",
+            "summaryCopied": "总结已复制到剪贴板",
+            "messageCopied": "消息已复制到剪贴板",
+            "copyFailed": "复制失败，请手动复制"
         },
         "copySessionContent": "复制会话内容",
         "copyUserContent": "复制用户内容",
@@ -315,7 +325,8 @@
             "latencyMs": "延迟",
             "sessions": "会话",
             "reconnects": "重连"
-        }
+        },
+        "unknown": "未知"
     },
     "dynamic": {
         "aiSummary": "测试 Web UI 功能\n\n🎯 **功能测试项目：**\n- Web UI 服务器启动和运行\n- WebSocket 实时通讯\n- 反馈提交功能\n- 图片上传和预览\n- 智能 Ctrl+V 图片粘贴\n- 多语言界面功能\n\n📋 **测试步骤：**\n1. 测试图片上传（拖拽、选择文件、剪贴板）\n2. 在文本框内按 Ctrl+V 测试智能粘贴\n3. 尝试切换语言（繁中/简中/英文）\n4. 提交反馈和图片\n\n请测试这些功能并提供反馈！"
@@ -517,7 +528,7 @@
         "cleaned": "会话已清理",
         "feedbackSubmitted": "反馈已成功提交",
         "userMessageRecorded": "用户消息已记录",
-        "historySaved": "会话历史已保存（{{count}} 个会话）",
+        "historySaved": "会话历史已保存（{count} 个会话）",
         "historyLoaded": "会话历史已载入"
     },
     "settingsAPI": {
@@ -542,14 +553,14 @@
     "prompt": {
         "saved": "提示词已保存",
         "deleted": "提示词已删除",
-        "applied": "已套用提示词：{{name}}",
+        "applied": "已套用提示词：{name}",
         "importSuccess": "提示词导入成功",
         "importFailed": "提示词导入失败",
         "exportSuccess": "提示词导出成功",
         "validationFailed": "提示词验证失败"
     },
     "error": {
-        "generic": "发生错误：{{error}}",
+        "generic": "发生错误：{error}",
         "network": "网络错误",
         "server": "服务器错误",
         "timeout": "操作超时",

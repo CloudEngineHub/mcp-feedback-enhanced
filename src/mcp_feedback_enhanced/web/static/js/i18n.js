@@ -272,26 +272,10 @@ class I18nManager {
     }
 
     updateConnectionMonitorContent() {
-        // 更新連線監控器中的動態文字
+        // 連線監控器的延遲、重連次數與頂部連線狀態文字都在 updateDisplay 依目前語言重繪
         if (window.feedbackApp && window.feedbackApp.connectionMonitor) {
-            // 觸發連線監控器重新更新顯示
             if (typeof window.feedbackApp.connectionMonitor.updateDisplay === 'function') {
                 window.feedbackApp.connectionMonitor.updateDisplay();
-            }
-        }
-
-        // 更新連線狀態文字
-        const statusText = document.querySelector('.status-text');
-        if (statusText && window.MCPFeedback && window.MCPFeedback.Utils && window.MCPFeedback.Utils.Status) {
-            // 從元素的類名或數據屬性中獲取狀態
-            const indicator = statusText.closest('.connection-indicator');
-            if (indicator) {
-                const statusClass = Array.from(indicator.classList).find(cls =>
-                    ['connecting', 'connected', 'disconnected', 'reconnecting'].includes(cls)
-                );
-                if (statusClass) {
-                    statusText.textContent = window.MCPFeedback.Utils.Status.getConnectionStatusText(statusClass);
-                }
             }
         }
     }

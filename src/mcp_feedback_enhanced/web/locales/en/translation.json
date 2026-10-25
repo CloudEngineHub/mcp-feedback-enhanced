@@ -216,7 +216,17 @@
             "projectDirectory": "Project Directory",
             "summary": "Summary",
             "noSummary": "No summary available",
-            "unknown": "Unknown"
+            "unknown": "Unknown",
+            "inProgress": "In progress",
+            "noData": "No session data to display",
+            "content": "Content",
+            "characters": "{count} characters",
+            "recordingDisabled": "Content recording disabled (privacy settings)",
+            "copySummary": "Copy summary",
+            "copyMessage": "Copy message content",
+            "summaryCopied": "Summary copied to clipboard",
+            "messageCopied": "Message copied to clipboard",
+            "copyFailed": "Copy failed, please copy manually"
         },
         "copySessionContent": "Copy Session Content",
         "copyUserContent": "Copy User Content",
@@ -523,7 +533,7 @@
         "cleaned": "Session cleaned",
         "feedbackSubmitted": "Feedback submitted successfully",
         "userMessageRecorded": "User message recorded",
-        "historySaved": "Session history saved ({{count}} sessions)",
+        "historySaved": "Session history saved ({count} sessions)",
         "historyLoaded": "Session history loaded"
     },
     "settingsAPI": {
@@ -549,14 +559,14 @@
     "prompt": {
         "saved": "Prompt saved",
         "deleted": "Prompt deleted",
-        "applied": "Prompt applied: {{name}}",
+        "applied": "Prompt applied: {name}",
         "importSuccess": "Prompts imported successfully",
         "importFailed": "Prompts import failed",
         "exportSuccess": "Prompts exported successfully",
         "validationFailed": "Prompt validation failed"
     },
     "error": {
-        "generic": "An error occurred: {{error}}",
+        "generic": "An error occurred: {error}",
         "network": "Network error",
         "server": "Server error",
         "timeout": "Operation timed out",

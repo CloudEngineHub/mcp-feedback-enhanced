@@ -341,8 +341,9 @@
                 break;
 
             case Utils.CONSTANTS.FEEDBACK_SUBMITTED:
-                const timeStr = this.lastSubmissionTime ?
-                    new Date(this.lastSubmissionTime).toLocaleTimeString() : '';
+                // index.html 沒載入 TimeUtils，缺的時候不顯示時間
+                const timeStr = this.lastSubmissionTime && Utils.Time ?
+                    Utils.Time.formatTimestamp(this.lastSubmissionTime, { format: 'time' }) : '';
                 icon = '✅';
                 title = window.i18nManager ? window.i18nManager.t('status.submitted.title') : '回饋已提交';
                 message = window.i18nManager ? window.i18nManager.t('status.submitted.message') : '等待下次 MCP 調用';

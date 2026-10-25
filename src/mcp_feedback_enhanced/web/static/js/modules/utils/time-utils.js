@@ -36,12 +36,14 @@
                     return '無效時間';
                 }
 
+                // 時間與日期跟介面語言（zh-TW、zh-CN、en），不跟瀏覽器語系
+                const locale = window.i18nManager ? window.i18nManager.getCurrentLanguage() : undefined;
                 if (options.format === 'time') {
                     // 只返回時間部分
-                    return date.toLocaleTimeString();
+                    return date.toLocaleTimeString(locale);
                 } else if (options.format === 'date') {
                     // 只返回日期部分
-                    return date.toLocaleDateString();
+                    return date.toLocaleDateString(locale);
                 } else if (options.format === 'iso') {
                     // ISO 格式
                     return date.toISOString();
