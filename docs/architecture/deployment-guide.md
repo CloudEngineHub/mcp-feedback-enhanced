@@ -27,14 +27,6 @@ graph TB
         WIN_BROWSER[Windows 瀏覽器]
         WSL --> WIN_BROWSER
     end
-
-    subgraph "容器化部署"
-        DOCKER[Docker 容器]
-        PORT_MAP[埠映射]
-        HOST[宿主機]
-        DOCKER --> PORT_MAP
-        PORT_MAP --> HOST
-    end
 ```
 
 ## 🛠️ 安裝和配置
@@ -57,13 +49,18 @@ graph TB
 
 ### 安裝方式
 
+套件提供 `mcp-feedback-enhanced` 指令（另有相容別名 `interactive-feedback-mcp`）。不帶子命令時啟動 MCP 伺服器（stdio），通常由 IDE 依 MCP 設定啟動，不需要手動常駐；Web 服務在 AI 第一次呼叫 `interactive_feedback` 時才啟動。
+
 #### 1. 使用 uvx（推薦）
 ```bash
-# 直接運行
-uvx mcp-feedback-enhanced@latest web
+# 啟動 MCP 伺服器（等同 `server` 子命令）
+uvx mcp-feedback-enhanced@latest
 
 # 指定版本
-uvx mcp-feedback-enhanced@2.4.3 web
+uvx mcp-feedback-enhanced@2.8.4
+
+# 不經 MCP 客戶端，單獨測試 Web UI
+uvx mcp-feedback-enhanced@latest test --web
 ```
 
 #### 2. 使用 pip
@@ -72,7 +69,7 @@ uvx mcp-feedback-enhanced@2.4.3 web
 pip install mcp-feedback-enhanced
 
 # 運行
-mcp-feedback-enhanced web
+mcp-feedback-enhanced
 ```
 
 #### 3. 從源碼安裝
@@ -85,7 +82,7 @@ cd mcp-feedback-enhanced
 uv sync
 
 # 運行
-uv run python -m mcp_feedback_enhanced web
+uv run python -m mcp_feedback_enhanced
 ```
 
 ## 🌍 環境配置
@@ -113,24 +110,24 @@ flowchart TD
 
 **特點**:
 - 直接在本地機器運行
-- 自動開啟本地瀏覽器
+- AI 呼叫 `interactive_feedback` 時開啟本地瀏覽器；已有連線中的回饋分頁時改為通知該分頁更新內容，不另開新分頁
 - 最簡單的部署方式
 
 **配置**:
 ```bash
-# 運行命令
-mcp-feedback-enhanced web
+# 由 IDE 依 MCP 設定啟動，或手動運行
+uvx mcp-feedback-enhanced@latest
 
-# 自動檢測並開啟瀏覽器
-# 默認地址: http://localhost:8000
+# 預設地址: http://127.0.0.1:8765
+# 可用 MCP_WEB_HOST、MCP_WEB_PORT 調整；埠被佔用時會改用附近的可用埠
 ```
 
 ### 2. SSH 遠程環境部署
 
 **特點**:
-- 在遠程服務器運行服務
-- 自動建立 SSH 隧道
-- 本地瀏覽器訪問遠程服務
+- 在遠程服務器運行 MCP 伺服器與 Web 服務
+- 不會自動建立 SSH 隧道，需自行設定埠轉發，再用本地瀏覽器訪問
+- 遠端無法開啟瀏覽器時，伺服器會在 stderr 印出網址，供手動開啟
 
 **配置步驟**:
 
@@ -143,16 +140,18 @@ ssh user@remote-server
 pip install mcp-feedback-enhanced
 ```
 
-2. **運行服務**:
-```bash
-# 在遠程服務器運行
-mcp-feedback-enhanced web --host 0.0.0.0 --port 8000
+2. **固定埠號**（在 MCP 設定的 `env` 中設定）:
+```json
+{
+    "MCP_WEB_PORT": "8765"
+}
 ```
 
-3. **建立 SSH 隧道**（自動或手動）:
+`MCP_WEB_HOST` 請維持預設的 `127.0.0.1`。Web UI 與 `/ws` 端點沒有認證機制，設成 `0.0.0.0` 等於讓能連到該埠的任何人讀取會話內容並提交回饋。
+
+3. **建立 SSH 埠轉發**:
 ```bash
-# 手動建立隧道（如果自動檢測失敗）
-ssh -L 8000:localhost:8000 user@remote-server
+ssh -L 8765:127.0.0.1:8765 user@remote-server
 ```
 
 ### 3. WSL 環境部署
@@ -170,107 +169,55 @@ mcp-feedback-enhanced web
 # 自動檢測 WSL 環境並開啟 Windows 瀏覽器
 ```
 
-### 4. 容器化部署
-
-#### Docker 部署
-```dockerfile
-# Dockerfile
-FROM python:3.12-slim
-
-WORKDIR /app
-COPY . .
-
-RUN pip install mcp-feedback-enhanced
-
-EXPOSE 8000
-
-CMD ["mcp-feedback-enhanced", "web", "--host", "0.0.0.0", "--port", "8000"]
-```
-
-```bash
-# 構建和運行
-docker build -t mcp-feedback-enhanced .
-docker run -p 8000:8000 mcp-feedback-enhanced
-```
-
-#### Docker Compose
-```yaml
-# docker-compose.yml
-version: '3.8'
-
-services:
-  mcp-feedback:
-    build: .
-    ports:
-      - "8000:8000"
-    environment:
-      - ENVIRONMENT=docker
-    volumes:
-      - ./projects:/app/projects
-    restart: unless-stopped
-```
-
 ## ⚙️ 配置選項
 
 ### 命令行參數
 
 ```bash
-mcp-feedback-enhanced web [OPTIONS]
+mcp-feedback-enhanced [server | test (--web | --desktop) | version]
 ```
 
-| 參數 | 類型 | 預設值 | 描述 |
-|------|------|--------|------|
-| `--host` | `str` | `localhost` | 綁定的主機地址 |
-| `--port` | `int` | `8000` | 服務埠號 |
-| `--debug` | `bool` | `False` | 啟用調試模式 |
-| `--no-browser` | `bool` | `False` | 不自動開啟瀏覽器 |
-| `--timeout` | `int` | `600` | 預設會話超時時間（秒） |
-| `--audio-enabled` | `bool` | `True` | 啟用音效通知（v2.4.3 新增） |
-| `--session-retention` | `int` | `72` | 會話歷史保存時間（小時，v2.4.3 新增） |
+| 子命令／參數 | 描述 |
+|------|------|
+| （無）或 `server` | 啟動 MCP 伺服器（stdio） |
+| `test --web` | 啟動 Web UI 測試並持續運行 |
+| `test --desktop` | 啟動桌面應用程式 |
+| `test --timeout N` | 可接受（預設 60），但目前沒有被使用 |
+| `version` | 顯示版本資訊 |
+
+`test` 不帶 `--web` 或 `--desktop` 時只印出說明並以狀態碼 1 結束。主機、埠、除錯模式沒有命令行參數，一律用下方環境變數設定。
 
 ### 環境變數
 
+| 變數 | 用途 | 預設值 |
+|------|------|--------|
+| `MCP_DEBUG` | `true`/`1`/`yes`/`on` 時把除錯日誌寫到 stderr | 關閉 |
+| `MCP_WEB_HOST` | Web 服務綁定的主機 | `127.0.0.1` |
+| `MCP_WEB_PORT` | Web 服務埠，`1024`-`65535`；`0` 表示由系統分配 | `8765` |
+| `MCP_DESKTOP_MODE` | `true` 時改用桌面應用程式 | 關閉 |
+| `MCP_LANGUAGE` | 強制指定介面語言（`zh-TW`、`zh-CN`、`en`） | 自動偵測 |
+| `MCP_GZIP_MIN_SIZE` | 回應超過此位元組數才 Gzip 壓縮 | `1000` |
+| `MCP_STATIC_CACHE_AGE` | `/static/` 的快取秒數 | `3600` |
+| `MCP_API_CACHE_AGE` | `/api/` 的快取秒數，`0` 表示不加快取標頭 | `0` |
+
 ```bash
-# 設置環境變數
-export MCP_FEEDBACK_HOST=0.0.0.0
-export MCP_FEEDBACK_PORT=9000
-export MCP_FEEDBACK_DEBUG=true
-export MCP_FEEDBACK_TIMEOUT=1200
-export MCP_FEEDBACK_AUDIO_ENABLED=true
-export MCP_FEEDBACK_SESSION_RETENTION=72
+# 範例
+export MCP_WEB_PORT=9000
+export MCP_DEBUG=true
+export MCP_LANGUAGE=en
 ```
 
-### 配置文件
-```json
-// config.json
-{
-    "server": {
-        "host": "localhost",
-        "port": 8000,
-        "debug": false
-    },
-    "session": {
-        "timeout": 600,
-        "max_connections": 5
-    },
-    "ui": {
-        "default_language": "zh-TW",
-        "theme": "light"
-    },
-    "audio": {
-        "enabled": true,
-        "default_volume": 75,
-        "max_custom_audios": 20,
-        "max_file_size_mb": 2
-    },
-    "session_history": {
-        "retention_hours": 72,
-        "max_retention_hours": 168,
-        "privacy_level": "full",
-        "auto_cleanup": true
-    }
-}
-```
+### 設定檔
+
+沒有 `config.json`。Web UI 的設定由瀏覽器端 `SettingsManager` 透過 HTTP API 存到 `~/.config/mcp-feedback-enhanced/`：
+
+| 檔案 | 內容 | 讀寫方式 |
+|------|------|----------|
+| `ui_settings.json` | 介面設定，包含提示詞（`promptSettings`）、音效與自訂音效（`audioNotificationEnabled`、`audioNotificationVolume`、`selectedAudioId`、`customAudios`）、會話歷史保存期限（`sessionHistoryRetentionHours`）、用戶訊息記錄（`userMessageRecordingEnabled`、`userMessagePrivacyLevel`）、輸入框高度（`combinedFeedbackTextHeight`）、會話超時（`sessionTimeoutEnabled`、`sessionTimeoutSeconds`）、日誌等級（`logLevel`） | `GET /api/load-settings`、`POST /api/save-settings`、`POST /api/clear-settings`、`POST /api/log-level` |
+| `session_history.json` | 會話歷史 | `GET /api/load-session-history`、`POST /api/save-session-history` |
+| `language.json` | 伺服器端語言設定 | Python `I18nManager` |
+
+瀏覽器 localStorage 只存介面語言（`language`）、瀏覽器通知設定（`notificationsEnabled`、`notificationTriggerMode`）與分頁追蹤資料（`mcp_feedback_tabs`、`mcp_feedback_last_activity`）。
 
 ## 🆕 v2.4.3 版本部署考慮
 
@@ -288,17 +235,8 @@ function checkAudioSupport() {
 }
 ```
 
-#### 音效文件存儲配置
-```json
-{
-    "audio_storage": {
-        "type": "localStorage",
-        "max_size_mb": 10,
-        "compression": true,
-        "fallback_enabled": true
-    }
-}
-```
+#### 音效文件存儲
+沒有獨立的音效儲存設定。自訂音效轉成 Base64 後存在 `ui_settings.json` 的 `customAudios`，接受 `audio/mp3`、`audio/mpeg`、`audio/wav`、`audio/ogg`。程式沒有檔案大小或數量上限，上傳大檔會讓 `ui_settings.json` 跟著變大。
 
 #### 自動播放政策處理
 ```bash
@@ -310,28 +248,16 @@ function checkAudioSupport() {
 
 ### 會話管理重構部署
 
-#### localStorage 容量規劃
-```javascript
-// 估算存儲需求
-const estimatedStorage = {
-    sessions_per_day: 50,
-    average_session_size_kb: 5,
-    retention_days: 3,
-    total_size_mb: (50 * 5 * 3) / 1024  // 約 0.73 MB
-};
-```
+#### 會話歷史存儲
+會話歷史存在伺服器端的 `~/.config/mcp-feedback-enhanced/session_history.json`，由前端經 `POST /api/save-session-history` 寫入、`GET /api/load-session-history` 讀取，不佔用瀏覽器 localStorage。載入時會移除超過保存期限的會話；保存期限是設定 `sessionHistoryRetentionHours`，介面可選 24、72、168、720 小時，預設 72。
 
-#### 隱私設定配置
-```json
-{
-    "privacy_defaults": {
-        "user_message_recording": "full",
-        "retention_hours": 72,
-        "auto_cleanup": true,
-        "export_enabled": true
-    }
-}
-```
+#### 隱私設定
+隱私相關設定都存在 `ui_settings.json`：
+
+| 設定鍵 | 可選值 | 預設值 |
+|--------|--------|--------|
+| `userMessageRecordingEnabled` | `true`/`false` | `true` |
+| `userMessagePrivacyLevel` | `full`、`basic`、`disabled` | `full` |
 
 ### 智能記憶功能部署
 
@@ -344,77 +270,40 @@ if (typeof ResizeObserver === 'undefined') {
 }
 ```
 
-#### 設定存儲優化
-```json
-{
-    "memory_settings": {
-        "debounce_delay_ms": 500,
-        "max_stored_heights": 10,
-        "cleanup_interval_hours": 24
-    }
-}
-```
+#### 設定存儲
+輸入框高度在調整後延遲 500 毫秒（debounce）寫入 `ui_settings.json` 的 `combinedFeedbackTextHeight`，預設 150 像素；沒有其他可調整的記憶設定。
 
 ## 🔧 運維管理
 
 ### 服務監控
 
-#### 健康檢查端點
-```bash
-# 檢查服務狀態
-curl http://localhost:8000/health
+#### 服務狀態檢查
+沒有 `/health` 端點。Web 服務啟動後（AI 第一次呼叫 `interactive_feedback` 之後），可用 `GET /api/session-status` 確認服務與目前會話：
 
-# 響應示例
+```bash
+curl http://127.0.0.1:8765/api/session-status
+```
+
+```json
 {
-    "status": "healthy",
-    "version": "2.4.3",
-    "uptime": "2h 30m 15s",
-    "active_sessions": 1,
-    "features": {
-        "audio_notifications": true,
-        "session_history": true,
-        "smart_memory": true
-    },
-    "storage": {
-        "session_history_count": 25,
-        "custom_audio_count": 3,
-        "localStorage_usage_mb": 1.2
+    "has_session": true,
+    "status": "active",
+    "session_info": {
+        "project_directory": "/path/to/project",
+        "summary": "代碼審查完成",
+        "feedback_completed": false
     }
 }
 ```
 
-#### 日誌監控
-```python
-# 日誌配置
-import logging
+沒有活躍會話時回傳 `has_session: false`、`status: "no_session"`。
 
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.FileHandler('mcp-feedback.log'),
-        logging.StreamHandler()
-    ]
-)
-```
+#### 日誌監控
+程式沒有寫日誌檔。設定 `MCP_DEBUG=true` 時，除錯訊息寫到 stderr；預設不輸出，避免干擾 MCP 的 stdio 通訊。
 
 ### 性能調優
 
-#### 內存優化
-```python
-# 會話清理配置
-SESSION_CLEANUP_INTERVAL = 300  # 5分鐘
-SESSION_TIMEOUT = 600  # 10分鐘
-MAX_CONCURRENT_SESSIONS = 10
-```
-
-#### 網路優化
-```python
-# WebSocket 配置
-WEBSOCKET_PING_INTERVAL = 30
-WEBSOCKET_PING_TIMEOUT = 10
-MAX_WEBSOCKET_CONNECTIONS = 50
-```
+會話清理與 WebSocket 連線沒有可調整的設定；可用環境變數調整的只有 Gzip 門檻與快取時間（`MCP_GZIP_MIN_SIZE`、`MCP_STATIC_CACHE_AGE`、`MCP_API_CACHE_AGE`，見上方環境變數表）。
 
 ### 故障排除
 
@@ -430,17 +319,16 @@ console.log('請點擊頁面任意位置以啟用音效功能');
 
 # 檢查音效文件格式
 # 支援格式：MP3, WAV, OGG
-# 最大文件大小：2MB
+# 程式沒有限制檔案大小
 ```
 
 2. **會話歷史丟失**
 ```bash
-# 檢查 localStorage 容量
-# 解決方案：清理過期數據或增加保存期限
-localStorage.getItem('sessionHistory');
+# 會話歷史存在伺服器端，不在 localStorage
+cat ~/.config/mcp-feedback-enhanced/session_history.json
 
-# 檢查隱私設定
-# 確認用戶訊息記錄等級設定正確
+# 檢查保存期限：超過 ui_settings.json 的 sessionHistoryRetentionHours（預設 72 小時）的會話會在載入時被移除
+# 檢查隱私設定：userMessageRecordingEnabled 為 false 或 userMessagePrivacyLevel 為 disabled 時不記錄用戶訊息
 ```
 
 3. **輸入框高度不記憶**
@@ -450,79 +338,56 @@ if (typeof ResizeObserver === 'undefined') {
     console.warn('瀏覽器不支援 ResizeObserver');
 }
 
-# 檢查設定存儲
-localStorage.getItem('combinedFeedbackTextHeight');
+# 檢查設定存儲（高度存在 ui_settings.json，不在 localStorage）
+grep combinedFeedbackTextHeight ~/.config/mcp-feedback-enhanced/ui_settings.json
 ```
 
 4. **埠被佔用**
 ```bash
 # 檢查埠使用情況
-netstat -tulpn | grep 8000
+netstat -tulpn | grep 8765
 
-# 解決方案：使用不同埠
-mcp-feedback-enhanced web --port 8001
+# 偏好埠被佔用時，若佔用者是本專案或 uvicorn/fastapi 的 Python 行程，會先嘗試結束它；
+# 否則自動往上（最多 100 個）再往下尋找可用埠。要固定改用其他埠：
+MCP_WEB_PORT=8766 uvx mcp-feedback-enhanced@latest
 ```
 
-2. **瀏覽器無法開啟**
+5. **瀏覽器無法開啟**
 ```bash
-# 手動開啟瀏覽器
-mcp-feedback-enhanced web --no-browser
-# 然後手動訪問 http://localhost:8000
+# 無法自動開啟時，伺服器會在 stderr 印出「無法自動開啟瀏覽器，請手動開啟：<網址>」
+# 依該網址手動開啟即可（預設 http://127.0.0.1:8765）
 ```
 
-3. **SSH 隧道失敗**
+6. **SSH 埠轉發失敗**
 ```bash
-# 手動建立隧道
-ssh -L 8000:localhost:8000 user@remote-server
+# 手動建立埠轉發
+ssh -L 8765:127.0.0.1:8765 user@remote-server
 
-# 或使用不同埠
-ssh -L 8001:localhost:8000 user@remote-server
+# 本地 8765 已被佔用時，改用其他本地埠
+ssh -L 8766:127.0.0.1:8765 user@remote-server
 ```
 
 #### 調試模式
 ```bash
-# 啟用詳細日誌
-mcp-feedback-enhanced web --debug
-
-# 查看詳細錯誤信息
-export PYTHONPATH=.
-python -m mcp_feedback_enhanced.debug
+# 啟用詳細日誌（寫到 stderr）
+MCP_DEBUG=true uvx mcp-feedback-enhanced@latest test --web
 ```
 
 ### 安全配置
 
-#### 生產環境安全
-```python
-# 限制 CORS
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["https://yourdomain.com"],
-    allow_credentials=True,
-    allow_methods=["GET", "POST"],
-    allow_headers=["*"],
-)
+#### 存取控制
+程式沒有 CORS 設定，也沒有認證機制。目前的防護只擋跨站的瀏覽器請求：
+- `/ws` 與 `/api/*` 的非 GET/HEAD/OPTIONS 請求會檢查 Origin：瀏覽器帶來的 Origin 必須指向本服務（或是桌面應用程式的來源），否則 `/ws` 以代碼 4003 關閉、`/api/*` 回 403；沒有帶 Origin 的非瀏覽器客戶端直接放行
+- `/api/*` 的非 GET/HEAD/OPTIONS 請求還要求 `Content-Type: application/json`，不符回 415
 
-# 添加安全標頭
-@app.middleware("http")
-async def add_security_headers(request, call_next):
-    response = await call_next(request)
-    response.headers["X-Content-Type-Options"] = "nosniff"
-    response.headers["X-Frame-Options"] = "DENY"
-    response.headers["X-XSS-Protection"] = "1; mode=block"
-    return response
-```
+因此 `MCP_WEB_HOST` 請維持預設的 `127.0.0.1`。
 
 #### 防火牆配置
-```bash
-# Ubuntu/Debian
-sudo ufw allow 8000/tcp
-
-# CentOS/RHEL
-sudo firewall-cmd --permanent --add-port=8000/tcp
-sudo firewall-cmd --reload
-```
+預設只綁定 `127.0.0.1`，不需要也不應該在防火牆開放 Web 服務埠；遠端使用請改用 SSH 埠轉發。
 
 ## 📊 監控和指標
+
+程式沒有對外提供指標端點，以下是部署時值得自行觀察的項目，不是程式內建的指標。
 
 ### 系統指標
 - CPU 使用率
@@ -541,96 +406,57 @@ sudo firewall-cmd --reload
 - 會話歷史存儲使用量
 - 自訂音效上傳數量
 - 輸入框高度調整頻率
-- localStorage 使用量
+- `session_history.json`、`ui_settings.json` 的檔案大小
 
 ### 監控工具集成
-```python
-# Prometheus 指標
-from prometheus_client import Counter, Histogram, Gauge
-
-session_counter = Counter('mcp_sessions_total', 'Total sessions created')
-response_time = Histogram('mcp_response_time_seconds', 'Response time')
-active_sessions = Gauge('mcp_active_sessions', 'Active sessions')
-
-# v2.4.3 新增指標
-audio_plays = Counter('mcp_audio_plays_total', 'Total audio notifications played')
-audio_errors = Counter('mcp_audio_errors_total', 'Total audio playback errors')
-session_history_size = Gauge('mcp_session_history_size_bytes', 'Session history storage size')
-custom_audio_count = Gauge('mcp_custom_audio_count', 'Number of custom audio files')
-height_adjustments = Counter('mcp_height_adjustments_total', 'Total textarea height adjustments')
-```
+程式沒有 Prometheus 或其他監控工具的整合。
 
 ---
 
 ## 🔄 版本升級指南
 
-### 從 v2.4.2 升級到 v2.4.3
+### 升級到新版本
 
 #### 1. 備份現有數據
 ```bash
-# 備份用戶設定
-cp ~/.mcp-feedback/settings.json ~/.mcp-feedback/settings.json.backup
-
-# 備份提示詞數據
-cp ~/.mcp-feedback/prompts.json ~/.mcp-feedback/prompts.json.backup
+# 介面設定（含提示詞、音效、自訂音效）與會話歷史都在這個資料夾
+cp ~/.config/mcp-feedback-enhanced/ui_settings.json ~/.config/mcp-feedback-enhanced/ui_settings.json.backup
+cp ~/.config/mcp-feedback-enhanced/session_history.json ~/.config/mcp-feedback-enhanced/session_history.json.backup
 ```
 
 #### 2. 升級軟體
 ```bash
-# 使用 uvx 升級
-uvx mcp-feedback-enhanced@2.4.3 web
+# uvx：MCP 設定的 args 使用 mcp-feedback-enhanced@latest 時，重啟 MCP 伺服器即會使用最新版
 
 # 或使用 pip 升級
-pip install --upgrade mcp-feedback-enhanced==2.4.3
+pip install --upgrade mcp-feedback-enhanced
 ```
 
-#### 3. 驗證新功能
+#### 3. 驗證版本
 ```bash
-# 檢查音效功能
-curl http://localhost:8000/health | jq '.features.audio_notifications'
-
-# 檢查會話歷史功能
-curl http://localhost:8000/health | jq '.features.session_history'
-
-# 檢查智能記憶功能
-curl http://localhost:8000/health | jq '.features.smart_memory'
+uvx mcp-feedback-enhanced@latest version
 ```
 
 #### 4. 配置遷移
+不需要手動遷移。前端載入 `ui_settings.json` 時會與預設值合併，檔案裡沒有的設定鍵直接使用預設值，例如：
+
 ```json
-// 新增的配置項目會自動使用預設值
 {
-    "audio": {
-        "enabled": true,
-        "volume": 75,
-        "selectedAudioId": "default-beep"
-    },
-    "sessionHistory": {
-        "retentionHours": 72,
-        "privacyLevel": "full"
-    },
-    "smartMemory": {
-        "heightMemoryEnabled": true
-    }
+    "audioNotificationEnabled": false,
+    "audioNotificationVolume": 50,
+    "selectedAudioId": "default-beep",
+    "sessionHistoryRetentionHours": 72,
+    "userMessagePrivacyLevel": "full",
+    "combinedFeedbackTextHeight": 150
 }
 ```
 
 ### 回滾指南
 
-如果需要回滾到 v2.4.2：
+把 MCP 設定 `args` 的 `mcp-feedback-enhanced@latest` 改成固定版本（例如 `mcp-feedback-enhanced@2.8.0`），然後重啟 MCP 伺服器。不要釘到 2.6.0 或更早的版本（含未認證命令執行漏洞，見 [SECURITY.md](../../SECURITY.md)）。需要時再把備份的設定檔複製回去：
 
 ```bash
-# 停止服務
-pkill -f mcp-feedback-enhanced
-
-# 安裝舊版本
-pip install mcp-feedback-enhanced==2.4.2
-
-# 恢復備份設定
-cp ~/.mcp-feedback/settings.json.backup ~/.mcp-feedback/settings.json
-
-# 重新啟動服務
-mcp-feedback-enhanced web
+cp ~/.config/mcp-feedback-enhanced/ui_settings.json.backup ~/.config/mcp-feedback-enhanced/ui_settings.json
 ```
 
 ---
