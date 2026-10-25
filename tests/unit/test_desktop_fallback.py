@@ -38,7 +38,7 @@ class FakeWebSocket:
 
 @pytest.fixture(autouse=True)
 def standard_browser_path(monkeypatch):
-    """開發機可能被判成 WSL（WSLENV／/mnt/c 存在）而走 cmd.exe 真的開瀏覽器；一律走標準路徑"""
+    """真正的 WSL 開發機會被判成 WSL 而走 cmd.exe 真的開瀏覽器；一律走標準路徑"""
     monkeypatch.setattr(browser, "is_wsl_environment", lambda: False)
 
 

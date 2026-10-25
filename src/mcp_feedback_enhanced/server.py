@@ -44,6 +44,7 @@ from .utils.error_handler import ErrorHandler, ErrorType
 
 # 導入資源管理器
 from .utils.resource_manager import create_temp_file
+from .web.utils.browser import is_wsl_environment
 
 
 # ===== 編碼初始化 =====
@@ -139,42 +140,6 @@ mcp: Any = FastMCP(SERVER_NAME)
 
 
 # ===== 工具函數 =====
-def is_wsl_environment() -> bool:
-    """
-    檢測是否在 WSL (Windows Subsystem for Linux) 環境中運行
-
-    Returns:
-        bool: True 表示 WSL 環境，False 表示其他環境
-    """
-    try:
-        # 檢查 /proc/version 文件是否包含 WSL 標識
-        if os.path.exists("/proc/version"):
-            with open("/proc/version") as f:
-                version_info = f.read().lower()
-                if "microsoft" in version_info or "wsl" in version_info:
-                    debug_log("偵測到 WSL 環境（通過 /proc/version）")
-                    return True
-
-        # 檢查 WSL 相關環境變數
-        wsl_env_vars = ["WSL_DISTRO_NAME", "WSL_INTEROP", "WSLENV"]
-        for env_var in wsl_env_vars:
-            if os.getenv(env_var):
-                debug_log(f"偵測到 WSL 環境變數: {env_var}")
-                return True
-
-        # 檢查是否存在 WSL 特有的路徑
-        wsl_paths = ["/mnt/c", "/mnt/d", "/proc/sys/fs/binfmt_misc/WSLInterop"]
-        for path in wsl_paths:
-            if os.path.exists(path):
-                debug_log(f"偵測到 WSL 特有路徑: {path}")
-                return True
-
-    except Exception as e:
-        debug_log(f"WSL 檢測過程中發生錯誤: {e}")
-
-    return False
-
-
 def is_remote_environment() -> bool:
     """
     檢測是否在遠端環境中運行

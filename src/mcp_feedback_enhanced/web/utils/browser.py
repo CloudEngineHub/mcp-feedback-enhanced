@@ -7,6 +7,7 @@
 """
 
 import os
+import platform
 import subprocess
 import webbrowser
 from collections.abc import Callable
@@ -17,33 +18,44 @@ from ...debug import server_debug_log as debug_log
 
 def is_wsl_environment() -> bool:
     """
-    檢測是否在 WSL 環境中運行
+    檢測是否在 WSL (Windows Subsystem for Linux) 環境中運行
+
+    只有 Linux 才可能是 WSL；原生 Windows 也可能設了 WSLENV（Windows 端用來
+    跟 WSL 共享環境變數），不能拿來判斷。
 
     Returns:
         bool: True 表示 WSL 環境，False 表示其他環境
     """
+    # 用 platform.system() 而非 sys.platform：mypy 會依執行平台把後者判成常數，
+    # 讓另一個平台的分支變成 unreachable
+    if platform.system() != "Linux":
+        return False
+
     try:
         # 檢查 /proc/version 文件是否包含 WSL 標識
         if os.path.exists("/proc/version"):
             with open("/proc/version") as f:
                 version_info = f.read().lower()
                 if "microsoft" in version_info or "wsl" in version_info:
+                    debug_log("偵測到 WSL 環境（通過 /proc/version）")
                     return True
 
         # 檢查 WSL 相關環境變數
         wsl_env_vars = ["WSL_DISTRO_NAME", "WSL_INTEROP", "WSLENV"]
         for env_var in wsl_env_vars:
             if os.getenv(env_var):
+                debug_log(f"偵測到 WSL 環境變數: {env_var}")
                 return True
 
         # 檢查是否存在 WSL 特有的路徑
         wsl_paths = ["/mnt/c", "/mnt/d", "/proc/sys/fs/binfmt_misc/WSLInterop"]
         for path in wsl_paths:
             if os.path.exists(path):
+                debug_log(f"偵測到 WSL 特有路徑: {path}")
                 return True
 
-    except Exception:
-        pass
+    except Exception as e:
+        debug_log(f"WSL 檢測過程中發生錯誤: {e}")
 
     return False
 
