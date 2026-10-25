@@ -194,32 +194,6 @@ class I18nManager:
 
         return text
 
-    def reload_translations(self) -> None:
-        """重新載入所有翻譯檔案（開發時使用）"""
-        self._load_all_translations()
-
-    def add_language(self, language_code: str, translation_file_path: str) -> bool:
-        """動態添加新語言支援"""
-        try:
-            translation_file = Path(translation_file_path)
-            if not translation_file.exists():
-                return False
-
-            with open(translation_file, encoding="utf-8") as f:
-                data = json.load(f)
-                self._translations[language_code] = data
-
-                if language_code not in self._supported_languages:
-                    self._supported_languages.append(language_code)
-
-                debug_log(
-                    f"成功添加語言 {language_code}: {data.get('meta', {}).get('displayName', language_code)}"
-                )
-                return True
-        except Exception as e:
-            debug_log(f"添加語言失敗 {language_code}: {e}")
-            return False
-
 
 # 全域的國際化管理器實例
 _i18n_manager = None
@@ -246,8 +220,3 @@ def set_language(language: str) -> bool:
 def get_current_language() -> str:
     """獲取當前語言"""
     return get_i18n_manager().get_current_language()
-
-
-def reload_translations() -> None:
-    """重新載入翻譯（開發用）"""
-    get_i18n_manager().reload_translations()
