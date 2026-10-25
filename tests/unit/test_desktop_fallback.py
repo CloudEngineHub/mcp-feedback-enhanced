@@ -13,9 +13,11 @@ Gatekeeper 擋下、啟動後隨即退出）時，舊版什麼介面都不開：
 5. 瀏覽器也開不了時，網址無條件印到 stderr
 """
 
+import asyncio
 import subprocess
 import sys
 import time
+import types
 import webbrowser
 from unittest.mock import AsyncMock
 
@@ -160,13 +162,29 @@ def popen_returning(process, monkeypatch):
     monkeypatch.setattr(subprocess, "Popen", popen)
 
 
+@pytest.fixture
+def desktop_app(monkeypatch):
+    """desktop_app 模組，但它自己的 asyncio.sleep 立即返回
+
+    desktop_app.asyncio 就是全域的 asyncio 模組：直接替換它的 sleep 會讓同一行程裡
+    所有 event loop（例如前面測試留下的 uvicorn 伺服器執行緒）都變成忙迴圈搶 GIL，
+    把主執行緒餓到逾時。所以只換掉 desktop_app 手上的模組參照。
+    """
+    from mcp_feedback_enhanced.desktop_app import desktop_app as module
+
+    fake_asyncio = types.ModuleType("asyncio")
+    fake_asyncio.__dict__.update(vars(asyncio))
+    fake_asyncio.sleep = _no_sleep
+    monkeypatch.setattr(module, "asyncio", fake_asyncio)
+    return module
+
+
 class TestNativeEarlyExitIsLaunchFailure:
     @pytest.mark.asyncio
     async def test_non_zero_exit_during_startup_raises(
-        self, monkeypatch, fake_desktop_binary
+        self, monkeypatch, fake_desktop_binary, desktop_app
     ):
         """Popen 成功但 native 隨即失敗退出（Defender／glibc／Gatekeeper）不能被當成啟動成功"""
-        from mcp_feedback_enhanced.desktop_app import desktop_app
 
         class ExitedProcess:
             def poll(self):
@@ -179,7 +197,6 @@ class TestNativeEarlyExitIsLaunchFailure:
                 )
 
         popen_returning(ExitedProcess(), monkeypatch)
-        monkeypatch.setattr(desktop_app.asyncio, "sleep", _no_sleep)
 
         app = desktop_app.DesktopApp()
         with pytest.raises(RuntimeError, match=r"隨即退出.*127.*GLIBC"):
@@ -188,10 +205,9 @@ class TestNativeEarlyExitIsLaunchFailure:
 
     @pytest.mark.asyncio
     async def test_stderr_held_by_descendant_does_not_hang(
-        self, monkeypatch, fake_desktop_binary
+        self, monkeypatch, fake_desktop_binary, desktop_app
     ):
         """WebView 等後代程序握著 stderr 寫端時，讀尾段有上限，逾時只報 exit code"""
-        from mcp_feedback_enhanced.desktop_app import desktop_app
 
         class HangingStderr:
             """像真實 Popen：有 timeout 就在期限內拋 TimeoutExpired，沒有就一直等後代關閉 pipe"""
@@ -207,7 +223,6 @@ class TestNativeEarlyExitIsLaunchFailure:
                 raise subprocess.TimeoutExpired(cmd="desktop", timeout=timeout)
 
         popen_returning(HangingStderr(), monkeypatch)
-        monkeypatch.setattr(desktop_app.asyncio, "sleep", _no_sleep)
 
         app = desktop_app.DesktopApp()
         start = time.monotonic()
@@ -217,17 +232,15 @@ class TestNativeEarlyExitIsLaunchFailure:
 
     @pytest.mark.asyncio
     async def test_clean_exit_during_startup_is_not_failure(
-        self, monkeypatch, fake_desktop_binary
+        self, monkeypatch, fake_desktop_binary, desktop_app
     ):
         """使用者在觀察期內自己關掉視窗（exit 0）沿用既有語意，不能被降級成 Web"""
-        from mcp_feedback_enhanced.desktop_app import desktop_app
 
         class ClosedByUser:
             def poll(self):
                 return 0
 
         popen_returning(ClosedByUser(), monkeypatch)
-        monkeypatch.setattr(desktop_app.asyncio, "sleep", _no_sleep)
 
         app = desktop_app.DesktopApp()
         await app.launch_tauri_app("http://127.0.0.1:8765")
