@@ -2,7 +2,7 @@
 
 ## 🚀 部署架構概覽
 
-MCP Feedback Enhanced 支援多種部署環境，具備智能環境檢測和自適應配置能力。
+MCP Feedback Enhanced 支援本地、SSH 遠端、WSL 與桌面應用程式等使用方式；程式只依環境決定怎麼開啟介面，遠端存取需要自行設定埠轉發。
 
 ### 部署拓撲圖
 
@@ -16,7 +16,7 @@ graph TB
 
     subgraph "SSH 遠程環境"
         REMOTE[遠程服務器]
-        SSH_TUNNEL[SSH 隧道]
+        SSH_TUNNEL[SSH 埠轉發<br/>需手動設定]
         LOCAL_CLIENT[本地客戶端]
         REMOTE --> SSH_TUNNEL
         SSH_TUNNEL --> LOCAL_CLIENT
@@ -91,20 +91,20 @@ uv run python -m mcp_feedback_enhanced
 
 ```mermaid
 flowchart TD
-    START[啟動檢測] --> SSH{SSH 環境?}
-    SSH -->|是| SSH_CONFIG[SSH 配置]
-    SSH -->|否| WSL{WSL 環境?}
-    WSL -->|是| WSL_CONFIG[WSL 配置]
-    WSL -->|否| LOCAL_CONFIG[本地配置]
-
-    SSH_CONFIG --> TUNNEL[建立 SSH 隧道]
-    WSL_CONFIG --> WSL_BROWSER[WSL 瀏覽器開啟]
-    LOCAL_CONFIG --> LOCAL_BROWSER[本地瀏覽器開啟]
-
-    TUNNEL --> SUCCESS[部署成功]
-    WSL_BROWSER --> SUCCESS
-    LOCAL_BROWSER --> SUCCESS
+    START[AI 呼叫 interactive_feedback] --> DESKTOP{MCP_DESKTOP_MODE 為 true?}
+    DESKTOP -->|是| APP[啟動桌面應用程式<br/>失敗時改走下方瀏覽器流程]
+    DESKTOP -->|否| TABS{已有連線中的回饋分頁?}
+    TABS -->|是| NOTIFY[送出 session_updated<br/>不另開分頁]
+    TABS -->|否| WSL{WSL 環境?<br/>只在 Linux 上可能成立}
+    WSL -->|是| WSL_BROWSER[依序試 cmd.exe、powershell.exe、wslview<br/>開啟 Windows 瀏覽器]
+    WSL -->|否| LOCAL_BROWSER[Python webbrowser.open]
+    WSL_BROWSER --> RESULT{開啟成功?}
+    LOCAL_BROWSER --> RESULT
+    RESULT -->|是| SUCCESS[瀏覽器顯示回饋頁面]
+    RESULT -->|否| NOTICE[stderr 印出網址<br/>請使用者手動開啟]
 ```
+
+SSH、Codespaces、Remote Containers、Docker、Windows 遠端桌面、沒有 `DISPLAY` 的 Linux 會被 `is_remote_environment()` 判定為遠端，但這個結果只寫進除錯日誌與 `get_system_info` 的輸出，不影響上面的開啟流程，也不會建立 SSH 隧道。
 
 ### 1. 本地環境部署
 
@@ -157,16 +157,14 @@ ssh -L 8765:127.0.0.1:8765 user@remote-server
 ### 3. WSL 環境部署
 
 **特點**:
-- 在 WSL 子系統中運行
-- 自動開啟 Windows 瀏覽器
-- 跨系統無縫集成
+- 在 WSL 中運行 MCP 伺服器與 Web 服務
+- 只在 Linux 上判斷是否為 WSL：`/proc/version` 含 `microsoft` 或 `wsl`、設了 `WSL_DISTRO_NAME`／`WSL_INTEROP`／`WSLENV`，或存在 `/mnt/c`、`/mnt/d`、`/proc/sys/fs/binfmt_misc/WSLInterop`；原生 Windows 即使設了 `WSLENV` 也不算 WSL
+- 偵測到 WSL 時依序用 `cmd.exe /c start`、`powershell.exe Start-Process`、`wslview` 開啟 Windows 瀏覽器；三種都失敗時在 stderr 印出網址
 
 **配置**:
 ```bash
-# 在 WSL 中運行
-mcp-feedback-enhanced web
-
-# 自動檢測 WSL 環境並開啟 Windows 瀏覽器
+# 在 WSL 中運行（通常由 IDE 依 MCP 設定啟動）
+uvx mcp-feedback-enhanced@latest
 ```
 
 ## ⚙️ 配置選項

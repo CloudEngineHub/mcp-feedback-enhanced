@@ -8,7 +8,7 @@ MCP Feedback Enhanced 採用**單一活躍會話 + 持久化 Web UI**的創新�
 
 - **Web-Only 架構**：完全基於 Web 技術，已移除所有 Electron 桌面應用功能
 - **四層架構設計**：清晰的層次分離，便於維護和擴展
-- **智能環境檢測**：自動識別本地、SSH Remote、WSL 環境並優化配置
+- **環境適配**：WSL 中改用 Windows 瀏覽器開啟介面；SSH 等遠端環境只偵測並寫進除錯日誌，需自行設定埠轉發
 - **單一活躍會話**：替代傳統多會話管理，提升性能和用戶體驗
 - **模組化設計**：每層職責明確，支援獨立開發和測試
 
@@ -227,18 +227,15 @@ stateDiagram-v2
 ### 3. 智能環境檢測
 ```mermaid
 flowchart TD
-    START[啟動檢測] --> LOCAL{本地環境?}
-    LOCAL -->|是| DIRECT[直接開啟瀏覽器]
-    LOCAL -->|否| REMOTE{SSH 遠程?}
-    REMOTE -->|是| TUNNEL[建立 SSH 隧道]
-    REMOTE -->|否| WSL{WSL 環境?}
-    WSL -->|是| WSLOPEN[WSL 瀏覽器開啟]
-    WSL -->|否| FALLBACK[回退模式]
-
-    DIRECT --> SUCCESS[成功啟動]
-    TUNNEL --> SUCCESS
-    WSLOPEN --> SUCCESS
-    FALLBACK --> SUCCESS
+    START[開啟回饋介面] --> TABS{已有連線中的分頁?}
+    TABS -->|是| NOTIFY[送出 session_updated]
+    TABS -->|否| WSL{WSL 環境?}
+    WSL -->|是| WSLOPEN[cmd.exe、powershell.exe、wslview<br/>開啟 Windows 瀏覽器]
+    WSL -->|否| DIRECT[Python webbrowser.open]
+    WSLOPEN --> RESULT{開啟成功?}
+    DIRECT --> RESULT
+    RESULT -->|是| SUCCESS[成功啟動]
+    RESULT -->|否| NOTICE[stderr 印出網址<br/>請使用者手動開啟]
 ```
 
 ## 🔧 技術亮點
@@ -263,17 +260,15 @@ self.global_active_tabs: Dict[str, dict] = {}  # 全局標籤頁狀態
 
 ### 2. 智能環境檢測與適配
 
-**環境自動識別**：
-- 本地開發環境檢測
-- SSH Remote 環境識別
-- WSL 子系統檢測
-- 容器化環境支援
+**環境偵測**：
+- `is_wsl_environment()`：只在 Linux 上可能成立，決定是否改用 Windows 瀏覽器
+- `is_remote_environment()`：SSH、Codespaces、Remote Containers、Docker、Windows 遠端桌面、沒有 `DISPLAY` 的 Linux 判定為遠端；結果只寫進除錯日誌與 `get_system_info`，不改變行為
 
 **瀏覽器智能開啟**：
 - **活躍標籤頁檢測**: 避免重複開啟瀏覽器視窗
 - **跨平台支援**: Windows, macOS, Linux 自動適配
-- **環境感知**: SSH/WSL 環境特殊處理
-- **錯誤恢復**: 開啟失敗時的備用方案
+- **WSL 處理**: 依序用 `cmd.exe`、`powershell.exe`、`wslview` 開啟 Windows 瀏覽器
+- **開啟失敗**: 在 stderr 印出網址，請使用者手動開啟
 
 ### 3. 高性能實時通信
 
