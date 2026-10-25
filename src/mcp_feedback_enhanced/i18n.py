@@ -175,27 +175,18 @@ class I18nManager:
 
     def t(self, key: str, **kwargs) -> str:
         """
-        翻譯函數 - 支援新舊兩種鍵值格式
+        翻譯函數：'buttons.submit' -> data['buttons']['submit']
 
-        新格式: 'buttons.submit' -> data['buttons']['submit']
-        舊格式: 'btn_submit_feedback' -> 兼容舊的鍵值
+        找不到時改查回退語言，再找不到就回傳 key 本身。
         """
         # 獲取當前語言的翻譯
         current_translations = self._translations.get(self._current_language, {})
-
-        # 嘗試新格式（巢狀鍵）
         text = self._get_nested_value(current_translations, key)
 
-        # 如果沒有找到，嘗試舊格式的兼容映射
-        if text is None:
-            text = self._get_legacy_translation(current_translations, key)
-
-        # 如果還是沒有找到，嘗試使用回退語言
+        # 如果沒有找到，嘗試使用回退語言
         if text is None:
             fallback_translations = self._translations.get(self._fallback_language, {})
             text = self._get_nested_value(fallback_translations, key)
-            if text is None:
-                text = self._get_legacy_translation(fallback_translations, key)
 
         # 最後回退到鍵本身
         if text is None:
@@ -209,81 +200,6 @@ class I18nManager:
                 pass
 
         return text
-
-    def _get_legacy_translation(
-        self, translations: dict[str, Any], key: str
-    ) -> str | None:
-        """獲取舊格式翻譯的兼容方法"""
-        # 舊鍵到新鍵的映射
-        legacy_mapping = {
-            # 應用程式
-            "app_title": "app.title",
-            "project_directory": "app.projectDirectory",
-            "language": "app.language",
-            "settings": "app.settings",
-            # 分頁
-            "feedback_tab": "tabs.feedback",
-            "images_tab": "tabs.images",
-            # 回饋
-            "feedback_title": "feedback.title",
-            "feedback_description": "feedback.description",
-            "feedback_placeholder": "feedback.placeholder",
-            # 圖片
-            "images_title": "images.title",
-            "images_select": "images.select",
-            "images_paste": "images.paste",
-            "images_clear": "images.clear",
-            "images_status": "images.status",
-            "images_status_with_size": "images.statusWithSize",
-            "images_drag_hint": "images.dragHint",
-            "images_delete_confirm": "images.deleteConfirm",
-            "images_delete_title": "images.deleteTitle",
-            "images_size_warning": "images.sizeWarning",
-            "images_format_error": "images.formatError",
-            # 按鈕
-            "submit": "buttons.submit",
-            "cancel": "buttons.cancel",
-            "close": "buttons.close",
-            "clear": "buttons.clear",
-            "btn_submit_feedback": "buttons.submitFeedback",
-            "btn_cancel": "buttons.cancel",
-            "btn_select_files": "buttons.selectFiles",
-            "btn_paste_clipboard": "buttons.pasteClipboard",
-            "btn_clear_all": "buttons.clearAll",
-            # 狀態
-            "feedback_submitted": "status.feedbackSubmitted",
-            "feedback_cancelled": "status.feedbackCancelled",
-            "timeout_message": "status.timeoutMessage",
-            "error_occurred": "status.errorOccurred",
-            "loading": "status.loading",
-            "connecting": "status.connecting",
-            "connected": "status.connected",
-            "disconnected": "status.disconnected",
-            "uploading": "status.uploading",
-            "upload_success": "status.uploadSuccess",
-            "upload_failed": "status.uploadFailed",
-            "command_running": "status.commandRunning",
-            "command_finished": "status.commandFinished",
-            "paste_success": "status.pasteSuccess",
-            "paste_failed": "status.pasteFailed",
-            "invalid_file_type": "status.invalidFileType",
-            "file_too_large": "status.fileTooLarge",
-            # 其他
-            "ai_summary": "aiSummary",
-            "language_selector": "languageSelector",
-            "language_zh_tw": "languageNames.zhTw",
-            "language_en": "languageNames.en",
-            "language_zh_cn": "languageNames.zhCn",
-            # 測試
-            "test_web_ui_summary": "test.webUiSummary",
-        }
-
-        # 檢查是否有對應的新鍵
-        new_key = legacy_mapping.get(key)
-        if new_key:
-            return self._get_nested_value(translations, new_key)
-
-        return None
 
     def get_language_display_name(self, language_code: str) -> str:
         """獲取語言的顯示名稱"""
