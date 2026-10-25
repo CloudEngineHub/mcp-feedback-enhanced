@@ -1182,11 +1182,13 @@ tests/
 - WebSocket 通信測試
 - 多語言切換測試
 
-**性能測試**：
-- 記憶體使用監控
-- 會話處理性能
-- 並發連接測試
-- 資源清理效率
+**性能測試**（只有少數有時間門檻的測試，沒有獨立的效能測試套件或基準）：
+- MCP 啟動與初始化時間：`TestMCPPerformance.test_startup_performance` 要求以 stdio 啟動伺服器在 30 秒內、`initialize` 在 5 秒內完成（`integration/test_mcp_workflow.py`）
+- 同時啟動兩個 MCP 客戶端：`test_concurrent_initialization` 只要求至少一個成功並能初始化，不量測時間（同上）
+- Web 服務啟動時間：`TestWebUIPerformance.test_server_startup_time` 要求 `start_server()` 加上等待 3 秒總計在 10 秒內，且伺服器執行緒仍在執行（`integration/test_web_integration.py`）
+- 連續建立會話：`test_multiple_session_performance` 連續建立 10 個會話，平均每個要在 0.1 秒內，最後一個是目前活躍會話（同上）
+- Gzip 壓縮比：`test_compression_performance` 對約 5KB 的 JSON 直接呼叫 `gzip.compress`，要求壓縮比超過 50%，不經過伺服器（`unit/test_gzip_compression.py`）
+- 記憶體監控、資源清理與會話清理只有功能測試（`unit/test_memory_monitor.py` 以模擬的 `psutil` 數值驗證門檻分級與清理回呼；`unit/test_resource_manager.py`、`unit/test_session_cleanup.py` 驗證清理與過期判斷），不量測記憶體用量或清理耗時；沒有並發 WebSocket 連線的測試
 
 ## 🔧 開發工具鏈
 
