@@ -144,7 +144,6 @@
     },
     "notifications": {
         "feedback_sent": "反馈已发送",
-        "command_executed": "命令已执行",
         "settings_saved": "设置已保存",
         "connection_lost": "连接中断",
         "connection_restored": "连接已恢复"
@@ -157,7 +156,6 @@
     "errors": {
         "connection_failed": "连接失败",
         "upload_failed": "上传失败",
-        "command_failed": "命令执行失败",
         "invalid_input": "输入内容无效",
         "timeout": "请求超时"
     },
@@ -592,17 +590,8 @@
         "userMessageFailed": "添加用户消息失败",
         "getSessionsFailed": "获取会话列表失败",
         "getLogLevelFailed": "获取日志等级失败",
-        "command": "命令执行错误",
         "resourceCleanup": "资源清理错误",
         "processing": "处理过程错误"
-    },
-    "commandStatus": {
-        "executing": "正在执行命令...",
-        "completed": "命令执行完成",
-        "failed": "命令执行失败",
-        "outputReceived": "已接收输出",
-        "invalid": "无效的命令",
-        "error": "命令执行错误"
     },
     "utils": {
         "copySuccess": "已复制到剪贴板",

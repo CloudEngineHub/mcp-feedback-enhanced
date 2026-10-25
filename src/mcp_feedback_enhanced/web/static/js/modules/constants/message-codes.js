@@ -95,16 +95,6 @@
             TIMEOUT: 'error.timeout',
             INVALID_INPUT: 'error.invalidInput',
             OPERATION_FAILED: 'error.operationFailed'
-        },
-
-        // 命令執行訊息
-        COMMAND: {
-            EXECUTING: 'commandStatus.executing',
-            COMPLETED: 'commandStatus.completed',
-            FAILED: 'commandStatus.failed',
-            OUTPUT_RECEIVED: 'commandStatus.outputReceived',
-            INVALID_COMMAND: 'commandStatus.invalid',
-            ERROR: 'commandStatus.error'
         }
     };
 

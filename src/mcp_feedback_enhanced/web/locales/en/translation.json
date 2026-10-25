@@ -144,7 +144,6 @@
     },
     "notifications": {
         "feedback_sent": "Feedback sent",
-        "command_executed": "Command executed",
         "settings_saved": "Settings saved",
         "connection_lost": "Connection lost",
         "connection_restored": "Connection restored"
@@ -157,7 +156,6 @@
     "errors": {
         "connection_failed": "Connection failed",
         "upload_failed": "Upload failed",
-        "command_failed": "Command execution failed",
         "invalid_input": "Invalid input",
         "timeout": "Request timeout"
     },
@@ -593,17 +591,8 @@
         "userMessageFailed": "Failed to add user message",
         "getSessionsFailed": "Failed to get sessions",
         "getLogLevelFailed": "Failed to get log level",
-        "command": "Command execution error",
         "resourceCleanup": "Resource cleanup error",
         "processing": "Processing error"
-    },
-    "commandStatus": {
-        "executing": "Executing command...",
-        "completed": "Command completed",
-        "failed": "Command failed",
-        "outputReceived": "Output received",
-        "invalid": "Invalid command",
-        "error": "Command execution error"
     },
     "utils": {
         "copySuccess": "Copied to clipboard",

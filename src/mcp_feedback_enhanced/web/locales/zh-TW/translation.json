@@ -149,7 +149,6 @@
     },
     "notifications": {
         "feedback_sent": "回饋已傳送",
-        "command_executed": "指令已執行",
         "settings_saved": "設定已儲存",
         "connection_lost": "連線中斷",
         "connection_restored": "連線已恢復"
@@ -162,7 +161,6 @@
     "errors": {
         "connection_failed": "連線失敗",
         "upload_failed": "上傳失敗",
-        "command_failed": "指令執行失敗",
         "invalid_input": "輸入內容無效",
         "timeout": "請求逾時"
     },
@@ -597,17 +595,8 @@
         "userMessageFailed": "新增使用者訊息失敗",
         "getSessionsFailed": "取得會話清單失敗",
         "getLogLevelFailed": "取得日誌等級失敗",
-        "command": "命令執行錯誤",
         "resourceCleanup": "資源清理錯誤",
         "processing": "處理過程錯誤"
-    },
-    "commandStatus": {
-        "executing": "正在執行命令...",
-        "completed": "命令執行完成",
-        "failed": "命令執行失敗",
-        "outputReceived": "已接收輸出",
-        "invalid": "無效的命令",
-        "error": "命令執行錯誤"
     },
     "utils": {
         "copySuccess": "已複製到剪貼簿",

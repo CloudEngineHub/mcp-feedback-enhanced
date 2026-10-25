@@ -58,14 +58,6 @@ class MessageCodes:
     SETTINGS_LOG_LEVEL_UPDATED = "settingsAPI.logLevelUpdated"
     SETTINGS_INVALID_LOG_LEVEL = "settingsAPI.invalidLogLevel"
 
-    # ========== 命令執行相關 ==========
-    COMMAND_EXECUTING = "commandStatus.executing"
-    COMMAND_COMPLETED = "commandStatus.completed"
-    COMMAND_FAILED = "commandStatus.failed"
-    COMMAND_INVALID = "commandStatus.invalid"
-    COMMAND_OUTPUT_RECEIVED = "commandStatus.outputReceived"
-    COMMAND_ERROR = "commandStatus.error"
-
     # ========== 錯誤相關 ==========
     ERROR_GENERIC = "error.generic"
     ERROR_NETWORK = "error.network"
@@ -108,11 +100,6 @@ LEGACY_KEY_MAPPING = {
     "MANUAL_CLEANUP": "SESSION_MANUAL_CLEANUP",
     "ERROR_CLEANUP": "SESSION_ERROR_CLEANUP",
     "SHUTDOWN_CLEANUP": "SYSTEM_SHUTDOWN",
-    "COMMAND_EXECUTING": "COMMAND_EXECUTING",
-    "COMMAND_COMPLETED": "COMMAND_COMPLETED",
-    "COMMAND_FAILED": "COMMAND_FAILED",
-    "COMMAND_INVALID": "COMMAND_INVALID",
-    "COMMAND_ERROR": "COMMAND_ERROR",
     "PROCESS_KILLED": "SYSTEM_PROCESS_KILLED",
     "RESOURCE_CLEANUP_ERROR": "ERROR_RESOURCE_CLEANUP",
     "HEARTBEAT_STOPPED": "SYSTEM_HEARTBEAT_STOPPED",

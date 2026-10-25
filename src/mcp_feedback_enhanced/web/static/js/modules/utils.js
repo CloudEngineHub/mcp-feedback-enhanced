@@ -328,7 +328,6 @@
                 'error.userMessageFailed': 'Failed to add user message',
                 'error.getSessionsFailed': 'Failed to get sessions',
                 'error.getLogLevelFailed': 'Failed to get log level',
-                'error.command': 'Command execution error',
                 'error.resourceCleanup': 'Resource cleanup error',
                 'error.processing': 'Processing error',
                 
