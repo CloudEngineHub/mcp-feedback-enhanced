@@ -13,28 +13,25 @@ AI 助手與用戶進行交互式回饋的核心 MCP 工具。
 #### 函數簽名
 ```python
 async def interactive_feedback(
-    project_directory: str,
-    summary: str,
-    timeout: int = 600
-) -> dict
+    project_directory: str = ".",
+    summary: str = "我已完成了您請求的任務。",
+    timeout: int = 600,
+) -> list[TextContent | ImageContent]
 ```
 
 #### 參數說明
 
 | 參數 | 類型 | 必需 | 預設值 | 描述 |
 |------|------|------|--------|------|
-| `project_directory` | `str` | ✅ | - | 專案目錄路徑，用於上下文顯示 |
-| `summary` | `str` | ✅ | - | AI 助手的工作摘要，向用戶說明當前狀態 |
-| `timeout` | `int` | ❌ | `600` | 等待用戶回饋的超時時間（秒） |
+| `project_directory` | `str` | ❌ | `"."` | 專案目錄路徑，用於上下文顯示；路徑不存在時改用伺服器的工作目錄 |
+| `summary` | `str` | ❌ | `"我已完成了您請求的任務。"` | AI 助手的工作摘要，向用戶說明當前狀態 |
+| `timeout` | `int` | ❌ | `600` | 等待用戶回饋的超時時間（秒），伺服器端鉗制在 60–86400，無法解析時用 600 |
 
 #### 返回值
-```python
-{
-    "command_logs": "",  # 命令執行日誌（保留字段）
-    "interactive_feedback": str,  # 用戶回饋內容
-    "images": List[str]  # 用戶上傳的圖片（Base64 編碼）
-}
-```
+MCP 內容列表：
+- 有回饋時：第一項是彙整文字回饋與圖片資訊的 `TextContent`，之後每張圖片一個 `ImageContent`
+- 等待逾時或用戶關閉介面：一個 `TextContent`，說明使用者未回應並要求 AI 結束任務、不要再呼叫本工具
+- 用戶送出空白回饋：`TextContent("用戶未提供任何回饋內容。")`
 
 #### 使用示例
 ```python
@@ -53,36 +50,24 @@ result = await interactive_feedback(
 ```
 
 #### 錯誤處理
+工具不會把例外拋給 MCP 客戶端：逾時、用戶關閉介面與其他錯誤都轉成 `TextContent` 說明後回傳。
+
+### get_system_info
+
 ```python
-try:
-    result = await interactive_feedback(...)
-except TimeoutError:
-    print("用戶回饋超時")
-except ValidationError as e:
-    print(f"參數驗證錯誤: {e}")
-except EnvironmentError as e:
-    print(f"環境檢測錯誤: {e}")
+def get_system_info() -> str
 ```
+
+回傳 JSON 字串，包含平台、Python 版本、是否為 WSL／遠端環境、介面類型與幾個環境偵測用的環境變數值。
 
 ## 🌐 Web API
 
 ### HTTP 端點
 
 #### GET /
-主頁重定向到回饋頁面。
+回饋頁面主入口。有活躍會話時渲染回饋頁面（`feedback.html`），沒有時渲染等待頁面（`index.html`）。
 
-**響應**: `302 Redirect` → `/feedback`
-
-#### GET /feedback
-回饋頁面主入口。
-
-**響應**: `200 OK`
-```html
-<!DOCTYPE html>
-<html>
-<!-- 回饋頁面 HTML 內容 -->
-</html>
-```
+**響應**: `200 OK`（HTML）
 
 #### GET /static/{path}
 靜態資源服務（CSS、JS、圖片等）。
@@ -105,12 +90,12 @@ except EnvironmentError as e:
     },
     "en": {
         "app": {
-            "title": "MCP Feedback Enhanced"
+            "title": "MCP Interactive Feedback System"
         }
     },
     "zh-CN": {
         "app": {
-            "title": "MCP Feedback Enhanced"
+            "title": "MCP 交互反馈系统"
         }
     }
 }
@@ -132,6 +117,8 @@ except EnvironmentError as e:
 }
 ```
 
+沒有活躍會話時回傳 `{"has_session": false, "status": "no_session", "messageCode": ...}`。
+
 #### GET /api/current-session
 獲取當前會話詳細信息。
 
@@ -142,7 +129,6 @@ except EnvironmentError as e:
     "project_directory": "./my-project",
     "summary": "代碼審查完成",
     "feedback_completed": false,
-    "command_logs": "",
     "images_count": 0
 }
 ```
@@ -150,28 +136,58 @@ except EnvironmentError as e:
 **錯誤響應**: `404 Not Found`
 ```json
 {
-    "error": "沒有活躍會話"
+    "error": "No active session",
+    "messageCode": "..."
 }
 ```
+
+#### 其他端點
+
+非 GET/HEAD/OPTIONS 的 `/api/*` 請求必須帶 `Content-Type: application/json`（否則 `415`），瀏覽器帶來的 Origin 必須指向本服務（否則 `403`）。
+
+| 方法 | 路徑 | 用途 |
+|------|------|------|
+| GET | `/api/all-sessions` | 目前行程中所有會話的實時狀態（`{"sessions": [...]}`，含 `user_messages`） |
+| POST | `/api/add-user-message` | 把一則用戶訊息記錄加到當前會話 |
+| GET | `/api/load-settings` | 讀取 `~/.config/mcp-feedback-enhanced/ui_settings.json`，不存在時回 `{}` |
+| POST | `/api/save-settings` | 以請求內容覆寫 `ui_settings.json` |
+| POST | `/api/clear-settings` | 刪除 `ui_settings.json` |
+| GET | `/api/load-session-history` | 讀取 `session_history.json`，回傳 `{"sessions": [...], "lastCleanup": ...}` |
+| POST | `/api/save-session-history` | 把 `{"sessions": [...], "lastCleanup": ...}` 寫入 `session_history.json` |
+| GET | `/api/log-level` | 讀取 `ui_settings.json` 的 `logLevel` |
+| POST | `/api/log-level` | 更新 `ui_settings.json` 的 `logLevel` |
 
 ### WebSocket API
 
 #### 連接端點
 ```
-ws://localhost:{port}/ws
+ws://127.0.0.1:{port}/ws
 ```
 
+連線時必須已有活躍會話，否則以代碼 `4004` 關閉；瀏覽器帶來的 Origin 不是本服務時以代碼 `4003` 關閉。一個會話只保留最新的一條連線。
+
 #### 訊息格式
-所有 WebSocket 訊息都使用 JSON 格式：
+所有訊息都是 JSON 物件，以 `type` 區分種類，其他欄位與 `type` 放在同一層，沒有 `data` 包裝：
 ```json
 {
-    "type": "message_type",
-    "data": { /* 訊息數據 */ },
-    "timestamp": "2024-12-XX 10:30:00"
+    "type": "heartbeat",
+    "tabId": "tab_1703123456789_abc",
+    "timestamp": 1703123456789
 }
 ```
 
 ### 📤 客戶端 → 服務器訊息
+
+| `type` | 其他欄位 | 伺服器處理 |
+|--------|----------|------------|
+| `submit_feedback` | `feedback`、`images`、`settings` | 提交回饋，見下方說明 |
+| `get_status` | 無 | 回傳 `status_update` |
+| `heartbeat` | `tabId`、`timestamp` | 更新心跳時間，回傳 `heartbeat_response` |
+| `pong` | `timestamp` | 回應伺服器的 `ping`，只寫除錯日誌 |
+| `user_timeout` | `timestamp` | 前端的會話超時到期；伺服器結束等待並清理會話 |
+| `update_timeout_settings` | `settings.enabled`、`settings.seconds` | 更新會話超時設定 |
+
+其他 `type` 只寫除錯日誌，不做處理。
 
 #### submit_feedback
 提交用戶回饋。
@@ -179,374 +195,76 @@ ws://localhost:{port}/ws
 ```json
 {
     "type": "submit_feedback",
-    "data": {
-        "feedback": "這個功能很好，但建議增加輸入驗證。",
-        "images": [
-            "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAA..."
-        ],
-        "settings": {
-            "language": "zh-TW",
-            "compress_images": true
+    "feedback": "這個功能很好，但建議增加輸入驗證。",
+    "images": [
+        {
+            "name": "screenshot.png",
+            "size": 12345,
+            "type": "image/png",
+            "data": "iVBORw0KGgoAAAANSUhEUgAA..."
         }
+    ],
+    "settings": {
+        "image_size_limit": 0,
+        "enable_base64_detail": false
     }
 }
 ```
 
 **字段說明**:
 - `feedback`: 用戶回饋文字內容
-- `images`: 圖片數組（Base64 編碼）
-- `settings.language`: 界面語言
-- `settings.compress_images`: 是否壓縮圖片
-
-#### heartbeat
-心跳檢測訊息。
-
-```json
-{
-    "type": "heartbeat",
-    "data": {
-        "timestamp": 1703123456789
-    }
-}
-```
-
-#### language_switch
-切換界面語言。
-
-```json
-{
-    "type": "language_switch",
-    "data": {
-        "language": "en"
-    }
-}
-```
-
-#### prompt_management
-提示詞管理操作。
-
-```json
-{
-    "type": "prompt_management",
-    "data": {
-        "action": "add|update|delete|use",
-        "prompt": {
-            "id": "prompt_1_1703123456789",
-            "name": "代碼審查提示",
-            "content": "請檢查這段代碼的邏輯正確性和性能優化建議。",
-            "isAutoSubmit": false
-        }
-    }
-}
-```
-
-**字段說明**:
-- `action`: 操作類型（add=新增, update=更新, delete=刪除, use=使用）
-- `prompt.id`: 提示詞唯一標識符
-- `prompt.name`: 提示詞名稱
-- `prompt.content`: 提示詞內容
-- `prompt.isAutoSubmit`: 是否為自動提交提示詞
-
-#### auto_submit_control
-自動提交功能控制。
-
-```json
-{
-    "type": "auto_submit_control",
-    "data": {
-        "action": "start|stop|update_settings",
-        "settings": {
-            "enabled": true,
-            "timeout": 30,
-            "promptId": "prompt_1_1703123456789"
-        }
-    }
-}
-```
-
-**字段說明**:
-- `action`: 控制動作（start=啟動, stop=停止, update_settings=更新設定）
-- `settings.enabled`: 是否啟用自動提交
-- `settings.timeout`: 自動提交倒數時間（秒）
-- `settings.promptId`: 自動提交使用的提示詞 ID
-
-#### session_management（v2.4.3 重構增強）
-會話管理操作。
-
-```json
-{
-    "type": "session_management",
-    "data": {
-        "action": "get_history|get_stats|clear_history|export_history|view_details",
-        "sessionId": "550e8400-e29b-41d4-a716-446655440000",
-        "options": {
-            "retentionHours": 72,
-            "privacyLevel": "full",
-            "includeUserMessages": true
-        }
-    }
-}
-```
-
-**字段說明**:
-- `action`: 管理動作（get_history=獲取歷史, get_stats=獲取統計, clear_history=清除歷史, export_history=匯出歷史, view_details=查看詳情）
-- `sessionId`: 會話 ID（可選）
-- `options.retentionHours`: 歷史保存時間（小時）
-- `options.privacyLevel`: 隱私等級（full=完整, basic=基本, disabled=停用）
-- `options.includeUserMessages`: 是否包含用戶訊息記錄
-
-#### audio_management（v2.4.3 新增）
-音效管理操作。
-
-```json
-{
-    "type": "audio_management",
-    "data": {
-        "action": "update_settings|test_audio|upload_custom|delete_custom",
-        "settings": {
-            "enabled": true,
-            "volume": 75,
-            "selectedAudioId": "notification-ding"
-        },
-        "customAudio": {
-            "id": "custom_1_1703123456789",
-            "name": "自訂提示音",
-            "data": "data:audio/mp3;base64,//uQx...",
-            "mimeType": "audio/mp3"
-        }
-    }
-}
-```
-
-**字段說明**:
-- `action`: 操作類型（update_settings=更新設定, test_audio=測試播放, upload_custom=上傳自訂音效, delete_custom=刪除自訂音效）
-- `settings.enabled`: 是否啟用音效通知
-- `settings.volume`: 音量（0-100）
-- `settings.selectedAudioId`: 選中的音效 ID
-- `customAudio`: 自訂音效數據
-
-#### height_management（v2.4.3 新增）
-輸入框高度管理。
-
-```json
-{
-    "type": "height_management",
-    "data": {
-        "action": "save_height|load_height",
-        "elementId": "combinedFeedbackText",
-        "height": 200,
-        "settingKey": "combinedFeedbackTextHeight"
-    }
-}
-```
-
-**字段說明**:
-- `action`: 操作類型（save_height=保存高度, load_height=載入高度）
-- `elementId`: 元素 ID
-- `height`: 高度值（像素）
-- `settingKey`: 設定鍵名
+- `images`: 圖片物件陣列；`data` 是不含 `data:` 前綴的 Base64。缺少 `name`、`data` 或 `size` 的項目會被略過
+- `settings.image_size_limit`: 圖片大小上限（位元組），`0` 表示不限制；超過上限的圖片會被略過
+- `settings.enable_base64_detail`: 是否在回給 AI 的文字中附上圖片的完整 Base64
 
 ### 📥 服務器 → 客戶端訊息
 
-#### connection_established
-WebSocket 連接建立確認。
-
-```json
-{
-    "type": "connection_established",
-    "data": {
-        "session_id": "550e8400-e29b-41d4-a716-446655440000",
-        "server_time": "2024-12-XX 10:30:00"
-    }
-}
-```
+| `type` | 欄位 | 何時發送 |
+|--------|------|----------|
+| `connection_established` | `messageCode` | WebSocket 連線建立後 |
+| `session_updated` | `action`（`"new_session_created"`）、`messageCode`、`session_info` | AI 再次呼叫 `interactive_feedback` 時通知既有分頁；連線時若有待送的會話更新也會送出 |
+| `status_update` | `status_info` | 連線建立且沒有待送的會話更新時，或回應 `get_status` |
+| `heartbeat_response` | `timestamp`（原樣回傳客戶端送來的值） | 回應 `heartbeat` |
+| `ping` | `timestamp` | 伺服器檢查分頁是否仍連線時；客戶端回 `pong` |
+| `notification` | `code`、`severity`，以及 `status` 或 `reason` | 回饋已收到（`severity: "success"`）、重複提交被忽略（`"warning"`）、會話被清理（`"warning"`，`reason` 為清理原因） |
 
 #### session_updated
-會話更新通知（AI 再次調用時）。
-
 ```json
 {
     "type": "session_updated",
-    "data": {
+    "action": "new_session_created",
+    "messageCode": "session.created",
+    "session_info": {
         "session_id": "new-session-id",
-        "summary": "根據您的建議，我已修改了錯誤處理邏輯。",
         "project_directory": "./my-project",
-        "timestamp": "2024-12-XX 10:35:00"
-    }
-}
-```
-
-#### feedback_received
-回饋接收確認。
-
-```json
-{
-    "type": "feedback_received",
-    "data": {
-        "session_id": "session-id",
-        "status": "success",
-        "message": "回饋已成功接收"
+        "summary": "根據您的建議，我已修改了錯誤處理邏輯。",
+        "status": "waiting"
     }
 }
 ```
 
 #### status_update
-狀態更新通知。
-
 ```json
 {
     "type": "status_update",
-    "data": {
-        "status": "FEEDBACK_PROCESSING",
-        "message": "正在處理您的回饋...",
-        "progress": 50
+    "status_info": {
+        "status": "waiting",
+        "message": "等待用戶回饋",
+        "feedback_completed": false,
+        "has_websocket": true,
+        "created_at": 1703123456.789,
+        "last_activity": 1703123456.789,
+        "project_directory": "./my-project",
+        "summary": "代碼審查完成",
+        "session_id": "550e8400-e29b-41d4-a716-446655440000"
     }
 }
 ```
 
-#### auto_submit_status
-自動提交狀態更新。
-
-```json
-{
-    "type": "auto_submit_status",
-    "data": {
-        "enabled": true,
-        "countdown": 25,
-        "promptId": "prompt_1_1703123456789",
-        "promptName": "代碼審查提示"
-    }
-}
-```
-
-**字段說明**:
-- `enabled`: 自動提交是否啟用
-- `countdown`: 剩餘倒數時間（秒）
-- `promptId`: 當前自動提交提示詞 ID
-- `promptName`: 當前自動提交提示詞名稱
-
-#### session_history（v2.4.3 增強）
-會話歷史數據。
-
-```json
-{
-    "type": "session_history",
-    "data": {
-        "sessions": [
-            {
-                "session_id": "session-1",
-                "summary": "代碼審查完成",
-                "status": "completed",
-                "created_at": "2024-12-13T10:30:00Z",
-                "completed_at": "2024-12-13T10:35:00Z",
-                "feedback_length": 150,
-                "user_messages": [
-                    {
-                        "timestamp": "2024-12-13T10:32:00Z",
-                        "content": "代碼看起來不錯",
-                        "type": "text",
-                        "submission_method": "manual"
-                    }
-                ],
-                "project_directory": "./my-project"
-            }
-        ],
-        "stats": {
-            "total": 10,
-            "completed": 8,
-            "average_feedback_length": 120,
-            "today_count": 3,
-            "average_duration": 300
-        },
-        "retention_info": {
-            "retention_hours": 72,
-            "oldest_session": "2024-12-11T10:30:00Z",
-            "cleanup_count": 2
-        }
-    }
-}
-```
-
-#### audio_notification（v2.4.3 新增）
-音效通知觸發。
-
-```json
-{
-    "type": "audio_notification",
-    "data": {
-        "trigger": "session_updated",
-        "audioId": "notification-ding",
-        "volume": 75,
-        "timestamp": "2024-12-13T10:30:00Z"
-    }
-}
-```
-
-**字段說明**:
-- `trigger`: 觸發事件（session_updated=會話更新, feedback_received=回饋接收）
-- `audioId`: 播放的音效 ID
-- `volume`: 播放音量
-- `timestamp`: 觸發時間
-
-#### audio_settings_update（v2.4.3 新增）
-音效設定更新通知。
-
-```json
-{
-    "type": "audio_settings_update",
-    "data": {
-        "settings": {
-            "enabled": true,
-            "volume": 75,
-            "selectedAudioId": "soft-chime"
-        },
-        "availableAudios": [
-            {
-                "id": "default-beep",
-                "name": "經典提示音",
-                "isDefault": true
-            },
-            {
-                "id": "custom_1",
-                "name": "自訂音效1",
-                "isDefault": false
-            }
-        ]
-    }
-}
-```
-
-#### height_settings_update（v2.4.3 新增）
-高度設定更新通知。
-
-```json
-{
-    "type": "height_settings_update",
-    "data": {
-        "elementId": "combinedFeedbackText",
-        "height": 200,
-        "saved": true,
-        "timestamp": "2024-12-13T10:30:00Z"
-    }
-}
-```
-
-#### error
-錯誤訊息。
-
-```json
-{
-    "type": "error",
-    "data": {
-        "error_code": "VALIDATION_ERROR",
-        "message": "回饋內容不能為空",
-        "details": {
-            "field": "feedback",
-            "value": ""
-        }
-    }
-}
-```
+#### 會話歷史不走 WebSocket
+沒有 `session_history` 訊息，自動提交、提示詞、音效、輸入框高度也都沒有對應的 WebSocket 訊息，這些都在前端處理，設定經 HTTP 存到 `ui_settings.json`。會話歷史由前端透過 HTTP 讀寫：
+- `GET /api/load-session-history`、`POST /api/save-session-history`：存檔的歷史（`~/.config/mcp-feedback-enhanced/session_history.json`）
+- `GET /api/all-sessions`：目前行程中的實時會話
 
 ## 🔧 內部 API
 
