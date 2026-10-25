@@ -26,7 +26,7 @@ MCP Feedback Enhanced 採用**單一活躍會話 + 持久化 Web UI**的創新�
 - JavaScript ES6+ (模組化架構)
 - WebSocket API (雙向通信)
 - Web Audio API (音效通知系統)
-- localStorage API (介面語言、通知設定與分頁追蹤)
+- localStorage API (介面語言與通知設定)
 - ResizeObserver API (元素尺寸監控)
 - 響應式設計 (多設備支援)
 
@@ -286,18 +286,20 @@ self.global_active_tabs: Dict[str, dict] = {}  # 全局標籤頁狀態
 **JavaScript 模組系統**：
 ```javascript
 // 模組化載入順序
-utils → tab-manager → websocket-manager →
+i18n → logger → utils/(dom、time、status) → session/ → prompt/ →
+audio/ → notification/ → utils → websocket-manager →
+connection-monitor → session-manager → file-upload-manager →
 image-handler → settings-manager → ui-manager →
-auto-refresh-manager → app
+textarea-height-manager → app
 ```
 
 **功能模組分離**：
-- 標籤頁管理 (tab-manager.js)
 - WebSocket 通信 (websocket-manager.js)
-- 圖片處理 (image-handler.js)
+- 連線狀態監控 (connection-monitor.js)
+- 圖片處理 (image-handler.js、file-upload-manager.js)
 - 設定管理 (settings-manager.js)
 - UI 控制 (ui-manager.js)
-- 自動刷新 (auto-refresh-manager.js)
+- 瀏覽器通知 (notification/notification-manager.js、notification-settings.js)
 - **提示詞管理模組群組**：
   - prompt-manager.js (核心管理器)
   - prompt-modal.js (編輯彈窗)
@@ -305,7 +307,7 @@ auto-refresh-manager → app
   - prompt-input-buttons.js (快速選擇按鈕)
 - **會話管理模組群組（v2.4.3 重構增強）**：
   - session-manager.js (會話控制器)
-  - session-data-manager.js (數據管理器，新增本地存儲)
+  - session-data-manager.js (數據管理器，經 HTTP API 讀寫伺服器端歷史)
   - session-ui-renderer.js (UI 渲染器，頁籤化設計)
   - session-details-modal.js (詳情彈窗)
 - **音效通知模組群組（v2.4.3 新增）**：
@@ -315,7 +317,7 @@ auto-refresh-manager → app
   - textarea-height-manager.js (輸入框高度管理)
   - 一鍵複製功能整合在各 UI 組件中
 - **自動提交功能**：
-  - 整合在 app.js 中的 AutoSubmitManager
+  - 整合在 app.js 中的 `autoSubmitManager` 物件
   - 與提示詞管理和設定管理的深度整合
 
 ## 📊 性能特性與優化

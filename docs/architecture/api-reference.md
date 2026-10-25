@@ -171,7 +171,6 @@ ws://127.0.0.1:{port}/ws
 ```json
 {
     "type": "heartbeat",
-    "tabId": "tab_1703123456789_abc",
     "timestamp": 1703123456789
 }
 ```
@@ -182,7 +181,7 @@ ws://127.0.0.1:{port}/ws
 |--------|----------|------------|
 | `submit_feedback` | `feedback`、`images`、`settings` | 提交回饋，見下方說明 |
 | `get_status` | 無 | 回傳 `status_update` |
-| `heartbeat` | `tabId`、`timestamp` | 更新心跳時間，回傳 `heartbeat_response` |
+| `heartbeat` | `timestamp` | 更新心跳時間，回傳 `heartbeat_response` |
 | `pong` | `timestamp` | 回應伺服器的 `ping`，只寫除錯日誌 |
 | `user_timeout` | `timestamp` | 前端的會話超時到期；伺服器結束等待並清理會話 |
 | `update_timeout_settings` | `settings.enabled`、`settings.seconds` | 更新會話超時設定 |

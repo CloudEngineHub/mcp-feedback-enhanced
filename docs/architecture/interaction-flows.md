@@ -558,26 +558,24 @@ stateDiagram-v2
 ## 🛡️ 錯誤處理和恢復
 
 ### 連接斷線處理
-```javascript
-// WebSocket 重連機制
-function handleWebSocketClose() {
-    console.log('WebSocket 連接已關閉，嘗試重連...');
+重連由 `WebSocketManager`（`websocket-manager.js`）處理，連線狀態經 `onConnectionStatusChange` 交給 `ConnectionMonitor`（`connection-monitor.js`）顯示：
 
-    setTimeout(() => {
-        initWebSocket();
-    }, 3000); // 3秒後重連
-}
+- **關閉碼決定是否重連**（`handleClose()`、`shouldAttemptReconnect()`）：
+  - `4004`（沒有活躍會話）：顯示斷線，不重連
+  - `1000`（正常關閉，例如伺服器清理會話時以 `reason="會話清理"` 關閉）：不重連
+  - 瀏覽器回報離線（`offline` 事件）：不重連；恢復上線（`online` 事件）時把重連次數歸零，1 秒後重新連線
+  - 其他關閉碼：重連，直到 `MAX_RECONNECT_ATTEMPTS`（5 次）用完，之後提示「請刷新頁面重試」
+- **延遲**：指數退避，`DEFAULT_RECONNECT_DELAY`（1000 毫秒）× 2^(第 N 次 − 1)，加上 0–1 秒隨機抖動，最多 30 秒
+- **連線成功**（`handleOpen()`）：重連次數與延遲歸零，啟動心跳並送出 `get_status` 取得目前狀態
+- **心跳**：連線期間每 `DEFAULT_HEARTBEAT_FREQUENCY`（60000 毫秒）送一次 `{type: 'heartbeat', timestamp}`；收到 `heartbeat_response` 時，`ConnectionMonitor` 以送出到收到的時間差計算延遲
+- **前端回饋狀態**：斷線時若正處於 `FEEDBACK_PROCESSING`，`FeedbackApp.handleWebSocketClose()` 把它設回 `FEEDBACK_WAITING`，避免卡在送出中
 
-// 心跳檢測
-setInterval(() => {
-    if (websocket && websocket.readyState === WebSocket.OPEN) {
-        websocket.send(JSON.stringify({
-            type: 'heartbeat',
-            timestamp: Date.now()
-        }));
-    }
-}, 30000); // 每30秒發送心跳
-```
+**連線狀態顯示**（`ConnectionMonitor`）：
+- 右上角狀態文字「重連中... (第N次)」的 N 是這次斷線後的重連次數（`reconnectAttempt`），恢復連線時歸零
+- 統計面板的「重連」是整頁累計的重連次數（`reconnectCount`），只有重新載入頁面才歸零
+- 「連線時間」在連線期間每秒更新；斷線時停止並顯示 `--:--`，重連成功後從 0 起算
+
+伺服器端另有斷線寬限：連線中斷後若在 `CLIENT_DISCONNECT_GRACE_SECONDS`（75 秒）內沒有重新連上，視為使用者關閉介面並結束等待（`WebFeedbackSession.on_client_disconnected()`）。
 
 ### 超時處理
 `WebFeedbackSession.wait_for_feedback(timeout)` 在執行緒中等待 `feedback_completed`，實際等待時間比 `timeout` 提早一點結束（超過 30 秒提早 5 秒，否則提早 1 秒，最少 1 秒），避免與 MCP 層的超時競爭：

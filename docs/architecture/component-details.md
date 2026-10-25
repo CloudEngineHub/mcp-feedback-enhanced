@@ -599,8 +599,8 @@ graph TB
 
 **核心功能**：
 - **SessionManager**: 當前會話的狀態管理和控制
-- **SessionDataManager**: 會話歷史記錄、統計數據，以及透過 `/api/load-session-history`、`/api/save-session-history` 讀寫伺服器端歷史
-- **SessionUIRenderer**: 專門的 UI 渲染器，負責會話列表和狀態顯示
+- **SessionDataManager**: 會話歷史記錄、統計數據，以及透過 `/api/load-session-history`、`/api/save-session-history` 讀寫伺服器端歷史。`updateStats()` 從會話歷史計算 `todayCount`（今日建立的會話數）與 `averageDuration`（這些會話的平均持續時間，秒）；持續時間與歷史卡片同一個定義 `TimeUtils.calculateSessionDuration()`：從 `created_at` 到 `completed_at`，沒有結束時間時用最後一則用戶訊息的時間，算不出來的會話不列入，也排除 24 小時以上的值
+- **SessionUIRenderer**: 專門的 UI 渲染器，負責會話列表和狀態顯示。`renderStats()` 更新會話頁籤的「今日會話」與「今日平均時長」；浮動統計面板（`#statsPanel`）的「會話」是歷史清單筆數（`renderSessionHistory()` 寫入 `#statsSessionCount`），「狀態」跟著當前會話（`renderCurrentSession()` 寫入 `#statsSessionStatus`）
 - **SessionDetailsModal**: 會話詳情彈窗，提供完整的會話資訊查看
 
 #### 音效通知模組群組 (audio/) - v2.4.3 新增
@@ -731,7 +731,6 @@ graph LR
     <script src="/static/js/modules/logger.js?v=..."></script>
     <!-- modules/utils/、session/、prompt/、audio/、notification/ 子模組 -->
     <script src="/static/js/modules/utils.js?v=..."></script>
-    <script src="/static/js/modules/tab-manager.js?v=..."></script>
     <script src="/static/js/modules/websocket-manager.js?v=..."></script>
     <script src="/static/js/modules/connection-monitor.js?v=..."></script>
     <script src="/static/js/modules/session-manager.js?v=..."></script>
@@ -765,7 +764,6 @@ graph TD
     end
 
     subgraph "功能模組"
-        TAB[tab-manager.js<br/>標籤頁管理]
         WS[websocket-manager.js<br/>WebSocket 通信]
         MONITOR[connection-monitor.js<br/>連線監控]
         SESSION[session-manager.js<br/>會話控制]
@@ -780,13 +778,11 @@ graph TD
         APP[app.js<br/>FeedbackApp]
     end
 
-    UTILS --> TAB
     UTILS --> WS
     MONITOR --> WS
     UPLOAD --> IMG
     I18N --> UI
     LOGGER --> APP
-    TAB --> APP
     WS --> APP
     SESSION --> APP
     IMG --> APP
@@ -804,7 +800,6 @@ function FeedbackApp(sessionId) {
     this.currentSessionId = null;
 
     // 模組管理器
-    this.tabManager = null;
     this.webSocketManager = null;
     this.connectionMonitor = null;
     this.sessionManager = null;
@@ -835,9 +830,11 @@ function WebSocketManager(options) {
     this.isConnected = false;
     this.connectionReady = false;
     this.heartbeatFrequency = options.heartbeatFrequency || Utils.CONSTANTS.DEFAULT_HEARTBEAT_FREQUENCY;
-    this.tabManager = options.tabManager || null;
+    this.reconnectAttempts = 0;
+    this.maxReconnectAttempts = options.maxReconnectAttempts || Utils.CONSTANTS.MAX_RECONNECT_ATTEMPTS; // 5
+    this.reconnectDelay = options.reconnectDelay || Utils.CONSTANTS.DEFAULT_RECONNECT_DELAY;         // 1000 毫秒
     this.connectionMonitor = options.connectionMonitor || null;
-    // 另有重連與會話超時相關欄位
+    // 另有會話超時相關欄位
 }
 
 WebSocketManager.prototype.connect = function() {
@@ -857,7 +854,16 @@ WebSocketManager.prototype.send = function(data) {
 };
 ```
 
-`processMessage()` 自行處理 `connection_established`、`heartbeat_response`、`ping`（回 `pong`）與 `update_timeout_settings`，所有訊息再交給 `onMessage` 回呼（`FeedbackApp.handleWebSocketMessage()`）；`startHeartbeat()` 依 `heartbeatFrequency` 定期送出 `heartbeat`。
+`processMessage()` 自行處理 `connection_established`、`heartbeat_response`、`ping`（回 `pong`）與 `update_timeout_settings`，所有訊息再交給 `onMessage` 回呼（`FeedbackApp.handleWebSocketMessage()`）；`startHeartbeat()` 依 `heartbeatFrequency`（60000 毫秒）定期送出 `heartbeat`。
+
+斷線時 `handleClose()` 依關閉碼決定是否重連：`4004`（沒有活躍會話）與 `1000`（正常關閉）不重連，瀏覽器離線時也不重連；其他情況由 `handleReconnection()` 以指數退避（1 秒 × 2^(N−1)，加 0–1 秒抖動，最多 30 秒）重連，最多 5 次。連線成功時 `handleOpen()` 把重連次數歸零。
+
+**connection-monitor.js - 連線監控**：
+- `ConnectionMonitor` 從 `WebSocketManager` 的 `onConnectionStatusChange` 接收連線狀態，更新右上角狀態與統計面板
+- `reconnectAttempt`：這次斷線後的重連次數，顯示在右上角「重連中... (第N次)」，恢復連線時歸零
+- `reconnectCount`：整頁累計的重連次數，顯示在統計面板「重連」
+- 連線時間：連線時 `startMonitoring()` 記下開始時間並每秒更新顯示；斷線時 `stopMonitoring()` 停止並顯示 `--:--`，重連成功後從 0 起算
+- 延遲：送出心跳時 `recordPing()`、收到 `heartbeat_response` 時 `recordPong()`，以時間差計算延遲並保留最近 20 筆平均，換算成訊號強度
 
 **image-handler.js / file-upload-manager.js - 圖片處理**：
 - `ImageHandler` 管圖片設定（大小上限 `imageSizeLimit`、`enableBase64Detail`），實際的檔案處理交給它建立的 `FileUploadManager`；對外提供 `getImages()`、`clearImages()`、`updateSettings()`

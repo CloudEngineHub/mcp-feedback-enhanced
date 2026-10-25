@@ -215,7 +215,7 @@ export MCP_LANGUAGE=en
 | `session_history.json` | 會話歷史 | `GET /api/load-session-history`、`POST /api/save-session-history` |
 | `language.json` | 伺服器端語言設定 | Python `I18nManager` |
 
-瀏覽器 localStorage 只存介面語言（`language`）、瀏覽器通知設定（`notificationsEnabled`、`notificationTriggerMode`）與分頁追蹤資料（`mcp_feedback_tabs`、`mcp_feedback_last_activity`）。
+瀏覽器 localStorage 只存介面語言（`language`）與瀏覽器通知設定（`notificationsEnabled`、`notificationTriggerMode`）。
 
 ## 🆕 v2.4.3 版本部署考慮
 
