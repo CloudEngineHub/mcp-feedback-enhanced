@@ -1,5 +1,0 @@
-- Session history keeps earlier sessions after the MCP server restarts (#177); sessions a previous process left waiting for feedback show as "Disconnected".
-- Session durations in history now come from the real creation and end times, and the retention period actually removes expired records.
-- Durations in the English UI get spaces and singular/plural units (`7 seconds`, `1 minute 5 seconds`).
-- A new-session notice is no longer swallowed by a heartbeat reply, so the page switches to the new session.
-- After switching languages, the current session card and session history change to the new language immediately.

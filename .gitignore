@@ -87,6 +87,10 @@ yarn.lock
 *.tmp
 *.temp
 
+# 發版 workflow（publish.yml）每次重新產生的發布說明
+/highlights.txt
+/release_body.md
+
 
 .claude/
 .gitnexus/
