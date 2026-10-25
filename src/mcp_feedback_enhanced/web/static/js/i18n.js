@@ -153,9 +153,6 @@ class I18nManager {
             // 更新所有語言選擇器（包括現代化版本）
             this.setupLanguageSelectors();
 
-            // 更新 HTML lang 屬性
-            document.documentElement.lang = language;
-
             console.log(`✅ i18nManager 語言已切換到: ${language}`);
         } else {
             console.warn(`❌ i18nManager 不支援的語言: ${language}`);
@@ -163,6 +160,9 @@ class I18nManager {
     }
 
     applyTranslations() {
+        // <html lang> 跟著實際套用的語言，第一次載入與切換語言都會經過這裡
+        document.documentElement.lang = this.currentLanguage;
+
         // 翻譯所有有 data-i18n 屬性的元素
         const elements = document.querySelectorAll('[data-i18n]');
         elements.forEach(element => {
