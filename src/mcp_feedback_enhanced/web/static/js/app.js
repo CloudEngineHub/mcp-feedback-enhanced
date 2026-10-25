@@ -670,6 +670,10 @@
                 if (data.code === 'session.feedbackSubmitted' || data.code === 'FEEDBACK_SUBMITTED' || data.code === 201) {
                     console.log('✅ 回饋提交成功通知');
                     this.handleFeedbackReceived(data);
+                } else if (data.code === 'feedback.alreadySubmitted') {
+                    // 伺服器忽略了重複提交：回到已提交狀態並沿用既有提示
+                    this.uiManager.setFeedbackState(window.MCPFeedback.Utils.CONSTANTS.FEEDBACK_SUBMITTED, this.currentSessionId);
+                    this.handleSubmitError();
                 }
                 break;
         }
@@ -1008,7 +1012,12 @@
         // 刷新會話列表以顯示最新狀態
         this.refreshSessionList();
 
-        // 根據服務器狀態更新消息顯示（不修改前端狀態）
+        // 重新整理後本地回饋狀態會重設成等待中：伺服器端已收過回饋就回到已提交，擋住再次送出
+        if (this.uiManager && (statusInfo.status === 'feedback_submitted' || statusInfo.status === 'completed')) {
+            this.uiManager.setFeedbackState(window.MCPFeedback.Utils.CONSTANTS.FEEDBACK_SUBMITTED, sessionId);
+        }
+
+        // 根據服務器狀態更新消息顯示
         switch (statusInfo.status) {
             case 'feedback_submitted':
                 const submittedMessage = window.i18nManager ? window.i18nManager.t('feedback.submittedWaiting') : '已送出反饋，等待下次 MCP 調用...';
@@ -1069,7 +1078,13 @@
      * 檢查是否可以提交回饋
      */
     FeedbackApp.prototype.canSubmitFeedback = function() {
-        // 簡化檢查：只檢查WebSocket連接，狀態由服務器端驗證
+        // 已提交或處理中就不再送：等待端只會讀第一次的回饋（伺服器端也會忽略重複提交）
+        const feedbackState = this.uiManager ? this.uiManager.getFeedbackState() : null;
+        if (feedbackState === window.MCPFeedback.Utils.CONSTANTS.FEEDBACK_SUBMITTED ||
+            feedbackState === window.MCPFeedback.Utils.CONSTANTS.FEEDBACK_PROCESSING) {
+            return false;
+        }
+
         const wsReady = this.webSocketManager && this.webSocketManager.isReady();
 
         console.log('🔍 提交檢查:', {

@@ -550,18 +550,44 @@ class WebFeedbackSession:
         # 整段寫入在 outcome lock 內原子完成：等待端要嘛看到完整回饋，
         # 要嘛什麼都沒看到，不會拿到文字有了、圖片還沒處理完的半套。
         with self._outcome_lock:
-            # 先設置設定，再處理圖片（因為處理圖片時需要用到設定）
-            self.settings = settings or {}
-            self.images = self._process_images(images)
-            self.feedback_result = feedback
+            # 已收過回饋（重新整理後再送、快捷鍵重送）：等待端只會讀第一次，
+            # 再寫只會讓伺服器端的回饋與 AI 拿到的不一致，所以整筆忽略。
+            # TIMEOUT 不在此列：寬限回呼寫成 TIMEOUT 後才送達的回饋仍以回饋為準（#162）
+            already_submitted = (
+                self.feedback_result is not None
+                or self.status == SessionStatus.COMPLETED
+            )
+            if not already_submitted:
+                # 先設置設定，再處理圖片（因為處理圖片時需要用到設定）
+                self.settings = settings or {}
+                self.images = self._process_images(images)
+                self.feedback_result = feedback
 
-            # 等待中 →（進行中）→ 已提交反饋：沒有程式把會話推到 ACTIVE，
-            # 所以從 WAITING 提交時先走一步 ACTIVE，照單向流轉進入 FEEDBACK_SUBMITTED
-            if self.status == SessionStatus.WAITING:
-                self.next_step()
-            self.next_step("已送出反饋，等待下次 MCP 調用")
+                # 等待中 →（進行中）→ 已提交反饋：沒有程式把會話推到 ACTIVE，
+                # 所以從 WAITING 提交時先走一步 ACTIVE，照單向流轉進入 FEEDBACK_SUBMITTED
+                if self.status == SessionStatus.WAITING:
+                    self.next_step()
+                self.next_step("已送出反饋，等待下次 MCP 調用")
 
-            self.feedback_completed.set()
+                self.feedback_completed.set()
+
+        if already_submitted:
+            debug_log(f"會話 {self.session_id} 已收過回饋，忽略重複提交")
+            if self.websocket:
+                try:
+                    await self.websocket.send_json(
+                        {
+                            "type": "notification",
+                            "code": self.get_message_code(
+                                "SESSION_FEEDBACK_ALREADY_SUBMITTED"
+                            ),
+                            "severity": "warning",
+                            "status": self.status.value,
+                        }
+                    )
+                except Exception as e:
+                    debug_log(f"發送重複提交通知失敗: {e}")
+            return
 
         # 發送反饋已收到的消息給前端
         if self.websocket:

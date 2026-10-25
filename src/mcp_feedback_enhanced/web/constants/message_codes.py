@@ -39,6 +39,7 @@ class MessageCodes:
     SESSION_TIMEOUT = "session.timeout"
     SESSION_CLEANED = "session.cleaned"
     SESSION_FEEDBACK_SUBMITTED = "session.feedbackSubmitted"
+    SESSION_FEEDBACK_ALREADY_SUBMITTED = "feedback.alreadySubmitted"
     SESSION_USER_MESSAGE_RECORDED = "session.userMessageRecorded"
     SESSION_HISTORY_SAVED = "session.historySaved"
     SESSION_HISTORY_LOADED = "session.historyLoaded"

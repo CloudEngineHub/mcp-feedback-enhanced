@@ -162,6 +162,38 @@ class TestWebFeedbackSession:
         assert session.settings == TestData.SAMPLE_FEEDBACK["settings"]
         assert session.status == SessionStatus.FEEDBACK_SUBMITTED
 
+    @pytest.mark.asyncio
+    async def test_second_submission_is_ignored(self, test_project_dir):
+        """重新整理後再送：等待端只讀第一次，第二次不得覆寫回饋或推進狀態"""
+        from mcp_feedback_enhanced.web.models import (
+            SessionStatus,
+            WebFeedbackSession,
+        )
+
+        class FakeWebSocket:
+            def __init__(self):
+                self.sent = []
+
+            async def send_json(self, data):
+                self.sent.append(data)
+
+        session = WebFeedbackSession(
+            "test-session", str(test_project_dir), TestData.SAMPLE_SESSION["summary"]
+        )
+        session.websocket = FakeWebSocket()
+        await session.submit_feedback("第一次", [], {"a": 1})
+        session.websocket.sent.clear()
+
+        await session.submit_feedback("第二次", [{"name": "x.png"}], {"b": 2})
+
+        assert session.feedback_result == "第一次"
+        assert session.images == []
+        assert session.settings == {"a": 1}
+        assert session.status == SessionStatus.FEEDBACK_SUBMITTED
+        assert [m["code"] for m in session.websocket.sent] == [
+            "feedback.alreadySubmitted"
+        ]
+
 
 class TestWebUIRoutes:
     """Web UI 路由測試"""
