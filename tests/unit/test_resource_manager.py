@@ -144,6 +144,16 @@ class TestResourceManager:
             assert not os.path.exists(temp_file)
             assert temp_file not in rm.temp_files
 
+    def test_cleanup_temp_files_with_future_mtime(self):
+        """mtime 比現在時間晚的剛建立檔案（Windows 常見），max_age=0 仍要清掉"""
+        rm = get_resource_manager()
+        temp_file = rm.create_temp_file(prefix="future_mtime_")
+        future = time.time() + 1
+        os.utime(temp_file, (future, future))
+
+        assert rm.cleanup_temp_files(max_age=0) == 1
+        assert not os.path.exists(temp_file)
+
     def test_cleanup_temp_dirs(self):
         """測試清理臨時目錄"""
         rm = get_resource_manager()

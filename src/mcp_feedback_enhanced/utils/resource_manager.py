@@ -290,8 +290,9 @@ class ResourceManager:
                     files_to_remove.add(file_path)
                     continue
 
-                # 檢查文件年齡
-                file_age = current_time - os.path.getmtime(file_path)
+                # 檢查文件年齡。Windows 上剛建立的檔案 mtime 可能比 time.time()
+                # 晚一點點（約 1 成的機率），年齡會是負數；不讓 max_age=0 漏掉它
+                file_age = max(0.0, current_time - os.path.getmtime(file_path))
                 if file_age >= max_age:
                     os.remove(file_path)
                     files_to_remove.add(file_path)
