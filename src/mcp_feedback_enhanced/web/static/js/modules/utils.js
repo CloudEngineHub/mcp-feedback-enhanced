@@ -31,16 +31,6 @@
         },
 
         /**
-         * 生成唯一 ID
-         * @param {string} prefix - ID 前綴
-         * @returns {string} 唯一 ID
-         */
-        generateId: function(prefix) {
-            prefix = prefix || 'id';
-            return prefix + '_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-        },
-
-        /**
          * 深度複製物件
          * @param {Object} obj - 要複製的物件
          * @returns {Object} 複製後的物件
