@@ -1,16 +1,16 @@
-# API 參考文檔
+# API 參考文件
 
-本文檔提供 MCP Feedback Enhanced 的完整 API 參考，包括 MCP 工具、Web API、WebSocket 通信協議和內部 API 接口。
+本文件提供 MCP Feedback Enhanced 的完整 API 參考，包括 MCP 工具、Web API、WebSocket 通信協定和內部 API。
 
 ## 📡 MCP 工具 API
 
-MCP Feedback Enhanced 基於 FastMCP 框架實現，提供標準的 MCP 協議支援。
+MCP Feedback Enhanced 基於 FastMCP 框架實現，提供標準的 MCP 協定支援。
 
 ### interactive_feedback
 
-AI 助手與用戶進行交互式回饋的核心 MCP 工具。
+AI 助手與使用者進行交互式回饋的核心 MCP 工具。
 
-#### 函數簽名
+#### 函式簽名
 ```python
 async def interactive_feedback(
     project_directory: str = ".",
@@ -24,13 +24,13 @@ async def interactive_feedback(
 | 參數 | 類型 | 必需 | 預設值 | 描述 |
 |------|------|------|--------|------|
 | `project_directory` | `str` | ❌ | `"."` | 專案目錄路徑，用於上下文顯示；路徑不存在時改用伺服器的工作目錄 |
-| `summary` | `str` | ❌ | `"我已完成了您請求的任務。"` | AI 助手的工作摘要，向用戶說明當前狀態 |
-| `timeout` | `int` | ❌ | `600` | 等待用戶回饋的超時時間（秒），伺服器端鉗制在 60–86400，無法解析時用 600 |
+| `summary` | `str` | ❌ | `"我已完成了您請求的任務。"` | AI 助手的工作摘要，向使用者說明目前狀態 |
+| `timeout` | `int` | ❌ | `600` | 等待使用者回饋的逾時時間（秒），伺服器端鉗制在 60–86400，無法解析時用 600 |
 
 #### 返回值
 MCP 內容列表：
 - 有回饋時：第一項是彙整文字回饋與圖片資訊的 `TextContent`，之後每張圖片一個 `ImageContent`
-- 等待逾時或用戶關閉介面：一個 `TextContent`，說明使用者未回應並要求 AI 結束任務、不要再呼叫本工具
+- 等待逾時或使用者關閉介面：一個 `TextContent`，說明使用者未回應並要求 AI 結束任務、不要再呼叫本工具
 - 使用者送出空白回饋：`TextContent("使用者未提供任何回饋內容。")`
 
 #### 使用示例
@@ -50,7 +50,7 @@ result = await interactive_feedback(
 ```
 
 #### 錯誤處理
-工具不會把例外拋給 MCP 客戶端：逾時、用戶關閉介面與其他錯誤都轉成 `TextContent` 說明後回傳。
+工具不會把例外拋給 MCP 客戶端：逾時、使用者關閉介面與其他錯誤都轉成 `TextContent` 說明後回傳。
 
 ### get_system_info
 
@@ -67,7 +67,7 @@ def get_system_info() -> str
 #### GET /
 回饋頁面主入口。有活躍會話時渲染回饋頁面（`feedback.html`），沒有時渲染等待頁面（`index.html`）。
 
-**響應**: `200 OK`（HTML）
+**回應**: `200 OK`（HTML）
 
 #### GET /static/{path}
 靜態資源服務（CSS、JS、圖片等）。
@@ -75,12 +75,12 @@ def get_system_info() -> str
 **參數**:
 - `path`: 靜態資源路徑
 
-**響應**: `200 OK` 或 `404 Not Found`
+**回應**: `200 OK` 或 `404 Not Found`
 
 #### GET /api/translations
-獲取多語言翻譯資源。
+取得多語言翻譯資源。
 
-**響應**: `200 OK`
+**回應**: `200 OK`
 ```json
 {
     "zh-TW": {
@@ -102,9 +102,9 @@ def get_system_info() -> str
 ```
 
 #### GET /api/session-status
-獲取當前會話狀態。
+取得目前會話狀態。
 
-**響應**: `200 OK`
+**回應**: `200 OK`
 ```json
 {
     "has_session": true,
@@ -120,9 +120,9 @@ def get_system_info() -> str
 沒有活躍會話時回傳 `{"has_session": false, "status": "no_session", "messageCode": ...}`。
 
 #### GET /api/current-session
-獲取當前會話詳細信息。
+取得目前會話詳細資訊。
 
-**響應**: `200 OK`
+**回應**: `200 OK`
 ```json
 {
     "session_id": "550e8400-e29b-41d4-a716-446655440000",
@@ -133,7 +133,7 @@ def get_system_info() -> str
 }
 ```
 
-**錯誤響應**: `404 Not Found`
+**錯誤回應**: `404 Not Found`
 ```json
 {
     "error": "No active session",
@@ -147,8 +147,8 @@ def get_system_info() -> str
 
 | 方法 | 路徑 | 用途 |
 |------|------|------|
-| GET | `/api/all-sessions` | 目前行程中所有會話的實時狀態（`{"sessions": [...]}`，含 `user_messages`） |
-| POST | `/api/add-user-message` | 把一則用戶訊息記錄加到當前會話 |
+| GET | `/api/all-sessions` | 目前行程中所有會話的即時狀態（`{"sessions": [...]}`，含 `user_messages`） |
+| POST | `/api/add-user-message` | 把一則使用者訊息記錄加到目前會話 |
 | GET | `/api/load-settings` | 讀取 `~/.config/mcp-feedback-enhanced/ui_settings.json`，不存在時回 `{}` |
 | POST | `/api/save-settings` | 以請求內容覆寫 `ui_settings.json` |
 | POST | `/api/clear-settings` | 刪除 `ui_settings.json` |
@@ -159,7 +159,7 @@ def get_system_info() -> str
 
 ### WebSocket API
 
-#### 連接端點
+#### 連線端點
 ```
 ws://127.0.0.1:{port}/ws
 ```
@@ -175,7 +175,7 @@ ws://127.0.0.1:{port}/ws
 }
 ```
 
-### 📤 客戶端 → 服務器訊息
+### 📤 客戶端 → 伺服器訊息
 
 | `type` | 其他欄位 | 伺服器處理 |
 |--------|----------|------------|
@@ -183,13 +183,13 @@ ws://127.0.0.1:{port}/ws
 | `get_status` | 無 | 回傳 `status_update` |
 | `heartbeat` | `timestamp` | 更新心跳時間，回傳 `heartbeat_response` |
 | `pong` | `timestamp` | 回應伺服器的 `ping`，只寫除錯日誌 |
-| `user_timeout` | `timestamp` | 前端的會話超時到期；伺服器結束等待並清理會話 |
-| `update_timeout_settings` | `settings.enabled`、`settings.seconds` | 更新會話超時設定 |
+| `user_timeout` | `timestamp` | 前端的會話逾時到期；伺服器結束等待並清理會話 |
+| `update_timeout_settings` | `settings.enabled`、`settings.seconds` | 更新會話逾時設定 |
 
 其他 `type` 只寫除錯日誌，不做處理。
 
 #### submit_feedback
-提交用戶回饋。
+提交使用者回饋。
 
 ```json
 {
@@ -211,14 +211,14 @@ ws://127.0.0.1:{port}/ws
 ```
 
 **字段說明**:
-- `feedback`: 用戶回饋文字內容
+- `feedback`: 使用者回饋文字內容
 - `images`: 圖片物件陣列；`data` 是不含 `data:` 前綴的 Base64。缺少 `name`、`data` 或 `size` 的項目會被略過
 - `settings.image_size_limit`: 圖片大小上限（位元組），`0` 表示不限制；超過上限的圖片會被略過
 - `settings.enable_base64_detail`: 是否在回給 AI 的文字中附上圖片的完整 Base64
 
-### 📥 服務器 → 客戶端訊息
+### 📥 伺服器 → 客戶端訊息
 
-| `type` | 欄位 | 何時發送 |
+| `type` | 欄位 | 何時傳送 |
 |--------|------|----------|
 | `connection_established` | `messageCode` | WebSocket 連線建立後 |
 | `session_updated` | `action`（`"new_session_created"`）、`messageCode`、`session_info` | AI 再次呼叫 `interactive_feedback` 時通知既有分頁；連線時若有待送的會話更新也會送出 |
@@ -263,7 +263,7 @@ ws://127.0.0.1:{port}/ws
 #### 會話歷史不走 WebSocket
 沒有 `session_history` 訊息，自動提交、提示詞、音效、輸入框高度也都沒有對應的 WebSocket 訊息，這些都在前端處理，設定經 HTTP 存到 `ui_settings.json`。會話歷史由前端透過 HTTP 讀寫：
 - `GET /api/load-session-history`、`POST /api/save-session-history`：存檔的歷史（`~/.config/mcp-feedback-enhanced/session_history.json`）
-- `GET /api/all-sessions`：目前行程中的實時會話
+- `GET /api/all-sessions`：目前行程中的即時會話
 
 ## 🔧 內部 API
 
@@ -274,7 +274,7 @@ ws://127.0.0.1:{port}/ws
 def create_session(self, project_directory: str, summary: str) -> str
 ```
 
-創建新的回饋會話並設為當前會話，回傳 `session_id`。
+建立新的回饋會話並設為目前會話，回傳 `session_id`。
 
 #### smart_open_browser()
 ```python
@@ -299,14 +299,14 @@ async def submit_feedback(
 ) -> None
 ```
 
-提交用戶回饋到會話。同一會話重複提交會被忽略，並送出 `notification`（`severity: "warning"`）。
+提交使用者回饋到會話。同一會話重複提交會被忽略，並送出 `notification`（`severity: "warning"`）。
 
 #### wait_for_feedback()
 ```python
 async def wait_for_feedback(self, timeout: int = 600) -> dict[str, Any]
 ```
 
-等待用戶回饋完成，回傳 `{"interactive_feedback": str, "images": list, "settings": dict}`。逾時或會話未取得回饋即結束時拋出 `TimeoutError`。
+等待使用者回饋完成，回傳 `{"interactive_feedback": str, "images": list, "settings": dict}`。逾時或會話未取得回饋即結束時拋出 `TimeoutError`。
 
 #### WebSocket 連線
 沒有 `add_websocket()`。`/ws` 端點把連線直接指定給 `session.websocket`，新連線會取代舊連線。
@@ -324,7 +324,7 @@ PromptManager.prototype.addPrompt = function(name, content) // => Object
 - `name`: 提示詞名稱（必須唯一）
 - `content`: 提示詞內容
 
-**返回值**: 新建的提示詞對象。名稱或內容為空、名稱重複時拋出 `Error`。
+**返回值**: 新建的提示詞物件。名稱或內容為空、名稱重複時拋出 `Error`。
 
 #### updatePrompt()
 ```javascript
@@ -361,14 +361,14 @@ PromptManager.prototype.getPromptsSortedByUsage = function() // => Array<Object>
 SessionDataManager.prototype.getCurrentSession = function() // => Object|null
 ```
 
-獲取當前活躍會話信息。`SessionManager.prototype.getCurrentSession()` 轉呼叫此方法。
+取得目前活躍會話資訊。`SessionManager.prototype.getCurrentSession()` 轉呼叫此方法。
 
 #### getSessionHistory()
 ```javascript
 SessionDataManager.prototype.getSessionHistory = function() // => Array<Object>
 ```
 
-回傳目前會話歷史的副本，本身不過濾；保存期限在載入時由 `cleanupExpiredSessions()` 套用。
+回傳目前會話歷史的副本，本身不過濾；儲存期限在載入時由 `cleanupExpiredSessions()` 套用。
 
 #### getStats()
 ```javascript
@@ -382,14 +382,14 @@ SessionDataManager.prototype.getStats = function() // => { todayCount, averageDu
 SessionDataManager.prototype.exportSessionHistory = function() // => string
 ```
 
-沒有參數，只匯出 JSON。把全部會話歷史下載為 `session-history-YYYY-MM-DD.json`，回傳該檔名。檔案內容是 `{ exportedAt, sessionCount, sessions }`；只有開啟用戶訊息記錄時，各會話才包含 `user_messages` 與 `user_message_count`。`SessionManager.prototype.exportSessionHistory()` 轉呼叫此方法並顯示成功或失敗訊息；單一會話改用 `exportSingleSession(sessionId)`。
+沒有參數，只匯出 JSON。把全部會話歷史下載為 `session-history-YYYY-MM-DD.json`，回傳該檔名。檔案內容是 `{ exportedAt, sessionCount, sessions }`；只有開啟使用者訊息記錄時，各會話才包含 `user_messages` 與 `user_message_count`。`SessionManager.prototype.exportSessionHistory()` 轉呼叫此方法並顯示成功或失敗訊息；單一會話改用 `exportSingleSession(sessionId)`。
 
 #### cleanupExpiredSessions()
 ```javascript
 SessionDataManager.prototype.cleanupExpiredSessions = function() // => number
 ```
 
-移除超過保存期限的會話。保存期限讀取設定 `sessionHistoryRetentionHours`（預設 72 小時），以秒比較；會話時間依序取 `saved_at`、`completed_at`、`created_at`（毫秒會先換成秒）。有清掉會話時立即呼叫 `saveToServer()` 存回 `/api/save-session-history`。`loadFromServer()` 合併存檔與實時會話後會呼叫它。
+移除超過儲存期限的會話。儲存期限讀取設定 `sessionHistoryRetentionHours`（預設 72 小時），以秒比較；會話時間依序取 `saved_at`、`completed_at`、`created_at`（毫秒會先換成秒）。有清掉會話時立即呼叫 `saveToServer()` 存回 `/api/save-session-history`。`loadFromServer()` 合併存檔與即時會話後會呼叫它。
 
 **返回值**: 清理的會話數量
 
@@ -436,7 +436,7 @@ AudioManager.prototype.removeCustomAudio = function(audioId) // => Object
 AudioManager.prototype.getAllAudios = function() // => Array<Object>
 ```
 
-獲取所有可用音效（內建 + 自訂）。
+取得所有可用音效（內建 + 自訂）。
 
 ### TextareaHeightManager API（v2.4.3 新增）
 
@@ -445,7 +445,7 @@ AudioManager.prototype.getAllAudios = function() // => Array<Object>
 TextareaHeightManager.prototype.registerTextarea = function(elementId, settingKey) // => boolean
 ```
 
-註冊 textarea 元素進行高度管理，並套用 `settingKey` 已保存的高度。高度變化經 500 毫秒 debounce 後以 `settingsManager.set(settingKey, height)` 保存；沒有公開的 `saveHeight()`／`loadHeight()`。
+註冊 textarea 元素進行高度管理，並套用 `settingKey` 已儲存的高度。高度變化經 500 毫秒 debounce 後以 `settingsManager.set(settingKey, height)` 儲存；沒有公開的 `saveHeight()`／`loadHeight()`。
 
 #### unregisterTextarea()
 ```javascript
@@ -489,7 +489,7 @@ togglePause: function()
 - `403 Forbidden`: 非 GET/HEAD/OPTIONS 的 `/api/*` 請求 Origin 不受信任
 - `404 Not Found`: 資源不存在，或 `/api/current-session`、`/api/add-user-message` 沒有活躍會話
 - `415 Unsupported Media Type`: 非 GET/HEAD/OPTIONS 的 `/api/*` 請求不是 `application/json`
-- `500 Internal Server Error`: 服務器內部錯誤
+- `500 Internal Server Error`: 伺服器內部錯誤
 
 ### WebSocket 關閉碼與錯誤通知
 - `4003`: Origin 不受信任
@@ -509,7 +509,7 @@ class SessionStatus(Enum):
     EXPIRED = "expired"                        # 已過期（終態）
 ```
 
-會話歷史沿用這些狀態值；載入歷史時，不在實時清單裡的未結束會話會被標為 `closed`。
+會話歷史沿用這些狀態值；載入歷史時，不在即時清單裡的未結束會話會被標為 `closed`。
 
 ### 提示詞與自動提交
 沒有提示詞狀態或自動提交狀態的列舉。提示詞以布林欄位 `isAutoSubmit` 標示自動提交；自動提交設定是 `ui_settings.json` 的 `autoSubmitEnabled`、`autoSubmitTimeout`、`autoSubmitPromptId`。
@@ -531,27 +531,27 @@ class SessionStatus(Enum):
 - 圖片數量限制：前端最多 10 張
 - 支援的圖片格式：前端接受任何 `image/*` 類型
 - 提示詞：名稱與內容不可為空、名稱不可重複，沒有長度或數量上限
-- **音效文件限制（v2.4.3 新增）**：
+- **音效檔案限制（v2.4.3 新增）**：
   - 支援格式：MP3, WAV, OGG（`audio/mp3`、`audio/mpeg`、`audio/wav`、`audio/ogg`）
   - 名稱不可重複，沒有檔案大小、數量或名稱長度上限
 - **會話歷史限制（v2.4.3 新增）**：
-  - 預設保存期限：72 小時
-  - 可選保存期限：24 小時、72 小時、7 天（168 小時）、30 天（720 小時）
-  - 單個會話的用戶訊息數沒有上限
+  - 預設儲存期限：72 小時
+  - 可選儲存期限：24 小時、72 小時、7 天（168 小時）、30 天（720 小時）
+  - 單個會話的使用者訊息數沒有上限
 
 ### 資源保護
-- WebSocket 連接：每個會話只保留最新的一條連線
-- 會話超時自動清理
+- WebSocket 連線：每個會話只保留最新的一條連線
+- 會話逾時自動清理
 - 內存使用監控
 
-### 跨域設置
-沒有 CORS 中介層，伺服器不核准任何跨來源請求。非 GET/HEAD/OPTIONS 的 `/api/*` 與 `/ws` 會檢查 Origin，詳見 [部署指南的安全配置](./deployment-guide.md#安全配置)。
+### 跨域設定
+沒有 CORS 中介層，伺服器不核准任何跨來源請求。非 GET/HEAD/OPTIONS 的 `/api/*` 與 `/ws` 會檢查 Origin，詳見 [部署指南的安全設定](./deployment-guide.md#安全設定)。
 
 ---
 
-## 📚 相關文檔
+## 📚 相關文件
 
 - **[系統架構總覽](./system-overview.md)** - 了解整體架構設計理念和技術棧
-- **[組件詳細說明](./component-details.md)** - 深入了解各層組件的具體實現
-- **[交互流程文檔](./interaction-flows.md)** - 詳細的用戶交互和系統流程
-- **[部署指南](./deployment-guide.md)** - 環境配置和部署最佳實踐
+- **[元件詳細說明](./component-details.md)** - 深入了解各層元件的具體實現
+- **[交互流程文件](./interaction-flows.md)** - 詳細的使用者交互和系統流程
+- **[部署指南](./deployment-guide.md)** - 環境設定和部署最佳實踐
