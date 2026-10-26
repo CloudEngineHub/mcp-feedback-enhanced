@@ -87,7 +87,7 @@ uv run python -m mcp_feedback_enhanced
 
 ## 🌍 環境設定
 
-### 環境檢測機制
+### 環境偵測機制
 
 ```mermaid
 flowchart TD
@@ -257,7 +257,7 @@ function checkAudioSupport() {
 | `userMessageRecordingEnabled` | `true`/`false` | `true` |
 | `userMessagePrivacyLevel` | `full`、`basic`、`disabled` | `full` |
 
-### 智能記憶功能部署
+### 智慧記憶功能部署
 
 #### ResizeObserver 支援檢查
 ```javascript
