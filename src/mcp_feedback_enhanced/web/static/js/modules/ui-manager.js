@@ -341,8 +341,7 @@
                 break;
 
             case Utils.CONSTANTS.FEEDBACK_SUBMITTED:
-                // index.html 沒載入 TimeUtils，缺的時候不顯示時間
-                const timeStr = this.lastSubmissionTime && Utils.Time ?
+                const timeStr = this.lastSubmissionTime ?
                     Utils.Time.formatTimestamp(this.lastSubmissionTime, { format: 'time' }) : '';
                 icon = '✅';
                 title = window.i18nManager ? window.i18nManager.t('status.submitted.title') : '回饋已提交';
