@@ -190,7 +190,7 @@ pip install uv
 ```
 # MCP Interactive Feedback 規則
 
-注意在任務完成前根據mcp-feedback-enhanced工具的要求進行工具調用
+注意在任務完成前根據mcp-feedback-enhanced工具的要求進行工具呼叫
 ```
 
 ## ⚙️ 進階設定
@@ -227,10 +227,10 @@ pip install uv
 uvx mcp-feedback-enhanced@latest version       # 檢查版本
 
 # 介面測試
-uvx mcp-feedback-enhanced@latest test --web    # 測試 Web UI (自動持續運行)
+uvx mcp-feedback-enhanced@latest test --web    # 測試 Web UI (自動持續執行)
 uvx mcp-feedback-enhanced@latest test --desktop # 測試桌面應用程式 (v2.5.0 新功能)
 
-# 調試模式（test 子命令會自動設定 MCP_DEBUG=true，除錯日誌寫到 stderr）
+# 除錯模式（test 子命令會自動設定 MCP_DEBUG=true，除錯日誌寫到 stderr）
 uvx mcp-feedback-enhanced@latest test --web
 
 # 指定語言測試
@@ -249,27 +249,27 @@ uv sync
 **本機測試方式**
 ```bash
 # 功能測試
-make test-web                                            # Web UI 測試 (持續運行)
+make test-web                                            # Web UI 測試 (持續執行)
 make test-desktop-func                                   # 桌面應用功能測試
 
 # 或直接使用指令
-uv run python -m mcp_feedback_enhanced test --web       # 使用專案 .venv 測試 Web UI (持續運行)
-uvx --no-cache --with-editable . mcp-feedback-enhanced test --web   # Web UI 測試 (持續運行)
+uv run python -m mcp_feedback_enhanced test --web       # 使用專案 .venv 測試 Web UI (持續執行)
+uvx --no-cache --with-editable . mcp-feedback-enhanced test --web   # Web UI 測試 (持續執行)
 uvx --no-cache --with-editable . mcp-feedback-enhanced test --desktop # 桌面應用測試
 
-# 桌面應用構建 (v2.5.0 新功能)
-make build-desktop                                       # 構建桌面應用 (debug 模式)
-make build-desktop-release                               # 構建桌面應用 (release 模式)
+# 桌面應用建置 (v2.5.0 新功能)
+make build-desktop                                       # 建置桌面應用 (debug 模式)
+make build-desktop-release                               # 建置桌面應用 (release 模式)
 make test-desktop                                        # 測試桌面應用
-make clean-desktop                                       # 清理桌面構建產物
+make clean-desktop                                       # 清理桌面建置產物
 
 # 單元測試
-make test                                                # 運行所有單元測試
+make test                                                # 執行所有單元測試
 make test-fast                                          # 快速測試 (跳過慢速測試)
-make test-cov                                           # 測試並生成覆蓋率報告
+make test-cov                                           # 測試並產生覆蓋率報告
 
-# 代碼品質檢查
-make check                                              # 完整代碼品質檢查
+# 程式碼品質檢查
+make check                                              # 完整程式碼品質檢查
 make quick-check                                        # 快速檢查並自動修復
 ```
 
@@ -367,7 +367,7 @@ python scripts/cleanup_cache.py --dry-run
 # 執行標準清理
 python scripts/cleanup_cache.py --clean
 
-# 強制清理（會嘗試關閉相關程序，解決 Windows 檔案佔用問題）
+# 強制清理（會嘗試關閉相關處理程序，解決 Windows 檔案佔用問題）
 python scripts/cleanup_cache.py --force
 
 # 或直接使用 uv 命令
