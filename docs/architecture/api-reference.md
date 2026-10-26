@@ -419,7 +419,7 @@ AudioManager.prototype.addCustomAudio = function(name, file) // => Promise<Objec
 新增自訂音效。
 
 **參數**:
-- `name`: 音效名稱（不可重複）
+- `name`: 音效名稱，不可和既有自訂音效重複，也不可和任一語言的預設音效名稱（例如「經典提示音」、"Classic Beep"）相同
 - `file`: 瀏覽器的 `File` 物件，類型須為 `audio/mp3`、`audio/mpeg`、`audio/wav` 或 `audio/ogg`；會轉成 Base64 存進設定
 
 **回傳值**: resolve 為新增的音效物件（`id`、`name`、`data`、`mimeType`、`createdAt`、`isDefault: false`）；名稱或檔案為空、格式不支援、名稱重複時 reject。

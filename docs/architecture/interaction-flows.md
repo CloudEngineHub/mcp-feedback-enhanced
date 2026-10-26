@@ -399,6 +399,7 @@ sequenceDiagram
     Server->>UI: status_update
     UI->>SM: updateStatusInfo(status_info)
     SM->>SDM: updateStatusInfo()
+    Note over SDM: 專案目錄與摘要直接取自 status_info，不讀介面文字；空摘要由顯示端依介面語言顯示「無摘要」
     alt 狀態為已提交、已完成、逾時、錯誤或已過期
         SDM->>SDM: handleSessionCompleted()
         SDM->>SDM: addSessionToHistory()，saveToServer() 存回伺服器
