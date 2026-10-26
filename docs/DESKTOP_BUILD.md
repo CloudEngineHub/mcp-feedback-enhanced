@@ -133,24 +133,29 @@ make test-desktop
 
 1. **Rust 未安裝**
    ```
-   ❌ Rust 未安裝，請造訪 https://rustup.rs/
+   ❌ 未找到 Rust 編譯器
+   💡 請安裝 Rust: https://rustup.rs/
    ```
    解決方案: 安裝 Rust 工具鏈
 
 2. **Tauri CLI 未安裝**
    ```
-   ⚠️ Tauri CLI 未安裝，正在安裝...
+   ⚠️  Tauri CLI 未安裝，嘗試安裝...
    ```
-   解決方案: 腳本會自動安裝，或手動執行 `cargo install tauri-cli`
+   解決方案: 腳本會自動安裝；若接著顯示 `❌ 無法安裝 Tauri CLI`，請手動執行 `cargo install tauri-cli` 查看錯誤
 
 3. **建置失敗**
    ```
-   ❌ 建置失敗
+   ❌ 構建失敗: <錯誤訊息>
    ```
-   解決方案: 檢查 Rust 環境，清理後重新建置
+   或所有平台的 Tauri 建置都失敗時：
+   ```
+   ❌ 所有平台構建都失敗了
+   ❌ 沒有成功構建任何平台
+   ```
+   解決方案: 依錯誤訊息檢查 Rust 環境，再清理後重新建置。`make clean-desktop` 執行的是 `scripts/build_desktop.py --clean`，清理完會接著重新建置 Debug 版本：
    ```bash
    make clean-desktop
-   make build-desktop
    ```
 
 ### 檢查環境
@@ -159,7 +164,7 @@ make test-desktop
 # 檢查 Rust 環境
 make check-rust
 
-# 檢查所有依賴
+# 安裝開發依賴與 pre-commit hooks
 make dev-setup
 ```
 
