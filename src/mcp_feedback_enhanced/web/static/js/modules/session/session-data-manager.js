@@ -165,12 +165,14 @@
         this.lastStatusUpdate = statusInfo;
 
         if (statusInfo.session_id || statusInfo.created_at) {
+            // status_info 來自伺服器 get_status_info，一定帶 project_directory 與 summary；
+            // 摘要是空字串時保持空值，由顯示端套用依介面語言的「無摘要」
             const sessionData = {
                 session_id: statusInfo.session_id || (this.currentSession && this.currentSession.session_id),
                 status: statusInfo.status,
                 created_at: statusInfo.created_at,
-                project_directory: statusInfo.project_directory || this.getProjectDirectory(),
-                summary: statusInfo.summary || this.getAISummary()
+                project_directory: statusInfo.project_directory,
+                summary: statusInfo.summary
             };
 
             // 檢查會話是否完成
@@ -587,63 +589,6 @@
         if (this.onHistoryChange) {
             this.onHistoryChange(this.sessionHistory);
         }
-    };
-
-    /**
-     * 獲取專案目錄（輔助方法）
-     */
-    SessionDataManager.prototype.getProjectDirectory = function() {
-        // 嘗試從多個來源獲取專案目錄
-        const sources = [
-            () => document.querySelector('.session-project')?.textContent?.replace('專案: ', ''),
-            () => document.querySelector('.project-info')?.textContent?.replace('專案目錄: ', ''),
-            () => this.currentSession?.project_directory
-        ];
-
-        for (const source of sources) {
-            try {
-                const result = source();
-                if (result && result !== '未知') {
-                    return result;
-                }
-            } catch (error) {
-                // 忽略錯誤，繼續嘗試下一個來源
-            }
-        }
-
-        return '未知';
-    };
-
-    /**
-     * 獲取 AI 摘要（輔助方法）
-     */
-    SessionDataManager.prototype.getAISummary = function() {
-        // 嘗試從多個來源獲取 AI 摘要
-        const sources = [
-            () => {
-                const element = document.querySelector('.session-summary');
-                const text = element?.textContent;
-                return text && text !== 'AI 摘要: 載入中...' ? text.replace('AI 摘要: ', '') : null;
-            },
-            () => {
-                const element = document.querySelector('#combinedSummaryContent');
-                return element?.textContent?.trim();
-            },
-            () => this.currentSession?.summary
-        ];
-
-        for (const source of sources) {
-            try {
-                const result = source();
-                if (result && result !== '暫無摘要') {
-                    return result;
-                }
-            } catch (error) {
-                // 忽略錯誤，繼續嘗試下一個來源
-            }
-        }
-
-        return '暫無摘要';
     };
 
     /**

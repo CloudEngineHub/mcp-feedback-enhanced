@@ -558,39 +558,20 @@
     };
 
     /**
-     * 獲取專案目錄
+     * 獲取專案目錄：讀頂部路徑的 data-full-path（伺服器渲染、會話更新時同步），不解析介面文字；
+     * 取不到回傳 null，由顯示端套用依介面語言的預設文字
      */
     SessionManager.prototype.getProjectDirectory = function() {
-        const projectElement = document.querySelector('.session-project');
-        if (projectElement) {
-            return projectElement.textContent.replace('專案: ', '');
-        }
-
-        // 從頂部狀態列獲取
-        const topProjectInfo = document.querySelector('.project-info');
-        if (topProjectInfo) {
-            return topProjectInfo.textContent.replace('專案目錄: ', '');
-        }
-
-        return '未知';
+        const pathElement = document.getElementById('projectPathDisplay');
+        return (pathElement && pathElement.getAttribute('data-full-path')) || null;
     };
 
     /**
-     * 獲取 AI 摘要
+     * 獲取 AI 摘要：讀摘要內容區（不帶介面標籤）；取不到回傳 null，由顯示端套用依介面語言的預設文字
      */
     SessionManager.prototype.getAISummary = function() {
-        const summaryElement = document.querySelector('.session-summary');
-        if (summaryElement && summaryElement.textContent !== 'AI 摘要: 載入中...') {
-            return summaryElement.textContent.replace('AI 摘要: ', '');
-        }
-
-        // 嘗試從主要內容區域獲取
         const mainSummary = document.querySelector('#combinedSummaryContent');
-        if (mainSummary && mainSummary.textContent.trim()) {
-            return mainSummary.textContent.trim();
-        }
-
-        return '暫無摘要';
+        return (mainSummary && mainSummary.textContent.trim()) || null;
     };
 
 
