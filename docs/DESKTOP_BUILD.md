@@ -1,6 +1,6 @@
-# 桌面應用程式構建指南
+# 桌面應用程式建置指南
 
-本文檔說明如何構建 MCP Feedback Enhanced 的桌面應用程式。
+本文件說明如何建置 MCP Feedback Enhanced 的桌面應用程式。
 
 ## 先決條件
 
@@ -36,7 +36,7 @@ uv sync --dev
 pip install -e ".[dev]"
 ```
 
-## 構建方法
+## 建置方法
 
 ### 方法 1: 使用 Makefile (推薦)
 
@@ -73,9 +73,9 @@ python scripts/build_desktop.py --clean
 python scripts/build_desktop.py --help
 ```
 
-## 構建產物
+## 建置產物
 
-構建完成後，產物將位於：
+建置完成後，產物將位於：
 
 ```
 src/mcp_feedback_enhanced/
@@ -98,14 +98,14 @@ src-tauri/python/mcp_feedback_enhanced_desktop/        # 開發環境模組
 
 ### 多平台支援
 
-構建腳本會自動構建以下平台的二進制文件：
+建置腳本會自動建置以下平台的二進位檔案：
 
 - **Windows**: `mcp-feedback-enhanced-desktop.exe`
 - **macOS Intel**: `mcp-feedback-enhanced-desktop-macos-intel`
 - **macOS Apple Silicon**: `mcp-feedback-enhanced-desktop-macos-arm64`
 - **Linux**: `mcp-feedback-enhanced-desktop-linux`
 
-桌面應用會根據運行平台自動選擇對應的二進制文件。
+桌面應用會根據執行平台自動選擇對應的二進位檔案。
 
 ## 測試桌面應用程式
 
@@ -121,11 +121,11 @@ make test-desktop
 
 ### Windows
 - 桌面應用程式不會顯示額外的 CMD 視窗
-- 二進制檔案: `mcp-feedback-enhanced-desktop.exe`
+- 二進位檔案: `mcp-feedback-enhanced-desktop.exe`
 
 ### Linux/macOS
-- 二進制檔案: `mcp-feedback-enhanced-desktop`
-- 自動設置執行權限
+- 二進位檔案: `mcp-feedback-enhanced-desktop`
+- 自動設定執行權限
 
 ## 故障排除
 
@@ -143,11 +143,11 @@ make test-desktop
    ```
    解決方案: 腳本會自動安裝，或手動執行 `cargo install tauri-cli`
 
-3. **構建失敗**
+3. **建置失敗**
    ```
    ❌ 構建失敗
    ```
-   解決方案: 檢查 Rust 環境，清理後重新構建
+   解決方案: 檢查 Rust 環境，清理後重新建置
    ```bash
    make clean-desktop
    make build-desktop
@@ -165,7 +165,7 @@ make dev-setup
 
 ### 跨平台編譯要求
 
-構建腳本會自動安裝以下 Rust targets：
+建置腳本會自動安裝以下 Rust targets：
 
 ```bash
 # 這些 targets 會自動安裝，無需手動執行
@@ -176,16 +176,16 @@ rustup target add x86_64-unknown-linux-gnu    # Linux
 ```
 
 **注意**:
-- 本地構建通常只能成功構建當前平台的二進制文件
-- 跨平台編譯需要複雜的工具鏈配置（C 編譯器、系統庫等）
+- 本機建置通常只能成功建置目前平台的二進位檔案
+- 跨平台編譯需要複雜的工具鏈設定（C 編譯器、系統函式庫等）
 - **完整的多平台支援在 GitHub Actions CI 中實現**
-- 發佈到 PyPI 時會自動包含所有平台的二進制文件
+- 發佈到 PyPI 時會自動包含所有平台的二進位檔案
 
-## 自動化構建
+## 自動化建置
 
-### CI/CD 多平台構建
+### CI/CD 多平台建置
 
-GitHub Actions 會在各自的原生平台上構建桌面應用：
+GitHub Actions 會在各自的原生平台上建置桌面應用：
 
 ```yaml
 # 多平台構建策略
@@ -201,11 +201,11 @@ strategy:
 ```
 
 這確保了：
-- ✅ 每個平台在其原生環境中構建
+- ✅ 每個平台在其原生環境中建置
 - ✅ 避免跨平台編譯的複雜性
-- ✅ 最終 PyPI 包包含所有平台的二進制文件
+- ✅ 最終 PyPI 套件包含所有平台的二進位檔案
 
-### 本地自動化
+### 本機自動化
 
 ```bash
 # 完整的開發工作流程
@@ -217,28 +217,28 @@ make test-all       # 測試所有功能
 
 ## 發布流程
 
-1. **構建發布版本**
+1. **建置發布版本**
    ```bash
    make build-desktop-release
    ```
 
-2. **構建 PyPI 包**
+2. **建置 PyPI 套件**
    ```bash
    make build-all
    ```
 
-3. **驗證包內容**
+3. **驗證套件內容**
    ```bash
    # 檢查桌面應用程式是否包含在包中
    tar -tf dist/*.tar.gz | grep desktop
    ```
 
-桌面應用程式現在已完全集成到 PyPI 包中，包含所有主要平台的二進制文件，用戶安裝後可直接使用 `--desktop` 選項啟動。
+桌面應用程式現在已完全整合到 PyPI 套件中，包含所有主要平台的二進位檔案，使用者安裝後可直接使用 `--desktop` 選項啟動。
 
-### 平台兼容性
+### 平台相容性
 
 - **Windows**: 支援 x64 架構
 - **macOS**: 支援 Intel 和 Apple Silicon (M1/M2) 架構
 - **Linux**: 支援 x64 架構
 
-桌面應用會自動檢測運行平台並選擇對應的二進制文件。
+桌面應用會自動偵測執行平台並選擇對應的二進位檔案。
