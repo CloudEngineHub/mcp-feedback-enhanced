@@ -2,24 +2,24 @@
 
 ## 🏗️ 整體架構設計
 
-MCP Feedback Enhanced 採用**單一活躍會話 + 持久化 Web UI**的創新架構設計，實現 AI 助手與用戶之間的高效、無縫交互體驗。
+MCP Feedback Enhanced 採用**單一活躍會話 + 持久化 Web UI**的創新架構設計，實現 AI 助手與使用者之間的高效、無縫交互體驗。
 
 ### 核心設計理念
 
 - **Web UI 加桌面模式**：介面一律由 FastAPI 提供的 Web 頁面呈現；預設用瀏覽器開啟，`MCP_DESKTOP_MODE=true` 時改用 Tauri 打包的桌面殼載入同一個頁面，桌面殼啟動失敗時自動改回瀏覽器
-- **四層架構設計**：清晰的層次分離，便於維護和擴展
+- **四層架構設計**：清晰的層次分離，便於維護和擴充
 - **環境適配**：WSL 中改用 Windows 瀏覽器開啟介面；SSH 等遠端環境只偵測並寫進除錯日誌，需自行設定埠轉發
-- **單一活躍會話**：同一時間只有一個 `current_session`，每次 AI 調用建立新會話並取代它；舊會話留在 `sessions` 字典直到被清理
+- **單一活躍會話**：同一時間只有一個 `current_session`，每次 AI 呼叫建立新會話並取代它；舊會話留在 `sessions` 字典直到被清理
 - **模組化設計**：每層職責明確，支援獨立開發和測試
 
 ### 技術棧概覽
 
 **後端技術**：
 - Python 3.11+ (核心語言)
-- FastMCP 4.0+ / MCP Python SDK 2.x (MCP 協議實現)
+- FastMCP 4.0+ / MCP Python SDK 2.x (MCP 協定實作)
 - FastAPI 0.115+ (Web 框架)
-- uvicorn 0.30+ (ASGI 服務器)
-- WebSocket (實時通信)
+- uvicorn 0.30+ (ASGI 伺服器)
+- WebSocket (即時通信)
 
 **前端技術**：
 - HTML5 + CSS3 (現代化 UI)
@@ -28,7 +28,7 @@ MCP Feedback Enhanced 採用**單一活躍會話 + 持久化 Web UI**的創新�
 - HTML5 Audio（`new Audio()`，音效通知系統）
 - localStorage API (介面語言與通知設定)
 - ResizeObserver API (元素尺寸監控)
-- 響應式設計 (多設備支援)
+- 響應式設計 (多裝置支援)
 
 **開發工具**：
 - pytest + pytest-asyncio + pytest-timeout + pytest-cov (測試框架)
@@ -46,7 +46,7 @@ graph TB
 
     subgraph "MCP Feedback Enhanced - 四層架構"
         subgraph "第一層：MCP 服務層"
-            SERVER["server.py<br/>FastMCP 服務器，stdio"]
+            SERVER["server.py<br/>FastMCP 伺服器，stdio"]
             TOOL["MCP 工具<br/>interactive_feedback、get_system_info"]
             I18N["i18n.py<br/>後端錯誤訊息翻譯"]
             DEBUG["debug.py<br/>除錯日誌與 user_notice"]
@@ -65,11 +65,11 @@ graph TB
         end
 
         subgraph "第四層：前端交互層"
-            HTML["HTML 模板<br/>feedback.html、index.html"]
+            HTML["HTML 範本<br/>feedback.html、index.html"]
             JS["app.js<br/>FeedbackApp"]
             CSS["樣式系統<br/>響應式設計"]
             SETTINGS["SettingsManager<br/>設定讀寫"]
-            PROMPT["提示詞管理<br/>PromptManager + UI 組件"]
+            PROMPT["提示詞管理<br/>PromptManager + UI 元件"]
             SESSION_MGR["會話管理<br/>SessionManager、SessionDataManager"]
             AUTO_SUBMIT["自動提交<br/>app.js 的 autoSubmitManager"]
             AUDIO_MGR["音效通知<br/>AudioManager + 自訂音效"]
@@ -90,13 +90,13 @@ graph TB
         USER["使用者<br/>文字與圖片回饋"]
     end
 
-    subgraph "運行環境"
-        LOCAL["本地環境"]
+    subgraph "執行環境"
+        LOCAL["本機環境"]
         SSH["SSH Remote"]
         WSL["WSL 環境"]
     end
 
-    AI -->|MCP 協議| SERVER
+    AI -->|MCP 協定| SERVER
     SERVER --> TOOL
     TOOL -->|launch_web_feedback_ui| MANAGER
     MANAGER --> SESSION
@@ -161,28 +161,28 @@ graph TB
 ### 2. 四層架構設計
 
 **第一層 - MCP 服務層**：
-- 實現 MCP 協議標準
+- 實作 MCP 協定標準
 - 提供 `interactive_feedback` 核心工具
-- 統一的國際化和調試支援
+- 統一的國際化和除錯支援
 - 錯誤處理和日誌記錄
 
 **第二層 - Web UI 管理層**：
 - 單例模式的 WebUIManager
 - 會話生命週期管理
-- 數據模型和狀態管理
+- 資料模型和狀態管理
 - 瀏覽器智能控制
 
 **第三層 - Web 服務層**：
-- FastAPI 高性能 Web 框架
+- FastAPI 高效能 Web 框架
 - RESTful API 和 WebSocket 支援
-- 路由處理和中間件
+- 路由處理和中介層
 - 靜態資源服務
 
 **第四層 - 前端交互層**：
 - 模組化 JavaScript 架構
 - 響應式 HTML/CSS 設計
-- 實時 WebSocket 通信
-- 豐富的用戶交互功能
+- 即時 WebSocket 通信
+- 豐富的使用者交互功能
 - **提示詞管理系統**：常用提示詞的 CRUD 操作和快速選擇
 - **會話管理功能**：會話歷史追蹤和統計分析（v2.4.3 重構增強）
 - **自動提交機制**：倒數計時器和自動回饋提交
@@ -193,8 +193,8 @@ graph TB
 ```mermaid
 stateDiagram-v2
     [*] --> NoSession: 系統啟動
-    NoSession --> ActiveSession: AI 首次調用
-    ActiveSession --> SessionUpdated: AI 再次調用
+    NoSession --> ActiveSession: AI 首次呼叫
+    ActiveSession --> SessionUpdated: AI 再次呼叫
     SessionUpdated --> ActiveSession: 會話切換完成
     ActiveSession --> Cleanup: 過期清理、記憶體壓力清理或伺服器停止
     Cleanup --> NoSession: current_session 設為 None
@@ -207,16 +207,16 @@ stateDiagram-v2
 
 ### 4. 持久化 Web UI 架構
 
-**跨調用保留的部分**：
+**跨呼叫保留的部分**：
 - **不重複開瀏覽器**: `_check_active_tabs()` 判斷已有連線中的分頁時不開新視窗，改送 `session_updated`
 - **沿用 WebSocket 連線**: `create_session()` 把舊會話的 WebSocket 直接轉給新會話
 - **前端狀態切換**: 收到新會話時，前端回饋狀態回到 `FEEDBACK_WAITING`
 - **局部更新**: 以 `GET /api/current-session` 更新 AI 摘要與專案資訊，不重新載入頁面；輸入框與已貼上的圖片會清空（`clearFeedback()`）
 
-**跨調用不保留的部分**：
-- 每次 AI 調用都是新的會話，回饋、圖片與會話狀態不會延續到下一次調用
-- 跨調用保留的是頁面本身、WebSocket 連線、`ui_settings.json` 的設定與 `session_history.json` 的會話歷史
-- 舊會話由過期清理與記憶體壓力清理移除（見「性能特性與優化」）
+**跨呼叫不保留的部分**：
+- 每次 AI 呼叫都是新的會話，回饋、圖片與會話狀態不會延續到下一次呼叫
+- 跨呼叫保留的是頁面本身、WebSocket 連線、`ui_settings.json` 的設定與 `session_history.json` 的會話歷史
+- 舊會話由過期清理與記憶體壓力清理移除（見「效能特性與優化」）
 
 ### 5. 國際化與本地化
 
@@ -227,7 +227,7 @@ stateDiagram-v2
 - 動態語言切換
 
 **本地化特性**：
-- 會話卡片與列表的時間、提示詞的建立／使用時間、自訂音效的建立日期，以 `toLocaleTimeString`／`toLocaleDateString` 依介面語言格式化（`TimeUtils.formatTimestamp()`）；其中提示詞與音效的日期經 `timestampHTML()` 產生，切換語言時重新格式化；會話詳情彈窗的時間用固定的 `YYYY/MM/DD HH:mm:ss` 格式，不分語言
+- 會話卡片與列表的時間、提示詞的建立／使用時間、自訂音效的建立日期，以 `toLocaleTimeString`／`toLocaleDateString` 依介面語言格式化（`TimeUtils.formatTimestamp()`）；其中提示詞與音效的日期經 `timestampHTML()` 產生，切換語言時重新格式化；會話詳情彈出視窗的時間用固定的 `YYYY/MM/DD HH:mm:ss` 格式，不分語言
 - 後端錯誤訊息與錯誤上下文前綴依語言分開（`ErrorHandler` 的 `_ERROR_MESSAGES`、`_CONTEXT_LABELS`）
 - 版面與字型不分語言，三種語言共用同一套 HTML 與 CSS
 
@@ -255,12 +255,12 @@ self.current_session: WebFeedbackSession | None = None
 self.sessions: dict[str, WebFeedbackSession] = {}  # 保留用於向後兼容
 ```
 
-`current_session` 是唯一的活躍會話。每次 AI 調用都由 `create_session()` 建立新會話並取代它；舊會話留在 `sessions`，供 `/api/all-sessions` 查詢，直到被過期清理或記憶體壓力清理移除。
+`current_session` 是唯一的活躍會話。每次 AI 呼叫都由 `create_session()` 建立新會話並取代它；舊會話留在 `sessions`，供 `/api/all-sessions` 查詢，直到被過期清理或記憶體壓力清理移除。
 
 **會話生命週期管理**：
-- 每次調用建立新會話；舊會話若已提交回饋，推進為已完成
-- 逾時、使用者設定的會話超時、斷線寬限到期都會經 `_cleanup_resources_enhanced()` 清理資源；過期會話另由會話的自動清理定時器與 `cleanup_expired_sessions()` 清除
-- 伺服器不保存會話狀態；會話歷史由前端存到 `session_history.json`
+- 每次呼叫建立新會話；舊會話若已提交回饋，推進為已完成
+- 逾時、使用者設定的會話逾時、斷線寬限到期都會經 `_cleanup_resources_enhanced()` 清理資源；過期會話另由會話的自動清理定時器與 `cleanup_expired_sessions()` 清除
+- 伺服器不儲存會話狀態；會話歷史由前端存到 `session_history.json`
 - 提交與逾時的判定以 `_outcome_lock` 保護，同一會話重複提交會被忽略
 
 ### 2. 智能環境檢測與適配
@@ -270,7 +270,7 @@ self.sessions: dict[str, WebFeedbackSession] = {}  # 保留用於向後兼容
 - `is_remote_environment()`：SSH、Codespaces、Remote Containers、Docker、Windows 遠端桌面、沒有 `DISPLAY` 的 Linux 判定為遠端；結果只寫進除錯日誌與 `get_system_info`，不改變行為
 
 **瀏覽器智能開啟**：
-- **活躍標籤頁檢測**: 避免重複開啟瀏覽器視窗
+- **活躍分頁檢測**: 避免重複開啟瀏覽器視窗
 - **跨平台支援**: Windows, macOS, Linux 自動適配
 - **WSL 處理**: 依序用 `cmd.exe`、`powershell.exe`、`wslview` 開啟 Windows 瀏覽器
 - **開啟失敗**: 在 stderr 印出網址，請使用者手動開啟
@@ -308,25 +308,25 @@ textarea-height-manager → app
 - 瀏覽器通知 (notification/notification-manager.js、notification-settings.js)
 - **提示詞管理模組群組**：
   - prompt-manager.js (核心管理器)
-  - prompt-modal.js (編輯彈窗)
-  - prompt-settings-ui.js (設定界面)
+  - prompt-modal.js (編輯彈出視窗)
+  - prompt-settings-ui.js (設定介面)
   - prompt-input-buttons.js (快速選擇按鈕)
 - **會話管理模組群組（v2.4.3 重構增強）**：
   - session-manager.js (會話控制器)
-  - session-data-manager.js (數據管理器，經 HTTP API 讀寫伺服器端歷史)
+  - session-data-manager.js (資料管理器，經 HTTP API 讀寫伺服器端歷史)
   - session-ui-renderer.js (UI 渲染器，頁籤化設計)
-  - session-details-modal.js (詳情彈窗)
+  - session-details-modal.js (詳情彈出視窗)
 - **音效通知模組群組（v2.4.3 新增）**：
   - audio-manager.js (音效管理器)
-  - audio-settings-ui.js (音效設定界面)
+  - audio-settings-ui.js (音效設定介面)
 - **智能記憶功能（v2.4.3 新增）**：
   - textarea-height-manager.js (輸入框高度管理)
-  - 一鍵複製功能整合在各 UI 組件中
+  - 一鍵複製功能整合在各 UI 元件中
 - **自動提交功能**：
   - 整合在 app.js 中的 `autoSubmitManager` 物件
   - 與提示詞管理和設定管理的深度整合
 
-## 📊 性能特性與優化
+## 📊 效能特性與優化
 
 ### 資源使用
 
@@ -336,7 +336,7 @@ textarea-height-manager → app
 - **暫存檔清理**: `ResourceManager` 每 300 秒清理最後修改超過 1 小時的已登記暫存檔
 
 **網路**：
-- **連線沿用**: 同一個分頁在多次 AI 調用間沿用同一條 WebSocket 連線，新會話建立時直接轉給新會話
+- **連線沿用**: 同一個分頁在多次 AI 呼叫間沿用同一條 WebSocket 連線，新會話建立時直接轉給新會話
 - **Gzip 壓縮**: 回應超過 `MCP_GZIP_MIN_SIZE`（預設 1000 位元組）時，以 `MCP_GZIP_LEVEL`（預設 6）壓縮
 - **快取標頭**: `/static/` 預設快取 3600 秒；`/api/` 預設不加快取標頭（`MCP_API_CACHE_AGE=0`），翻譯經 `/api/translations` 取得，因此預設也不快取
 
@@ -358,7 +358,7 @@ textarea-height-manager → app
 - **自動重連**: WebSocket 斷線後以指數退避重連，最多 5 次
 - **逾時保護**: `timeout` 鉗制在 60–86400 秒；前端斷線超過 75 秒視為使用者關閉介面並結束等待
 - **併發控制**: 提交與逾時判定以 `_outcome_lock` 保護，同一會話重複提交會被忽略
-- **錯誤處理**: `ErrorHandler.log_error_with_context()` 產生錯誤 ID 並寫進除錯日誌；回給 AI 的是 `format_user_error()` 產生的使用者可讀訊息，不會把例外拋給 MCP 客戶端
+- **錯誤處理**: `ErrorHandler.log_error_with_context()` 產生錯誤 ID 並寫進除錯日誌；回給 AI 的是 `format_user_error()` 產生的使用者可讀訊息，不會把例外拋給 MCP 用戶端
 
 ## 🆕 v2.4.3 版本新功能架構
 
@@ -369,17 +369,17 @@ textarea-height-manager → app
 graph TB
     subgraph "音效通知系統"
         AM[AudioManager<br/>音效管理器]
-        ASU[AudioSettingsUI<br/>設定界面]
+        ASU[AudioSettingsUI<br/>設定介面]
         DA[DefaultAudios<br/>內建音效]
         CA[CustomAudios<br/>自訂音效]
     end
 
     subgraph "HTML5 Audio"
         AUDIO[Audio 物件]
-        BASE64[Base64 音效數據]
+        BASE64[Base64 音效資料]
     end
 
-    subgraph "設定存儲"
+    subgraph "設定儲存"
         LS[ui_settings.json<br/>經 /api/save-settings]
         SM[SettingsManager]
     end
@@ -401,7 +401,7 @@ graph TB
 - **自訂音效**: 支援 MP3、WAV、OGG 格式上傳
 - **音量控制**: 0-100% 可調節音量
 - **測試播放**: 即時測試音效效果
-- **設定持久化**: 音效偏好自動保存
+- **設定持久化**: 音效偏好自動儲存
 
 ### 2. 會話管理重構架構
 
@@ -410,7 +410,7 @@ graph TB
 graph LR
     subgraph "v2.4.2 設計"
         SIDEBAR[左側邊欄<br/>會話管理]
-        COMPAT[瀏覽器相容性問題<br/>小視窗按鈕無法點擊]
+        COMPAT[瀏覽器相容性問題<br/>小視窗按鈕無法點選]
     end
 
     subgraph "v2.4.3 重構"
@@ -424,10 +424,10 @@ graph LR
 
 **新增功能模組**：
 - **session-ui-renderer.js**: 專門的 UI 渲染器
-- **session-details-modal.js**: 會話詳情彈窗
-- **伺服器端歷史存儲**: 存在 `session_history.json`，保存期限可選 24、72、168、720 小時（預設 72）
-- **隱私控制**: 三級用戶訊息記錄設定
-- **數據管理**: 匯出和清理功能
+- **session-details-modal.js**: 會話詳情彈出視窗
+- **伺服器端歷史儲存**: 存在 `session_history.json`，儲存期限可選 24、72、168、720 小時（預設 72）
+- **隱私控制**: 三級使用者訊息記錄設定
+- **資料管理**: 匯出和清理功能
 
 ### 3. 智能記憶功能架構
 
@@ -440,7 +440,7 @@ graph TB
         DEBOUNCE[防抖機制<br/>500ms 延遲]
     end
 
-    subgraph "存儲機制"
+    subgraph "儲存機制"
         SETTINGS[SettingsManager]
         HEIGHT_KEY[combinedFeedbackTextHeight]
     end
@@ -455,14 +455,14 @@ graph TB
 ```
 
 **一鍵複製功能**：
-- **專案路徑、會話 ID**: 會話頁籤中點擊即複製（`Utils.copyToClipboard()`），成功或失敗都顯示翻譯過的提示
+- **專案路徑、會話 ID**: 會話頁籤中點選即複製（`Utils.copyToClipboard()`），成功或失敗都顯示翻譯過的提示
 - **使用者內容**: 工作區的「複製使用者內容」按鈕複製輸入框文字（`copyUserFeedback()`）
 - **目前會話**: 會話頁籤的「複製會話內容」「複製使用者內容」按鈕
-- **會話詳情**: 詳情彈窗的「複製摘要」「複製訊息內容」
+- **會話詳情**: 詳情彈出視窗的「複製摘要」「複製訊息內容」
 
 ## 🔄 核心工作流程
 
-### AI 助手調用流程（v2.4.3 增強）
+### AI 助手呼叫流程（v2.4.3 增強）
 ```mermaid
 sequenceDiagram
     participant AI as AI 助手
@@ -470,10 +470,10 @@ sequenceDiagram
     participant WM as WebUIManager
     participant UI as Web UI
     participant AUDIO as 音效管理器
-    participant User as 用戶
+    participant User as 使用者
 
     AI->>MCP: interactive_feedback()
-    MCP->>WM: 創建/更新會話
+    MCP->>WM: 建立/更新會話
     WM->>UI: 啟動 Web 服務（尚未啟動時）
     WM->>User: 智能開啟瀏覽器
 
@@ -484,17 +484,17 @@ sequenceDiagram
     User->>UI: 提交回饋
     UI->>WM: WebSocket 傳送
     WM->>MCP: 回饋完成
-    MCP->>AI: 返回結果
+    MCP->>AI: 回傳結果
 ```
 
-### 多次循環調用
+### 多次循環呼叫
 ```mermaid
 graph LR
-    A[AI 首次調用] --> B[用戶回饋]
+    A[AI 首次呼叫] --> B[使用者回饋]
     B --> C[AI 處理回饋]
-    C --> D[AI 再次調用]
+    C --> D[AI 再次呼叫]
     D --> E[會話無縫更新]
-    E --> F[用戶再次回饋]
+    E --> F[使用者再次回饋]
     F --> G[持續循環...]
 
     style D fill:#e1f5fe
@@ -503,7 +503,7 @@ graph LR
 
 ## 🔍 安全性考量
 
-### 數據安全
+### 資料安全
 
 **輸入處理**：
 - MCP 工具參數：`timeout` 鉗制在 60–86400 秒，無法解析時用 600；`project_directory` 不存在時改用伺服器的工作目錄
@@ -545,9 +545,9 @@ graph LR
 
 ---
 
-## 📚 相關文檔
+## 📚 相關文件
 
-- **[組件詳細說明](./component-details.md)** - 深入了解各層組件的具體實現
-- **[交互流程文檔](./interaction-flows.md)** - 詳細的用戶交互和系統流程
-- **[API 參考文檔](./api-reference.md)** - 完整的 API 端點和參數說明
-- **[部署指南](./deployment-guide.md)** - 環境配置和部署最佳實踐
+- **[元件詳細說明](./component-details.md)** - 深入了解各層元件的具體實作
+- **[交互流程文件](./interaction-flows.md)** - 詳細的使用者交互和系統流程
+- **[API 參考文件](./api-reference.md)** - 完整的 API 端點和參數說明
+- **[部署指南](./deployment-guide.md)** - 環境設定和部署最佳實踐
