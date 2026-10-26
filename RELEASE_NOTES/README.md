@@ -6,8 +6,8 @@
 
 ```
 RELEASE_NOTES/
-├── README.md                  # 此說明文檔
-├── template.md               # 發佈說明模板
+├── README.md                  # 此說明文件
+├── template.md               # 發佈說明範本
 ├── CHANGELOG.en.md           # 完整更新歷史（英文）
 ├── CHANGELOG.zh-TW.md        # 完整更新歷史（繁體中文）
 ├── CHANGELOG.zh-CN.md        # 完整更新歷史（簡體中文）
