@@ -103,7 +103,7 @@ python scripts/validate_workflows.py
 
 ## 🚀 使用指南
 
-### 方案 1：使用一鍵建置發佈（推薦）
+### 方案 1：使用一鍵建置發佈（建議）
 1. 觸發 "Build Desktop & Release" 工作流程
 2. 系統自動建置所有平台
 3. 建置成功後自動發佈

@@ -38,7 +38,7 @@ pip install -e ".[dev]"
 
 ## 建置方法
 
-### 方法 1: 使用 Makefile (推薦)
+### 方法 1: 使用 Makefile (建議)
 
 ```bash
 # 構建 Debug 版本
@@ -178,7 +178,7 @@ rustup target add x86_64-unknown-linux-gnu    # Linux
 **注意**:
 - 本機建置通常只能成功建置目前平台的二進位檔案
 - 跨平台編譯需要複雜的工具鏈設定（C 編譯器、系統函式庫等）
-- **完整的多平台支援在 GitHub Actions CI 中實現**
+- **完整的多平台支援在 GitHub Actions CI 中達成**
 - 發佈到 PyPI 時會自動包含所有平台的二進位檔案
 
 ## 自動化建置
