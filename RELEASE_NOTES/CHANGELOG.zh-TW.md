@@ -20,14 +20,14 @@
 - **複製會話內容、複製使用者內容寫死簡中**：現在依介面語言輸出。複製會話內容的使用者訊息原本顯示成 [object Object]，狀態與建立時間是原始值；現在顯示訊息內容與狀態文字，時間和複製使用者內容一樣改用會話詳情視窗的 YYYY/MM/DD HH:MM:SS。
 - **自動提交倒數期間手動送出，被記成「自動提交」**：前端用「自動提交倒數是否正在跑」判斷提交方式，只要有提示詞設成自動提交、倒數開始後手動按送出，會話歷史、會話詳情、匯出檔與伺服器記錄的 `submission_method` 都是 `auto`。現在依實際觸發來源記錄：倒數到期自動送出記 `auto`，按送出按鈕或 Ctrl+Enter 記 `manual`；連線還沒就緒、先暫存再送出的回饋也保留原本的方式。
 - **圖示按鈕在套用翻譯後變成文字**：提示詞設定的自動提交按鈕，⏰／⏸️ 圖示被換成「設定為自動提交」等字樣，提示也寫死中文；會話卡片的「複製會話內容」「複製使用者內容」按鈕，📋／📝 圖示連同文字一起被換成純文字，`aria-label` 寫死中文，切換語言也不會換。現在圖示保留，說明放在滑鼠提示與螢幕閱讀器標籤，並依介面語言顯示。
-- **頁面的 `<html lang>` 一直是 `zh-CN`**：兩個模板寫死 `lang="zh-CN"`，第一次開頁時也不會更新，只有在介面上切換語言才會改；繁中或英文介面被宣告成簡中，螢幕閱讀器與瀏覽器會用錯的語言朗讀、斷字與選字型。現在模板預設 `zh-TW`（與前端預設語言一致），套用翻譯時一併把 `lang` 設成目前的介面語言，第一次載入與切換語言都會更新。
+- **頁面的 `<html lang>` 一直是 `zh-CN`**：兩個範本寫死 `lang="zh-CN"`，第一次開頁時也不會更新，只有在介面上切換語言才會改；繁中或英文介面被宣告成簡中，螢幕閱讀器與瀏覽器會用錯的語言朗讀、斷字與選字型。現在範本預設 `zh-TW`（與前端預設語言一致），套用翻譯時一併把 `lang` 設成目前的介面語言，第一次載入與切換語言都會更新。
 - **`MCP_LANGUAGE` 現在真的決定網頁介面語言**（[#189](https://github.com/Minidoracat/mcp-feedback-enhanced/issues/189)）：v2.7.1 只調整了後端偵測順序，網頁介面仍由 `ui_settings.json` 的 `language` 或瀏覽器語言決定，設了 `MCP_LANGUAGE=en`／`zh-CN` 畫面還是繁中。現在伺服器把指定語言帶進回饋頁與等待頁（`<html lang>` 與 `data-forced-language`），第一次套用翻譯就是指定語言。指定期間語言選單仍可切換，但只在目前頁面有效，重新整理後回到指定語言；`ui_settings.json` 的 `language` 不會被切換、改其他設定或重設改動。
 - **`MCP_LANGUAGE` 只接受 `zh-TW`、`zh-CN`、`en`**：去掉前後空白後必須完全相符，`ja`、`EN`、`zh_TW` 等值一律當作沒設。原本錯誤處理的備援路徑會直接回傳未驗證的值。
 - **等待頁（還沒有會話時）支援三語**：「連線中...」與等待說明原本寫死繁中，現在照 `MCP_LANGUAGE` → `ui_settings.json` 的 `language` → 瀏覽器語言 → 繁中的順序顯示。
 - **第一次開頁不再把瀏覽器語言寫進 `ui_settings.json`**：只有使用者在沒設 `MCP_LANGUAGE` 時切換語言才會存。
 - **介面上寫死的中文**：會話詳情視窗的「(進行中)」、「未知」、「內容」、「字元」、複製按鈕與提示訊息，自訂音效清單的「建立於／格式」與播放／刪除按鈕提示，以及提示詞選擇視窗的「最近使用」改用翻譯；播放／刪除兩個圖示按鈕也加上螢幕閱讀器標籤。重設設定的確認框、測試通知失敗的提示、自動提交暫停的原因與狀態按鈕的「秒」、自動提交時間的驗證錯誤、圖片移除按鈕的提示與螢幕閱讀器標籤、提示詞視窗的關閉按鈕與空狀態、音效名稱輸入視窗，以及新增或上傳時提示詞、音效名稱重複等錯誤訊息，也改用翻譯。英文的自動提交暫停訊息原本直接把原因黏在 "Auto submit paused" 後面，現在是完整句子。
 - **英文或簡中介面下，空白的 AI 摘要被存成介面文字**：AI 傳來空白摘要時，前端改讀會話卡片上的「AI 摘要: …」再用繁中字串去掉標籤；英文或簡中介面比對失效，摘要變成 "AI Summary: Loading..." 之類的文字，出現在會話卡片、歷史、詳情與匯出。現在直接使用伺服器的摘要與專案目錄，空白摘要依介面語言顯示「無摘要」。
-- **開著自動提交時切換語言，狀態按鈕顯示成「已停用」**：按鈕模板固定套用「已停用」的翻譯，每次切換語言都會蓋掉「已啟用 (30秒)」。現在切換語言時依按鈕目前的狀態與秒數重畫，啟用與停用都跟著介面語言。
+- **開著自動提交時切換語言，狀態按鈕顯示成「已停用」**：按鈕範本固定套用「已停用」的翻譯，每次切換語言都會蓋掉「已啟用 (30秒)」。現在切換語言時依按鈕目前的狀態與秒數重畫，啟用與停用都跟著介面語言。
 - **英文或簡中介面可以把自訂音效取成和預設音效相同的名稱**：重名檢查只比對繁中名稱「經典提示音」等，英文介面取名 "Classic Beep" 不會被擋，選單裡出現兩個同名音效。現在三種語言的預設音效名稱都算重名。
 - **部分訊息顯示 key 名稱或未代入的參數**：補齊三個語系缺少的翻譯（簡中缺最多，例如系統與錯誤訊息、會話逾時；英文缺會話逾時與自動提交提示）。會話歷史已儲存、套用提示詞、一般錯誤三則訊息的參數寫成 {{count}}，與前端的 {count} 不符，console 會顯示「會話歷史已保存（{4} 個會話）」，現已修正。
 - **繁中介面使用大陸用語**：繁中翻譯檔、頁面初始文字與翻譯尚未載入時的備用文字，把大陸用語換成台灣用語，例如「用戶」改「使用者」、「剪貼板」改「剪貼簿」、「當前會話」改「目前會話」、「連接」改「連線」、「超時」改「逾時」、「數據」改「資料」、「保存」改「儲存」、「點擊」改「點選」、「重置設定」改「重設設定」、「提示詞模板」改「提示詞範本」、「本地儲存」改「本機儲存」；「會話」維持不變。
@@ -41,21 +41,21 @@
 - **匯出單一會話後提示「會話歷史已匯出」**：容易誤以為匯出了整份歷史；改成「會話已匯出」，三個語系新增 `sessionHistory.management.exportSingleSuccess`。
 
 ### 📝 文件
-- **架構文件與實作不符**：`docs/architecture/` 的部署指南與 API 參考寫了不存在的 `web` 子命令、`--port`／`--session-retention` 等參數、`MCP_FEEDBACK_*` 環境變數、`config.json`、`/health` 端點，以及 `session_history` 等 WebSocket 訊息，還說會話歷史存在 localStorage。現在改成實際的子命令（`server`、`test --web/--desktop`、`version`）、實際讀取的環境變數（`MCP_WEB_HOST`、`MCP_WEB_PORT` 等）、`~/.config/mcp-feedback-enhanced/` 下的 `ui_settings.json` 與 `session_history.json`，以及實際的 WebSocket 訊息類型與前端方法簽名（`getStats()`、無參數的 `exportSessionHistory()`）。架構文件也對照這一版的程式碼重新核對：移除已刪除的類別、方法與 `test --timeout` 參數，補上 `MCP_GZIP_LEVEL` 環境變數，開發工具段改寫成目前的 pre-commit（Ruff v0.17.2）與 CI 的 Ruff、mypy 檢查，引用的介面文字改成目前的繁中用語。
-- **環境偵測、交互流程與組件說明**：SSH 等遠端偵測只寫進除錯日誌，不會自動建立 SSH 隧道；WSL 只在 Linux 判斷並改用 Windows 瀏覽器開啟。交互流程與組件說明改用實際的方法名與狀態；重新連線與統計面板的說明改成目前行為（右上角重新連線次數每次斷線重算、面板重新連線次數整頁累計、平均持續時間與歷史持續時間同一定義）。
-- **系統架構總覽**：改正為 Web UI 加 Tauri 桌面模式，架構圖補上 Tauri 桌面殼並改成實際的模組連線（提示詞、音效、輸入框高度經設定 API 存檔，不走 WebSocket）；「技術亮點」與「維護特性」移除程式沒有的增量更新、狀態回滾、日誌輪轉、健康檢查與錯誤統計等說法；「性能」「安全性」「環境需求」刪掉沒有程式依據的數字與功能（例如「減少 60% 記憶體」「首屏 < 500ms」「SQL 注入防護」「CORS」），改寫成實際行為；其餘段落也對照實作改寫：單一活躍會話的狀態圖改成實際的清理時機，「持久化 Web UI」改寫成實際跨調用保留與不保留的內容（新會話會清空輸入框與圖片），刪掉「地區特定的 UI 佈局」「字體和排版優化」等沒有實作的本地化說法。組件詳細說明的「性能測試」改列實際有時間門檻的測試。另外移除已刪除的 TabManager 與各文件結尾過期的版本標示，架構文件索引列出已在 2026-10-26 對照 main 程式碼核對過的段落與對照的 commit。
+- **架構文件與實作不符**：`docs/architecture/` 的部署指南與 API 參考文件寫了不存在的 `web` 子命令、`--port`／`--session-retention` 等參數、`MCP_FEEDBACK_*` 環境變數、`config.json`、`/health` 端點，以及 `session_history` 等 WebSocket 訊息，還說會話歷史存在 localStorage。現在改成實際的子命令（`server`、`test --web/--desktop`、`version`）、實際讀取的環境變數（`MCP_WEB_HOST`、`MCP_WEB_PORT` 等）、`~/.config/mcp-feedback-enhanced/` 下的 `ui_settings.json` 與 `session_history.json`，以及實際的 WebSocket 訊息類型與前端方法簽章（`getStats()`、無參數的 `exportSessionHistory()`）。架構文件也對照這一版的程式碼重新核對：移除已刪除的類別、方法與 `test --timeout` 參數，補上 `MCP_GZIP_LEVEL` 環境變數，開發工具段改寫成目前的 pre-commit（Ruff v0.17.2）與 CI 的 Ruff、mypy 檢查，引用的介面文字改成目前的繁中用語。
+- **環境偵測、互動流程文件與元件詳細說明**：SSH 等遠端偵測只寫進除錯日誌，不會自動建立 SSH 隧道；WSL 只在 Linux 判斷並改用 Windows 瀏覽器開啟。互動流程文件與元件詳細說明改用實際的方法名與狀態；重新連線與統計面板的說明改成目前行為（右上角重新連線次數每次斷線重算、面板重新連線次數整頁累計、平均持續時間與歷史持續時間同一定義）。
+- **系統架構總覽**：改正為 Web UI 加 Tauri 桌面模式，架構圖補上 Tauri 桌面殼並改成實際的模組連線（提示詞、音效、輸入框高度經設定 API 存檔，不走 WebSocket）；「技術亮點」與「維護特性」移除程式沒有的增量更新、狀態回滾、日誌輪轉、健康檢查與錯誤統計等說法；「效能」「安全性」「環境需求」刪掉沒有程式依據的數字與功能（例如「減少 60% 記憶體」「首屏 < 500ms」「SQL 注入防護」「CORS」），改寫成實際行為；其餘段落也對照實作改寫：單一活躍會話的狀態圖改成實際的清理時機，「持久化 Web UI」改寫成實際跨呼叫保留與不保留的內容（新會話會清空輸入框與圖片），刪掉「地區特定的 UI 佈局」「字體和排版優化」等沒有實作的本地化說法。元件詳細說明的「效能測試」改列實際有時間門檻的測試。另外移除已刪除的 TabManager 與各文件結尾過期的版本標示，架構文件索引列出已在 2026-10-26 對照 main 程式碼核對過的段落與對照的 commit。
 - **三語 README**：環境偵測描述改成實際行為，`test` 範例補上 `--web`（不帶參數只會印出說明），並註明 `MCP_WEB_PORT=0` 由系統分配埠；刪除不存在的「總是在主螢幕中心顯示視窗」設定問答。
 - **`MCP_LANGUAGE` 與介面語言的說明**：三語 README 與 `docs/architecture/` 的部署指南、元件詳細說明、互動流程文件、系統架構總覽，把語言分成兩條順序：網頁介面語言是 `MCP_LANGUAGE` → `ui_settings.json` 的 `language` → 瀏覽器語言 → 繁中，回給 AI 的錯誤訊息語言是 `MCP_LANGUAGE` → `LANG` 等環境變數 → 系統 locale → 繁中；註明只接受 `zh-TW`、`zh-CN`、`en`，其他值會被忽略，指定時介面切換只在目前頁面有效、不存檔，重新整理就回到指定語言。設定檔表格刪掉 `language.json`，並更正「localStorage 存介面語言」的說法（localStorage 只存通知設定）。
-- **繁中文件改用台灣用語**：README.zh-TW、`docs/architecture/` 全部架構文件（索引、系統架構總覽、元件詳細說明、互動流程、API 參考、部署指南）、繁中 Cache 管理與 SSH Remote 指南、桌面建置與 GitHub Actions 工作流程說明、發佈說明管理文件與範本，敘述、圖表，以及程式碼區塊裡的中文註解與範例字串，都改用台灣用語（例如使用者、資料、設定、逾時、呼叫、互動、智慧、偵測、通訊、連接埠、建置）；「交互流程文件」改名為「互動流程文件」。和原始碼或 workflow 逐字相同的程式碼行維持原樣。
+- **繁中文件改用台灣用語**：README.zh-TW、`docs/architecture/` 全部架構文件（索引、系統架構總覽、元件詳細說明、互動流程文件、API 參考文件、部署指南）、繁中 Cache 管理與 SSH Remote 指南、桌面建置與 GitHub Actions 工作流程說明、發佈說明管理文件與範本，敘述、圖表，以及程式碼區塊裡的中文註解與範例字串，都改用台灣用語（例如使用者、資料、設定、逾時、呼叫、互動、智慧、偵測、通訊、連接埠、建置）；「交互流程文件」改名為「互動流程文件」。和原始碼或 workflow 逐字相同的程式碼行維持原樣。
 - **桌面建置指南故障排除範例對齊實際輸出**：`docs/DESKTOP_BUILD.md` 的錯誤訊息範例改成 `scripts/build_desktop.py` 實際印出的內容；修正 `make clean-desktop`（清理後會接著重新建置 Debug 版本）與 `make dev-setup`（安裝開發依賴與 pre-commit hooks）的說明。
 
 ### 🧹 程式碼清理
-- 刪除 app.js 沒有呼叫者的會話更新與狀態更新防抖包裝，以及伺服器從不發送的 feedback_received、desktop_close_request 訊息處理（含測試資料裡沒有測試使用的 feedback_received fixture）。
+- 刪除 app.js 沒有呼叫者的會話更新與狀態更新防抖包裝，以及伺服器從不傳送的 feedback_received、desktop_close_request 訊息處理（含測試資料裡沒有測試使用的 feedback_received fixture）。
 - 刪除 WebSocket 重新連線中處理「會話更新」關閉原因的分支（伺服器從不送這個原因），以及沒有呼叫端的連線統計重設函式。
 - 刪除從未啟用的分頁管理模組 tab-manager.js（含呼叫已不存在路由的 /api/register-tab），以及只有它呼叫的 `Utils.generateId`。
 - `test` 子命令刪除 `--timeout`：這個參數從來沒有被讀取，`test --web`／`--desktop` 本來就持續執行到 Ctrl+C。之後再帶 `--timeout` 會出現 `unrecognized arguments`。
 - 刪除沒有呼叫者的後端程式碼：`SessionCleanupManager`、`CompressionMonitor`、`FeedbackResult`、`WebFeedbackSession.set_error`／`set_expired`、`server.py` 算完沒用到的 `fastmcp_settings`（FastMCP 會自己讀 `FASTMCP_LOG_LEVEL`），以及 `main_routes.py` 的 `_delayed_server_stop`。
-- 刪除 `ResourceManager.register_process` 與跟著失去作用的程序追蹤（`unregister_process`、`cleanup_processes`、程序健康檢查、`processes` 統計欄位）：沒有任何地方註冊程序，追蹤表永遠是空的。
+- 刪除 `ResourceManager.register_process` 與跟著失去作用的處理程序追蹤（`unregister_process`、`cleanup_processes`、處理程序健康檢查、`processes` 統計欄位）：沒有任何地方註冊處理程序，追蹤表永遠是空的。
 - 刪除永遠是空的全域分頁追蹤狀態（`WebUIManager.global_active_tabs`、`session.active_tabs`、`get_global_active_tabs_count`、`broadcast_to_active_tabs`）：TabManager 刪除後沒有任何東西會寫入。
 - 刪除 `ErrorHandler` 的錯誤解決建議（`_ERROR_SOLUTIONS`、`get_error_solutions`、`get_i18n_error_solutions`）與 `create_error_response`：只有測試呼叫，正式流程不會顯示。錯誤類型的使用者訊息改為直接取內建訊息表：原本先查語系檔裡不存在的 `errors.types.*`，每次都退回內建表；三種語言的輸出不變。
 - 刪除 Python `I18nManager` 用不到的部分：舊格式 key 對應（`_get_legacy_translation`，例如 `btn_submit_feedback` → `buttons.submitFeedback`，沒有任何程式傳舊格式 key，不少對應的新 key 也早已不存在）；`get_language_display_name` 與只被它使用的 `get_language_info`（查的 `languageNames.*`、`meta.displayName` 在三個語系都不存在）；沒有呼叫者的 `reload_translations`、`add_language` 與模組層級的 `reload_translations`。
@@ -63,7 +63,7 @@
 - 刪除沒有任何頁面載入的檔案：前端 `static/js/modules/constants/message-codes.js`（`MessageCodes`、`createMessage` 等匯出沒有任何讀取者），以及 `templates/components/status-indicator.html` 和只有它會用到的 `status.completed.message`（三個語系）。
 - 刪除 `utils.js` 走不到的備用訊息表（`getFallbackMessage`）與 `showMessage` 的訊息代碼物件分支：所有呼叫者都傳已翻譯好的字串，沒有人傳 `{ code }` 物件；`i18nManager` 在 `i18n.js` 載入時就建立，翻譯檔載入失敗時它也還在，不會落到這張表。表裡的 `settings.*` 也從來對不上後端實際送的 `settingsAPI.*`。
 - 刪除每次都以 exit 1 結束的 `scripts/validate_message_codes.py`：它列出的缺漏都不會顯示給使用者（比對的是只在 i18n 未載入時才用到的前端備用訊息表，缺翻譯的代碼也只隨前端不顯示的通知送出），Makefile 與 CI 也沒有執行它。
-- 刪除三個語系中沒有任何程式或模板使用的翻譯 key（繁中 82 個、簡中 77 個、英文 78 個），包括 `about.contact`、`summary.*`、`themes.*`、`autoRefresh.*`、`connection.*`、`notifications.*`、`errors.*` 等整段，以及只存在於單一語系的 `app.author`、`app.credits`、`autoSubmit.autoCommitNoPrompt` 等。刪除前逐一確認沒有動態組字、`data-i18n` 屬性或後端訊息代碼會用到。
+- 刪除三個語系中沒有任何程式或範本使用的翻譯 key（繁中 82 個、簡中 77 個、英文 78 個），包括 `about.contact`、`summary.*`、`themes.*`、`autoRefresh.*`、`connection.*`、`notifications.*`、`errors.*` 等整段，以及只存在於單一語系的 `app.author`、`app.credits`、`autoSubmit.autoCommitNoPrompt` 等。刪除前逐一確認沒有動態組字、`data-i18n` 屬性或後端訊息代碼會用到。
 - 函式內的 import 能移到檔頭的都移上去，刻意延遲的匯入（循環匯入、只在 Windows 有的模組、執行時才加進 sys.path 的開發環境桌面模組等）保留並註明理由；未使用的解包變數改名。
 - 後端不再讀寫 `~/.config/mcp-feedback-enhanced/language.json`：寫入它的 `set_language()` 自 2025-06 起就沒有呼叫者，檔案只會殘留舊值。後端錯誤訊息的語言改為 `MCP_LANGUAGE` → `LANG`／`LC_ALL`／`LC_MESSAGES`／`LANGUAGE` → 系統語言 → 繁中；原本靠這個檔決定 AI 收到的錯誤訊息語言的使用者，會改看上述環境變數或系統語言，需要固定語言請設 `MCP_LANGUAGE`。既有的 `language.json` 不會被刪除，只是不再讀取；啟動時也不再建立 `~/.config/mcp-feedback-enhanced` 資料夾。
 - 刪除前端讀取 localStorage `language` 的死路徑（全專案沒有寫入者）。
@@ -77,7 +77,7 @@
 - Tests workflow 在 ubuntu 加上 `ruff check`、`ruff format --check` 與 `mypy`；原本既有的 mypy 錯誤已修正。
 
 ### ✅ 測試
-- 桌面啟動測試不再把整個行程的 `asyncio.sleep` 換成立即返回：之前會讓前面測試留下的 uvicorn 伺服器執行緒變成忙迴圈搶 GIL，CI 的 ubuntu job 偶爾因此逾時 60 秒；現在只替換 `desktop_app` 模組自己的 `asyncio` 參照。
+- 桌面啟動測試不再把整個行程的 `asyncio.sleep` 換成立即回傳：之前會讓前面測試留下的 uvicorn 伺服器執行緒變成忙迴圈搶 GIL，CI 的 ubuntu job 偶爾因此逾時 60 秒；現在只替換 `desktop_app` 模組自己的 `asyncio` 參照。
 - `web_ui_manager` fixture 結束時停掉測試啟動的 uvicorn 伺服器：之前整合測試開的 8 個伺服器執行緒都活到 pytest 結束。
 - i18n 測試改用三個語系都存在的 key，並要求翻譯結果不是 key 本身：原本的 `common.*`、`error.connection` 等 key 在語系檔裡不存在，測試只因為找不到 key 時會回傳 key 本身才通過。帶參數的翻譯改測 `error.generic` 的 `{error}` 有被替換。
 - 錯誤訊息測試改為實際比對三種語言的內建訊息、檢查三個語系的文字各不相同，不再 mock 掉被測函式。
