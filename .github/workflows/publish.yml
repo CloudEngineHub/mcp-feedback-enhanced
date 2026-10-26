@@ -27,7 +27,14 @@ on:
         type: string
 
 jobs:
+  # 先跑 Tests（同 test.yml，測 dispatch 當下的 ref）；失敗則 release 不執行
+  tests:
+    uses: ./.github/workflows/test.yml
+    permissions:
+      contents: read
+
   release:
+    needs: tests
     runs-on: ubuntu-latest
     # PyPI Trusted Publishing（OIDC）：PyPI 端信任本 repo 的 publish.yml + pypi environment，
     # 不再使用長效 API token；id-token: write 讓 GitHub 發 OIDC token 給 PyPI。
