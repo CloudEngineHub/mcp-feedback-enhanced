@@ -2,15 +2,15 @@
 
 ## 🎯 概述 / Overview
 
-此專案已採用簡化的發布流程，不再需要建立版本化目錄（如 `v2.3.0/`），而是直接更新 CHANGELOG 文件。
+此專案已採用簡化的發布流程，不再需要建立版本化目錄（如 `v2.3.0/`），而是直接更新 CHANGELOG 檔案。
 
 This project now uses a simplified release workflow that no longer requires creating versioned directories (like `v2.3.0/`), but instead directly updates CHANGELOG files.
 
 ## 📋 新的發布流程 / New Release Process
 
-### 1. 更新 CHANGELOG 文件 / Update CHANGELOG Files
+### 1. 更新 CHANGELOG 檔案 / Update CHANGELOG Files
 
-在發布前，請手動更新以下三個文件：
+在發布前，請手動更新以下三個檔案：
 Before releasing, manually update these three files:
 
 - `RELEASE_NOTES/CHANGELOG.en.md`
@@ -19,7 +19,7 @@ Before releasing, manually update these three files:
 
 ### 2. CHANGELOG 格式要求 / CHANGELOG Format Requirements
 
-每個新版本應該按照以下格式添加到 CHANGELOG 文件的頂部：
+每個新版本應該按照以下格式加到 CHANGELOG 檔案的頂部：
 Each new version should be added to the top of CHANGELOG files in this format:
 
 ```markdown
@@ -42,7 +42,7 @@ Each new version should be added to the top of CHANGELOG files in this format:
 
 ### 3. 執行發布 / Execute Release
 
-1. 確保所有 CHANGELOG 文件都已更新
+1. 確保所有 CHANGELOG 檔案都已更新
    Ensure all CHANGELOG files are updated
 
 2. 前往 GitHub Actions 頁面
@@ -65,7 +65,7 @@ Choosing the appropriate version type is important, select based on the changes:
 - **適用情況 / When to use**:
   - 🐛 修復 bug / Bug fixes
   - 🔒 安全性修補 / Security patches
-  - 📝 文檔更新 / Documentation updates
+  - 📝 文件更新 / Documentation updates
   - 🎨 小幅 UI 調整 / Minor UI tweaks
 
 #### ✨ Minor (次要版本)
@@ -108,13 +108,13 @@ The GitHub workflow will automatically:
 
 1. ✅ 版本號碼升級 / Version bump
 2. ✅ 從 CHANGELOG 提取亮點 / Extract highlights from CHANGELOG
-3. ✅ 生成多語系 GitHub Release / Generate multi-language GitHub Release
+3. ✅ 產生多語系 GitHub Release / Generate multi-language GitHub Release
 4. ✅ 發布到 PyPI / Publish to PyPI
 5. ✅ 建立 Git 標籤 / Create Git tags
 
 ## 📦 GitHub Release 格式 / GitHub Release Format
 
-自動生成的 Release 將包含：
+自動產生的 Release 將包含：
 Auto-generated releases will include:
 
 - 🌟 版本亮點 / Version highlights
@@ -127,7 +127,7 @@ Auto-generated releases will include:
 1. **不再需要版本目錄**：舊的 `RELEASE_NOTES/v2.x.x/` 目錄結構已棄用
    **No more version directories**: Old `RELEASE_NOTES/v2.x.x/` directory structure is deprecated
 
-2. **手動更新 CHANGELOG**：發布前必須手動更新 CHANGELOG 文件
+2. **手動更新 CHANGELOG**：發布前必須手動更新 CHANGELOG 檔案
    **Manual CHANGELOG updates**: CHANGELOG files must be manually updated before release
 
 3. **格式一致性**：請保持 CHANGELOG 格式的一致性以確保自動提取正常運作
@@ -144,4 +144,4 @@ Existing version directories (`v2.2.1` to `v2.2.5`) can optionally be kept for h
 - ✅ 減少維護負擔 / Reduced maintenance burden
 - ✅ 單一真實來源 / Single source of truth
 - ✅ 簡化的專案結構 / Simplified project structure
-- ✅ 自動化的 Release 生成 / Automated release generation
+- ✅ 自動化的 Release 產生 / Automated release generation
