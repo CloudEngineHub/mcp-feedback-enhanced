@@ -2,13 +2,13 @@
 
 ## 🏗️ 整體架構設計
 
-MCP Feedback Enhanced 採用**單一活躍會話 + 持久化 Web UI**的創新架構設計，實現 AI 助手與使用者之間的高效、無縫交互體驗。
+MCP Feedback Enhanced 採用**單一活躍會話 + 持久化 Web UI**的創新架構設計，達成 AI 助手與使用者之間的高效、無縫互動體驗。
 
 ### 核心設計理念
 
 - **Web UI 加桌面模式**：介面一律由 FastAPI 提供的 Web 頁面呈現；預設用瀏覽器開啟，`MCP_DESKTOP_MODE=true` 時改用 Tauri 打包的桌面殼載入同一個頁面，桌面殼啟動失敗時自動改回瀏覽器
 - **四層架構設計**：清晰的層次分離，便於維護和擴充
-- **環境適配**：WSL 中改用 Windows 瀏覽器開啟介面；SSH 等遠端環境只偵測並寫進除錯日誌，需自行設定埠轉發
+- **環境適應**：WSL 中改用 Windows 瀏覽器開啟介面；SSH 等遠端環境只偵測並寫進除錯日誌，需自行設定埠轉發
 - **單一活躍會話**：同一時間只有一個 `current_session`，每次 AI 呼叫建立新會話並取代它；舊會話留在 `sessions` 字典直到被清理
 - **模組化設計**：每層職責明確，支援獨立開發和測試
 
@@ -19,12 +19,12 @@ MCP Feedback Enhanced 採用**單一活躍會話 + 持久化 Web UI**的創新�
 - FastMCP 4.0+ / MCP Python SDK 2.x (MCP 協定實作)
 - FastAPI 0.115+ (Web 框架)
 - uvicorn 0.30+ (ASGI 伺服器)
-- WebSocket (即時通信)
+- WebSocket (即時通訊)
 
 **前端技術**：
 - HTML5 + CSS3 (現代化 UI)
 - JavaScript ES6+ (模組化架構)
-- WebSocket API (雙向通信)
+- WebSocket API (雙向通訊)
 - HTML5 Audio（`new Audio()`，音效通知系統）
 - localStorage API (介面語言與通知設定)
 - ResizeObserver API (元素尺寸監控)
@@ -64,7 +64,7 @@ graph TB
             WS["main_routes.py<br/>WebSocket 端點"]
         end
 
-        subgraph "第四層：前端交互層"
+        subgraph "第四層：前端互動層"
             HTML["HTML 範本<br/>feedback.html、index.html"]
             JS["app.js<br/>FeedbackApp"]
             CSS["樣式系統<br/>響應式設計"]
@@ -170,24 +170,24 @@ graph TB
 - 單例模式的 WebUIManager
 - 會話生命週期管理
 - 資料模型和狀態管理
-- 瀏覽器智能控制
+- 瀏覽器智慧控制
 
 **第三層 - Web 服務層**：
 - FastAPI 高效能 Web 框架
 - RESTful API 和 WebSocket 支援
-- 路由處理和中介層
+- 路由處理和中介軟體
 - 靜態資源服務
 
-**第四層 - 前端交互層**：
+**第四層 - 前端互動層**：
 - 模組化 JavaScript 架構
 - 響應式 HTML/CSS 設計
-- 即時 WebSocket 通信
-- 豐富的使用者交互功能
+- 即時 WebSocket 通訊
+- 豐富的使用者互動功能
 - **提示詞管理系統**：常用提示詞的 CRUD 操作和快速選擇
 - **會話管理功能**：會話歷史追蹤和統計分析（v2.4.3 重構增強）
 - **自動提交機制**：倒數計時器和自動回饋提交
-- **音效通知系統**：智能音效提醒和自訂音效管理（v2.4.3 新增）
-- **智能記憶功能**：輸入框高度記憶和一鍵複製（v2.4.3 新增）
+- **音效通知系統**：智慧音效提醒和自訂音效管理（v2.4.3 新增）
+- **智慧記憶功能**：輸入框高度記憶和一鍵複製（v2.4.3 新增）
 
 ### 3. 單一活躍會話模式
 ```mermaid
@@ -231,7 +231,7 @@ stateDiagram-v2
 - 後端錯誤訊息與錯誤上下文前綴依語言分開（`ErrorHandler` 的 `_ERROR_MESSAGES`、`_CONTEXT_LABELS`）
 - 版面與字型不分語言，三種語言共用同一套 HTML 與 CSS
 
-### 6. 智能環境檢測
+### 6. 智慧環境偵測
 ```mermaid
 flowchart TD
     START[開啟回饋介面] --> TABS{已有連線中的分頁?}
@@ -263,21 +263,21 @@ self.sessions: dict[str, WebFeedbackSession] = {}  # 保留用於向後兼容
 - 伺服器不儲存會話狀態；會話歷史由前端存到 `session_history.json`
 - 提交與逾時的判定以 `_outcome_lock` 保護，同一會話重複提交會被忽略
 
-### 2. 智能環境檢測與適配
+### 2. 智慧環境偵測與適應
 
 **環境偵測**：
 - `is_wsl_environment()`：只在 Linux 上可能成立，決定是否改用 Windows 瀏覽器
 - `is_remote_environment()`：SSH、Codespaces、Remote Containers、Docker、Windows 遠端桌面、沒有 `DISPLAY` 的 Linux 判定為遠端；結果只寫進除錯日誌與 `get_system_info`，不改變行為
 
-**瀏覽器智能開啟**：
-- **活躍分頁檢測**: 避免重複開啟瀏覽器視窗
-- **跨平台支援**: Windows, macOS, Linux 自動適配
+**瀏覽器智慧開啟**：
+- **活躍分頁偵測**: 避免重複開啟瀏覽器視窗
+- **跨平台支援**: Windows, macOS, Linux 自動適應
 - **WSL 處理**: 依序用 `cmd.exe`、`powershell.exe`、`wslview` 開啟 Windows 瀏覽器
 - **開啟失敗**: 在 stderr 印出網址，請使用者手動開啟
 
-### 3. 即時通信
+### 3. 即時通訊
 
-**WebSocket 雙向通信**：
+**WebSocket 雙向通訊**：
 - 單一 `/ws` 連線，訊息是以 `type` 區分的 JSON
 - 前端每 60 秒送一次心跳
 - 斷線後以指數退避自動重連，最多 5 次
@@ -300,7 +300,7 @@ textarea-height-manager → app
 ```
 
 **功能模組分離**：
-- WebSocket 通信 (websocket-manager.js)
+- WebSocket 通訊 (websocket-manager.js)
 - 連線狀態監控 (connection-monitor.js)
 - 圖片處理 (image-handler.js、file-upload-manager.js)
 - 設定管理 (settings-manager.js)
@@ -319,7 +319,7 @@ textarea-height-manager → app
 - **音效通知模組群組（v2.4.3 新增）**：
   - audio-manager.js (音效管理器)
   - audio-settings-ui.js (音效設定介面)
-- **智能記憶功能（v2.4.3 新增）**：
+- **智慧記憶功能（v2.4.3 新增）**：
   - textarea-height-manager.js (輸入框高度管理)
   - 一鍵複製功能整合在各 UI 元件中
 - **自動提交功能**：
@@ -429,7 +429,7 @@ graph LR
 - **隱私控制**: 三級使用者訊息記錄設定
 - **資料管理**: 匯出和清理功能
 
-### 3. 智能記憶功能架構
+### 3. 智慧記憶功能架構
 
 **輸入框高度管理**：
 ```mermaid
@@ -475,7 +475,7 @@ sequenceDiagram
     AI->>MCP: interactive_feedback()
     MCP->>WM: 建立/更新會話
     WM->>UI: 啟動 Web 服務（尚未啟動時）
-    WM->>User: 智能開啟瀏覽器
+    WM->>User: 智慧開啟瀏覽器
 
     Note over UI,AUDIO: v2.4.3 新增音效通知
     UI->>AUDIO: 會話更新事件
@@ -548,6 +548,6 @@ graph LR
 ## 📚 相關文件
 
 - **[元件詳細說明](./component-details.md)** - 深入了解各層元件的具體實作
-- **[交互流程文件](./interaction-flows.md)** - 詳細的使用者交互和系統流程
+- **[互動流程文件](./interaction-flows.md)** - 詳細的使用者互動和系統流程
 - **[API 參考文件](./api-reference.md)** - 完整的 API 端點和參數說明
 - **[部署指南](./deployment-guide.md)** - 環境設定和部署最佳實踐
