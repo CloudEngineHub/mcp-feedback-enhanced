@@ -170,6 +170,7 @@
             "exportSingle": "Export This Session",
             "confirmClear": "Are you sure you want to clear all session history?",
             "exportSuccess": "Session history exported successfully",
+            "exportSingleSuccess": "Session exported successfully",
             "clearSuccess": "Session history cleared successfully",
             "clearTitle": "Clear all session history records",
             "description": "Manage locally stored session history records, including retention period settings and data export functionality",

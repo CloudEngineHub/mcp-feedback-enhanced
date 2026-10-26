@@ -170,6 +170,7 @@
             "exportSingle": "匯出此會話",
             "confirmClear": "確定要清空所有會話歷史嗎？",
             "exportSuccess": "會話歷史已匯出",
+            "exportSingleSuccess": "會話已匯出",
             "clearSuccess": "會話歷史已清空",
             "clearTitle": "清空所有會話歷史記錄",
             "description": "管理本機儲存的會話歷史記錄，包括儲存期限設定和資料匯出功能",

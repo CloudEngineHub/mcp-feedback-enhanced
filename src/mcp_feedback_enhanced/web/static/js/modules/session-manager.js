@@ -666,7 +666,7 @@
                 // 顯示成功訊息
                 if (window.MCPFeedback && window.MCPFeedback.Utils && window.MCPFeedback.Utils.showMessage) {
                     const message = window.i18nManager ?
-                        window.i18nManager.t('sessionHistory.management.exportSuccess') :
+                        window.i18nManager.t('sessionHistory.management.exportSingleSuccess') :
                         '會話已匯出';
                     window.MCPFeedback.Utils.showMessage(message + ': ' + filename, 'success');
                 }
