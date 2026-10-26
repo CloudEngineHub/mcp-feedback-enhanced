@@ -1,45 +1,45 @@
-# 組件詳細說明
+# 元件詳細說明
 
-## 🏗️ 四層架構組件
+## 🏗️ 四層架構元件
 
-MCP Feedback Enhanced 採用清晰的四層架構設計，每層負責特定的功能領域。本文檔詳細說明各層組件的實現細節、職責分工和交互機制。
+MCP Feedback Enhanced 採用清晰的四層架構設計，每層負責特定的功能領域。本文件詳細說明各層元件的實現細節、職責分工和交互機制。
 
 ### 架構設計原則
 
-- **單一職責**: 每個組件專注於特定功能領域
-- **低耦合**: 層間通過明確的接口通信
+- **單一職責**: 每個元件專注於特定功能領域
+- **低耦合**: 層間透過明確的介面通信
 - **高內聚**: 相關功能集中在同一層內
 - **可擴展**: 支援新功能的無縫集成
 - **可測試**: 每層都可獨立進行單元測試
 
-### 詳細組件關係圖
+### 詳細元件關係圖
 
 ```mermaid
 graph TB
     subgraph "第一層：MCP 服務層"
-        SERVER[server.py<br/>MCP 服務器<br/>FastMCP 實現]
+        SERVER[server.py<br/>MCP 伺服器<br/>FastMCP 實現]
         TOOL[interactive_feedback<br/>核心工具<br/>參數驗證]
         I18N[i18n.py<br/>國際化支援<br/>多語言管理]
-        DEBUG[debug.py<br/>統一調試<br/>日誌輸出]
+        DEBUG[debug.py<br/>統一除錯<br/>日誌輸出]
     end
 
     subgraph "第二層：Web UI 管理層"
         MANAGER[WebUIManager<br/>全域單一實例<br/>會話控制]
         SESSION[WebFeedbackSession<br/>會話模型<br/>狀態管理]
-        MODELS[models/<br/>數據模型<br/>類型定義]
+        MODELS[models/<br/>資料模型<br/>類型定義]
     end
 
     subgraph "第三層：Web 服務層"
         MAIN[main.py<br/>FastAPI 應用<br/>HTTP 服務]
         ROUTES[routes/main_routes.py<br/>路由處理<br/>API 端點]
-        WS[WebSocket<br/>實時通信<br/>雙向數據流]
+        WS[WebSocket<br/>即時通信<br/>雙向資料流]
     end
 
     subgraph "第四層：前端交互層"
-        HTML[templates/<br/>HTML 模板<br/>Jinja2 渲染]
+        HTML[templates/<br/>HTML 範本<br/>Jinja2 渲染]
         JS[static/js/<br/>JavaScript 模組<br/>ES6+ 架構]
         CSS[static/css/<br/>樣式系統<br/>響應式設計]
-        LOCALES[locales/<br/>翻譯文件<br/>JSON 格式]
+        LOCALES[locales/<br/>翻譯檔案<br/>JSON 格式]
         PROMPT_MODULES[prompt/<br/>提示詞管理模組<br/>CRUD 操作]
         SESSION_MODULES[session/<br/>會話管理模組<br/>歷史追蹤]
     end
@@ -56,16 +56,16 @@ graph TB
         COMPRESS[web/utils/compression_config.py<br/>Gzip 與快取標頭<br/>HTTP 中介層]
     end
 
-    %% 主要數據流
-    SERVER -->|MCP 調用| TOOL
-    TOOL -->|創建會話| MANAGER
+    %% 主要資料流
+    SERVER -->|MCP 呼叫| TOOL
+    TOOL -->|建立會話| MANAGER
     MANAGER -->|管理| SESSION
     MANAGER -->|啟動服務| MAIN
     MAIN -->|路由分發| ROUTES
     ROUTES -->|渲染頁面| HTML
     HTML -->|載入腳本| JS
     JS -->|WebSocket| WS
-    WS -->|回傳數據| SESSION
+    WS -->|回傳資料| SESSION
 
     %% 新功能模組
     JS -->|載入模組| PROMPT_MODULES
@@ -78,7 +78,7 @@ graph TB
     ROUTES -->|翻譯 API| LOCALES
     I18N -->|語言包| LOCALES
     DEBUG -->|日誌記錄| SERVER
-    MODELS -->|數據結構| SESSION
+    MODELS -->|資料結構| SESSION
 
     %% 工具層支援
     ERROR -->|錯誤處理| MANAGER
@@ -104,7 +104,7 @@ graph TB
 
 ## 🔧 第一層：MCP 服務層
 
-### server.py - MCP 服務器核心
+### server.py - MCP 伺服器核心
 
 **架構實現**：
 ```python
@@ -126,23 +126,23 @@ async def interactive_feedback(
 ```
 
 **主要職責**：
-- **MCP 協議實現**: 基於 FastMCP 框架的標準實現
+- **MCP 協定實現**: 基於 FastMCP 框架的標準實現
 - **工具註冊**: 註冊 `interactive_feedback` 和 `get_system_info` 工具
 - **環境偵測**: `is_remote_environment()` 與 `is_wsl_environment()` 的結果只寫進 debug log 與 `get_system_info` 的回傳，不改變流程；WSL 判斷另用於選擇瀏覽器開啟方式（見 `web/utils/browser.py`）
-- **生命週期管理**: 控制 Web UI 的啟動、運行和清理
-- **接口層**: 作為 AI 助手與系統的主要通信接口
+- **生命週期管理**: 控制 Web UI 的啟動、執行和清理
+- **介面層**: 作為 AI 助手與系統的主要通信介面
 
 **核心特性**：
-- 異步處理提升性能
+- 非同步處理提升效能
 - 完整的錯誤處理和日誌記錄
-- 參數類型驗證和文檔生成
+- 參數類型驗證和文件生成
 
 ### interactive_feedback 工具
 
 **工具執行流程**：
 ```mermaid
 flowchart TD
-    START[AI 助手調用] --> VALIDATE[整理參數<br/>目錄不存在改用 cwd<br/>timeout 鉗制在 60 到 86400 秒]
+    START[AI 助手呼叫] --> VALIDATE[整理參數<br/>目錄不存在改用 cwd<br/>timeout 鉗制在 60 到 86400 秒]
     VALIDATE --> MANAGER[get_web_ui_manager]
     MANAGER --> SESSION[create_session<br/>建立新會話]
     SESSION --> LAUNCH[伺服器未啟動時 start_server]
@@ -166,8 +166,8 @@ flowchart TD
 
 **參數說明**：
 - `project_directory`: 專案目錄路徑，顯示在介面上；路徑不存在時改用伺服器目前工作目錄
-- `summary`: AI 工作摘要，顯示給用戶確認
-- `timeout`: 等待超時時間，預設 600 秒（10 分鐘），伺服器端鉗制在 60–86400 秒
+- `summary`: AI 工作摘要，顯示給使用者確認
+- `timeout`: 等待逾時時間，預設 600 秒（10 分鐘），伺服器端鉗制在 60–86400 秒
 
 **返回格式**：
 ```python
@@ -209,7 +209,7 @@ def get_i18n_manager() -> I18nManager: ...
 - **參數替換**: 支援 `{name}` 格式的動態內容
 - **回退機制**: 翻譯缺失時改用回退語言 `zh-TW`，仍找不到就回傳鍵本身
 
-**翻譯文件結構**：
+**翻譯檔案結構**：
 ```json
 {
     "app": {
@@ -223,9 +223,9 @@ def get_i18n_manager() -> I18nManager: ...
 }
 ```
 
-### debug.py - 統一調試系統
+### debug.py - 統一除錯系統
 
-**調試功能**：
+**除錯功能**：
 - **條件輸出**: 只在 `MCP_DEBUG` 為 `true`、`1`、`yes`、`on` 時輸出
 - **分類日誌**: 不同模組使用不同前綴
 - **安全輸出**: 輸出到 stderr 避免干擾 MCP 通信
@@ -263,8 +263,8 @@ def get_web_ui_manager() -> WebUIManager:
 ```
 
 **核心職責**：
-- **會話管理**: 單一活躍會話的創建、更新、清理
-- **服務器控制**: 在背景執行緒啟動 uvicorn（`start_server`），以及停止服務（`stop`）
+- **會話管理**: 單一活躍會話的建立、更新、清理
+- **伺服器控制**: 在背景執行緒啟動 uvicorn（`start_server`），以及停止服務（`stop`）
 - **瀏覽器控制**: 智能開啟瀏覽器，避免重複視窗
 - **資源管理**: 自動清理過期資源和錯誤處理
 - **活躍標籤頁偵測**: `_check_active_tabs()` 以目前會話 WebSocket 的心跳或 ping 判斷是否已有開著的頁面
@@ -330,7 +330,7 @@ stateDiagram-v2
 
     note right of WAITING
         - 顯示 AI 摘要
-        - 等待用戶輸入
+        - 等待使用者輸入
         - 支援文字與圖片
     end note
 
@@ -342,7 +342,7 @@ stateDiagram-v2
 
 `next_step()` 只能單向推進（WAITING → ACTIVE → FEEDBACK_SUBMITTED → COMPLETED）；`TIMEOUT`、`EXPIRED`、`ERROR` 由清理流程依 `CleanupReason` 直接設定，`COMPLETED`、`ERROR`、`TIMEOUT`、`EXPIRED` 都是終態。
 
-**會話數據結構**：
+**會話資料結構**：
 ```python
 class WebFeedbackSession:
     def __init__(self, session_id: str, project_directory: str, summary: str,
@@ -384,7 +384,7 @@ class SessionStatus(Enum):
     EXPIRED = "expired"                         # 已過期（終態）
 ```
 
-### models/ - 數據模型層
+### models/ - 資料模型層
 
 `web/models/__init__.py` 只匯出 `WebFeedbackSession`、`SessionStatus`、`CleanupReason`，都定義在 `feedback_session.py`；沒有獨立的回饋結果型別，`wait_for_feedback()` 直接回傳 dict，轉成 MCP 格式由 `server.py` 的 `create_feedback_text()` 與 `process_images()` 處理。
 
@@ -424,11 +424,11 @@ self._init_basic_components()
 
 **核心功能**：
 - **HTTP 路由處理**: 頁面與 JSON API 端點
-- **WebSocket 連接管理**: 實時雙向通信
+- **WebSocket 連線管理**: 即時雙向通信
 - **靜態資源服務**: CSS、JS、圖片等資源
-- **模板渲染**: Jinja2 模板引擎
+- **範本渲染**: Jinja2 範本引擎
 - **伺服器執行**: `start_server()` 在 daemon 執行緒內以 uvicorn 啟動，同時執行 `_init_async_components()`
-- **安全配置**: 跨站寫入與 WebSocket 來源檢查
+- **安全設定**: 跨站寫入與 WebSocket 來源檢查
 
 ### routes/main_routes.py - 路由處理
 
@@ -493,7 +493,7 @@ async def index(request: Request):
 **WebSocket 訊息類型**：
 
 伺服器 → 前端：
-- `connection_established`: 連接建立確認
+- `connection_established`: 連線建立確認
 - `session_updated`: 新會話建立通知（`action: "new_session_created"`）
 - `status_update`: 會話狀態（`status_info`）
 - `notification`: 以 `code` 帶訊息代碼、`severity` 區分等級；回饋已收到（`FEEDBACK_SUBMITTED`，`severity: "success"`）、重複提交（`warning`）、會話清理（`warning`）都走這個類型，沒有獨立的 `feedback_received` 訊息
@@ -504,11 +504,11 @@ async def index(request: Request):
 - `submit_feedback`: 提交回饋（`feedback`、`images`、`settings`）
 - `get_status`: 請求會話狀態
 - `heartbeat`: 心跳，更新 `last_heartbeat`
-- `user_timeout`: 使用者設定的會話超時已到
+- `user_timeout`: 使用者設定的會話逾時已到
 - `pong`: 回應伺服器的 `ping`
-- `update_timeout_settings`: 更新會話超時設定
+- `update_timeout_settings`: 更新會話逾時設定
 
-**WebSocket 連接管理**（節錄）：
+**WebSocket 連線管理**（節錄）：
 ```python
 @manager.app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket, lang: str = "zh-TW"):
@@ -544,14 +544,14 @@ async def websocket_endpoint(websocket: WebSocket, lang: str = "zh-TW"):
 graph TB
     subgraph "提示詞管理模組"
         PM[prompt-manager.js<br/>核心管理器<br/>CRUD 操作]
-        PMO[prompt-modal.js<br/>彈窗組件<br/>編輯界面]
+        PMO[prompt-modal.js<br/>彈出視窗元件<br/>編輯介面]
         PSU[prompt-settings-ui.js<br/>設定頁面<br/>列表管理]
         PIB[prompt-input-buttons.js<br/>輸入按鈕<br/>快速選擇]
     end
 
-    PM -->|提供數據| PMO
-    PM -->|提供數據| PSU
-    PM -->|提供數據| PIB
+    PM -->|提供資料| PMO
+    PM -->|提供資料| PSU
+    PM -->|提供資料| PIB
     PMO -->|編輯操作| PM
     PSU -->|管理操作| PM
     PIB -->|使用操作| PM
@@ -559,8 +559,8 @@ graph TB
 
 **核心功能**：
 - **PromptManager**: 提示詞的增刪改查、排序、自動提交標記
-- **PromptModal**: 新增/編輯提示詞的彈窗界面
-- **PromptSettingsUI**: 設定頁籤中的提示詞管理界面
+- **PromptModal**: 新增/編輯提示詞的彈出視窗介面
+- **PromptSettingsUI**: 設定頁籤中的提示詞管理介面
 - **PromptInputButtons**: 回饋輸入區的快速選擇按鈕
 
 #### 會話管理模組群組 (session/) - v2.4.3 重構增強
@@ -570,31 +570,31 @@ graph TB
 graph TB
     subgraph "會話管理模組（v2.4.3 重構）"
         SM[session-manager.js<br/>會話控制器<br/>狀態管理]
-        SDM[session-data-manager.js<br/>數據管理器<br/>本地存儲增強]
+        SDM[session-data-manager.js<br/>資料管理器<br/>本機儲存增強]
         SUR[session-ui-renderer.js<br/>UI 渲染器<br/>頁籤化設計]
-        SDM_MODAL[session-details-modal.js<br/>詳情彈窗<br/>會話詳細資訊]
+        SDM_MODAL[session-details-modal.js<br/>詳情彈出視窗<br/>會話詳細資訊]
     end
 
-    SM -->|數據操作| SDM
+    SM -->|資料操作| SDM
     SM -->|UI 渲染| SUR
     SM -->|詳情顯示| SDM_MODAL
-    SDM -->|狀態回調| SM
-    SUR -->|用戶操作| SM
+    SDM -->|狀態回呼| SM
+    SUR -->|使用者操作| SM
     SDM_MODAL -->|查看操作| SM
 ```
 
 **v2.4.3 重構亮點**：
 - **從側邊欄遷移到頁籤**: 解決瀏覽器相容性問題
-- **伺服器端歷史存儲**: 存在 `session_history.json`，保存期限可選 24、72、168、720 小時（預設 72）
+- **伺服器端歷史儲存**: 存在 `session_history.json`，儲存期限可選 24、72、168、720 小時（預設 72）
 - **隱私控制**: 「使用者訊息記錄」的隱私等級分三級（完整記錄／基本統計／停用記錄）
-- **數據管理**: 匯出和清理功能
-- **UI 重新設計**: 專門的渲染器和詳情彈窗
+- **資料管理**: 匯出和清理功能
+- **UI 重新設計**: 專門的渲染器和詳情彈出視窗
 
 **核心功能**：
-- **SessionManager**: 當前會話的狀態管理和控制
-- **SessionDataManager**: 會話歷史記錄、統計數據，以及透過 `/api/load-session-history`、`/api/save-session-history` 讀寫伺服器端歷史。`updateStats()` 從會話歷史計算 `todayCount`（今日建立的會話數）與 `averageDuration`（這些會話的平均持續時間，秒）；持續時間與歷史卡片同一個定義 `TimeUtils.calculateSessionDuration()`：從 `created_at` 到 `completed_at`，沒有結束時間時用最後一則用戶訊息的時間，算不出來的會話不列入，也排除 24 小時以上的值
-- **SessionUIRenderer**: 專門的 UI 渲染器，負責會話列表和狀態顯示。`renderStats()` 更新會話頁籤的「今日會話」與「今日平均持續時間」；浮動統計面板（`#statsPanel`）的「會話」是歷史清單筆數（`renderSessionHistory()` 寫入 `#statsSessionCount`），「狀態」跟著當前會話（`renderCurrentSession()` 寫入 `#statsSessionStatus`）
-- **SessionDetailsModal**: 會話詳情彈窗，提供完整的會話資訊查看
+- **SessionManager**: 目前會話的狀態管理和控制
+- **SessionDataManager**: 會話歷史記錄、統計資料，以及透過 `/api/load-session-history`、`/api/save-session-history` 讀寫伺服器端歷史。`updateStats()` 從會話歷史計算 `todayCount`（今日建立的會話數）與 `averageDuration`（這些會話的平均持續時間，秒）；持續時間與歷史卡片同一個定義 `TimeUtils.calculateSessionDuration()`：從 `created_at` 到 `completed_at`，沒有結束時間時用最後一則使用者訊息的時間，算不出來的會話不列入，也排除 24 小時以上的值
+- **SessionUIRenderer**: 專門的 UI 渲染器，負責會話列表和狀態顯示。`renderStats()` 更新會話頁籤的「今日會話」與「今日平均持續時間」；浮動統計面板（`#statsPanel`）的「會話」是歷史清單筆數（`renderSessionHistory()` 寫入 `#statsSessionCount`），「狀態」跟著目前會話（`renderCurrentSession()` 寫入 `#statsSessionStatus`）
+- **SessionDetailsModal**: 會話詳情彈出視窗，提供完整的會話資訊查看
 
 #### 音效通知模組群組 (audio/) - v2.4.3 新增
 
@@ -603,33 +603,33 @@ graph TB
 graph TB
     subgraph "音效通知系統（v2.4.3 新增）"
         AM[audio-manager.js<br/>音效管理器<br/>播放控制]
-        ASU[audio-settings-ui.js<br/>設定界面<br/>音效配置]
+        ASU[audio-settings-ui.js<br/>設定介面<br/>音效設定]
         DA[defaultAudios<br/>內建音效<br/>Base64 編碼]
-        CA[customAudios<br/>自訂音效<br/>用戶上傳]
+        CA[customAudios<br/>自訂音效<br/>使用者上傳]
     end
 
     subgraph "Web Audio API"
         AUDIO[Audio 物件]
-        BASE64[Base64 音效數據]
+        BASE64[Base64 音效資料]
     end
 
-    AM -->|管理界面| ASU
+    AM -->|管理介面| ASU
     AM -->|內建音效| DA
     AM -->|自訂音效| CA
     AM -->|播放控制| AUDIO
-    AUDIO -->|數據來源| BASE64
-    AM -->|設定保存| SettingsManager
+    AUDIO -->|資料來源| BASE64
+    AM -->|設定儲存| SettingsManager
 ```
 
 **核心功能**：
 - **AudioManager**: 音效播放控制、音量管理、音效選擇
-- **AudioSettingsUI**: 音效設定界面、上傳管理、測試播放
+- **AudioSettingsUI**: 音效設定介面、上傳管理、測試播放
 - **內建音效**: 經典提示音、通知鈴聲、輕柔鐘聲
 - **自訂音效**: 支援 MP3、WAV、OGG 格式上傳和管理
 
 **技術特性**：
 - **Web Audio API**: 使用原生 Audio 物件進行播放
-- **Base64 存儲**: 音效文件以 Base64 格式經 SettingsManager 存在伺服器端 `ui_settings.json` 的 `customAudios`
+- **Base64 儲存**: 音效檔案以 Base64 格式經 SettingsManager 存在伺服器端 `ui_settings.json` 的 `customAudios`
 - **音量控制**: 0-100% 可調節音量
 - **瀏覽器相容性**: 處理自動播放政策限制
 
@@ -644,7 +644,7 @@ graph TB
         DEBOUNCE[防抖機制<br/>500ms 延遲]
     end
 
-    subgraph "存儲機制"
+    subgraph "儲存機制"
         SETTINGS[SettingsManager]
         HEIGHT_KEY[combinedFeedbackTextHeight]
     end
@@ -659,8 +659,8 @@ graph TB
 ```
 
 **一鍵複製功能**：
-- **專案路徑複製**: 點擊路徑文字即可複製到剪貼簿
-- **會話ID複製**: 點擊會話ID即可複製
+- **專案路徑複製**: 點選路徑文字即可複製到剪貼簿
+- **會話ID複製**: 點選會話ID即可複製
 - **複製反饋**: 視覺提示複製成功狀態
 - **國際化支援**: 複製提示支援多語言
 
@@ -672,18 +672,18 @@ graph LR
     subgraph "自動提交功能"
         ASM[autoSubmitManager<br/>app.js 內建立的倒數物件<br/>狀態控制]
         PM[PromptManager<br/>提示詞選擇<br/>自動標記]
-        SM[SettingsManager<br/>設定存儲<br/>配置管理]
+        SM[SettingsManager<br/>設定儲存<br/>設定管理]
     end
 
     ASM -->|選擇提示詞| PM
-    ASM -->|保存設定| SM
+    ASM -->|儲存設定| SM
     PM -->|提供提示詞| ASM
     SM -->|載入設定| ASM
 ```
 
-### templates/ - HTML 模板系統
+### templates/ - HTML 範本系統
 
-**模板結構**（`feedback.html` 節錄；`GET /` 有活躍會話時渲染此頁，沒有會話時渲染 `index.html` 等待頁）：
+**範本結構**（`feedback.html` 節錄；`GET /` 有活躍會話時渲染此頁，沒有會話時渲染 `index.html` 等待頁）：
 ```html
 <!DOCTYPE html>
 <html lang="zh-CN" id="html-root">
@@ -738,8 +738,8 @@ graph LR
 </html>
 ```
 
-**模板特性**：
-- **Jinja2 模板引擎**: 支援變數替換和條件渲染；`components/` 下有 `image-upload.html` 等可重用片段
+**範本特性**：
+- **Jinja2 範本引擎**: 支援變數替換和條件渲染；`components/` 下有 `image-upload.html` 等可重用片段
 - **佈局模式**: `layout_mode` 由 `load_user_layout_settings()` 從 `ui_settings.json` 讀出，套到 `<body>` 的 class
 - **國際化支援**: `data-i18n` 屬性由前端 `i18n.js` 翻譯
 - **Markdown 摘要**: 以 marked 轉換、DOMPurify 過濾後顯示
@@ -860,22 +860,22 @@ WebSocketManager.prototype.send = function(data) {
 
 **image-handler.js / file-upload-manager.js - 圖片處理**：
 - `ImageHandler` 管圖片設定（大小上限 `imageSizeLimit`、`enableBase64Detail`），實際的檔案處理交給它建立的 `FileUploadManager`；對外提供 `getImages()`、`clearImages()`、`updateSettings()`
-- `FileUploadManager` 處理點擊選檔、拖放、全域貼上；`processFiles()` 只收 `image/*`，檢查大小上限（`0` 表示不限制）與數量上限（預設 10 張），`fileToBase64()` 以 `FileReader` 轉成 Base64
+- `FileUploadManager` 處理點選選檔、拖放、全域貼上；`processFiles()` 只收 `image/*`，檢查大小上限（`0` 表示不限制）與數量上限（預設 10 張），`fileToBase64()` 以 `FileReader` 轉成 Base64
 - 前端與後端都**不壓縮**圖片；後端 `WebFeedbackSession._process_images()` 再依 `image_size_limit` 過濾並解碼成 bytes
 
 **前端特性總結**：
 - **模組化設計**: 清晰的職責分離和依賴管理
 - **響應式 UI**: 適配不同螢幕尺寸和設備
-- **實時通信**: WebSocket 雙向數據同步
+- **即時通信**: WebSocket 雙向資料同步
 - **圖片處理**: 大小與數量限制、轉成 Base64 傳送（不壓縮、不轉格式）
 - **國際化**: 動態語言切換和本地化
 - **錯誤處理**: 優雅的錯誤恢復機制
-- **性能優化**: 靜態資源快取標頭、WebSocket 訊息防抖
+- **效能優化**: 靜態資源快取標頭、WebSocket 訊息防抖
 - **無障礙支援**: 鍵盤導航和螢幕閱讀器支援
 
 ### static/css/ - 樣式系統（v2.4.3 擴展）
 
-**樣式文件結構**：
+**樣式檔案結構**：
 ```
 static/css/
 ├── styles.css                  # 主樣式文件（:root 色彩變數）
@@ -938,10 +938,10 @@ static/css/
 **響應式設計增強**：
 - **移動設備優化**: 768px 以下音量、音效選擇與自訂音效項目改為垂直排列
 - **觸控友好**: 按鈕和滑桿適配觸控操作
-- **視覺反饋**: 懸停和點擊狀態的視覺提示
+- **視覺反饋**: 懸停和點選狀態的視覺提示
 - **深色配色**: 固定使用 `styles.css` `:root` 的深色變數，沒有主題切換
 
-## 🛠️ 工具層組件
+## 🛠️ 工具層元件
 
 ### utils/error_handler.py - 錯誤處理框架
 
@@ -1038,7 +1038,7 @@ class ResourceManager:
 ```
 
 **運作方式**：
-- 初始化時以 `atexit` 註冊 `cleanup_all`，並啟動每 300 秒執行一次的自動清理執行緒（清除超過 1 小時的臨時文件）；另向 `MemoryMonitor` 註冊清理回呼，記憶體達 `critical` 以上時清理臨時文件、臨時目錄與文件句柄
+- 初始化時以 `atexit` 註冊 `cleanup_all`，並啟動每 300 秒執行一次的自動清理執行緒（清除超過 1 小時的臨時檔案）；另向 `MemoryMonitor` 註冊清理回呼，記憶體達 `critical` 以上時清理臨時檔案、臨時目錄與檔案控制代碼
 - 實際呼叫端：`server.py` 的 `save_feedback_to_file()` 用模組函式 `create_temp_file(suffix=".json", prefix="feedback_")` 把每次回饋存成臨時 JSON
 
 ### web/utils/browser.py - 瀏覽器控制
@@ -1092,7 +1092,7 @@ class PortManager:
     def get_port_status(port: int, host: str = "127.0.0.1") -> dict[str, Any]: ...
 ```
 
-**埠的決定順序**（`WebUIManager.__init__`）：`MCP_WEB_PORT` 環境變數（1024–65535，或 `0` 表示由系統分配）> 預設 8765，再交給 `find_free_port_enhanced()`；`MCP_TEST_MODE=true` 時不清理占用程序。`start_server()` 啟動前若埠又被占用，會以 `auto_cleanup=False` 再找一次；uvicorn 啟動時遇到「位址已在使用中」則改用下一個埠，最多重試 5 次。
+**埠的決定順序**（`WebUIManager.__init__`）：`MCP_WEB_PORT` 環境變數（1024–65535，或 `0` 表示由系統分配）> 預設 8765，再交給 `find_free_port_enhanced()`；`MCP_TEST_MODE=true` 時不清理占用的處理程序。`start_server()` 啟動前若埠又被占用，會以 `auto_cleanup=False` 再找一次；uvicorn 啟動時遇到「位址已在使用中」則改用下一個埠，最多重試 5 次。
 
 ### 會話清理流程
 
@@ -1113,7 +1113,7 @@ graph TD
 ```
 
 **清理內容**（`WebFeedbackSession._cleanup_resources_enhanced`）：
-- 取消自動清理、使用者超時、斷線寬限三種計時器
+- 取消自動清理、使用者逾時、斷線寬限三種計時器
 - 透過 WebSocket 送出 `notification`（訊息代碼依 `CleanupReason` 而定）後關閉連線
 - 設定 `feedback_completed` 事件，清空圖片與設定
 - 依原因把狀態設為 `EXPIRED`／`TIMEOUT`／`ERROR`，其餘設為 `COMPLETED`
@@ -1172,7 +1172,7 @@ tests/
 
 **單元測試**：
 - 每個工具模組的獨立測試
-- 數據模型的驗證測試
+- 資料模型的驗證測試
 - 錯誤處理機制測試
 - 國際化功能測試
 
@@ -1182,7 +1182,7 @@ tests/
 - WebSocket 通信測試
 - 多語言切換測試
 
-**性能測試**（只有少數有時間門檻的測試，沒有獨立的效能測試套件或基準）：
+**效能測試**（只有少數有時間門檻的測試，沒有獨立的效能測試套件或基準）：
 - MCP 啟動與初始化時間：`TestMCPPerformance.test_startup_performance` 要求以 stdio 啟動伺服器在 30 秒內、`initialize` 在 5 秒內完成（`integration/test_mcp_workflow.py`）
 - 同時啟動兩個 MCP 客戶端：`test_concurrent_initialization` 只要求至少一個成功並能初始化，不量測時間（同上）
 - Web 服務啟動時間：`TestWebUIPerformance.test_server_startup_time` 要求 `start_server()` 加上等待 3 秒總計在 10 秒內，且伺服器執行緒仍在執行（`integration/test_web_integration.py`）
@@ -1192,7 +1192,7 @@ tests/
 
 ## 🔧 開發工具鏈
 
-### 代碼品質工具
+### 程式碼品質工具
 
 **Ruff (Linting + Formatting)**：設定在 `pyproject.toml` 的 `[tool.ruff]`
 - 目標 `py311`、行長 88；規則集含 E/W/F、`I`（import 排序）、B、UP、`S`（bandit 安全規則）、PL、RUF 等
@@ -1224,9 +1224,9 @@ tests/
 
 ---
 
-## 📚 相關文檔
+## 📚 相關文件
 
 - **[系統架構總覽](./system-overview.md)** - 了解整體架構設計理念
-- **[交互流程文檔](./interaction-flows.md)** - 詳細的用戶交互和系統流程
-- **[API 參考文檔](./api-reference.md)** - 完整的 API 端點和參數說明
-- **[部署指南](./deployment-guide.md)** - 環境配置和部署最佳實踐
+- **[交互流程文件](./interaction-flows.md)** - 詳細的使用者交互和系統流程
+- **[API 參考文件](./api-reference.md)** - 完整的 API 端點和參數說明
+- **[部署指南](./deployment-guide.md)** - 環境設定和部署最佳實踐
