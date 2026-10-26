@@ -1,20 +1,20 @@
-# 交互流程文件
+# 互動流程文件
 
-## 🔄 AI 助手與 MCP 服務完整交互流程
+## 🔄 AI 助手與 MCP 服務完整互動流程
 
 本文件詳細描述 AI 助手呼叫 MCP Feedback Enhanced 服務的完整流程，包括首次呼叫、多次循環呼叫、錯誤處理和效能優化機制。
 
 ### 核心設計理念
 
 - **持久化會話**: 支援 AI 助手多次循環呼叫，無需重複建立連線
-- **環境適配**: WSL 中改用 Windows 瀏覽器開啟介面；SSH 等遠端環境需自行設定埠轉發
+- **環境適應**: WSL 中改用 Windows 瀏覽器開啟介面；SSH 等遠端環境需自行設定埠轉發
 - **無縫狀態切換**: 會話更新時前端局部更新，保持使用者操作狀態
 - **優雅錯誤處理**: 完整的錯誤恢復機制和逾時保護
 - **資源優化**: 單一活躍會話模式，最小化資源佔用
 
 ## 📋 流程概覽
 
-### 整體交互時序圖
+### 整體互動時序圖
 
 ```mermaid
 sequenceDiagram
@@ -22,7 +22,7 @@ sequenceDiagram
     participant MCP as MCP 服務<br/>(server.py)
     participant WM as WebUIManager<br/>(單例管理器)
     participant FastAPI as FastAPI 應用<br/>(Web 服務)
-    participant WS as WebSocket<br/>(即時通信)
+    participant WS as WebSocket<br/>(即時通訊)
     participant Browser as 瀏覽器<br/>(Web UI)
     participant User as 使用者
 
@@ -38,7 +38,7 @@ sequenceDiagram
     FastAPI-->>-WM: 伺服器就緒
 
     WM->>Browser: smart_open_browser(url)
-    Note over Browser: 智能開啟瀏覽器<br/>檢測活躍分頁
+    Note over Browser: 智慧開啟瀏覽器<br/>偵測活躍分頁
 
     Browser->>+FastAPI: GET /
     FastAPI->>FastAPI: TemplateResponse("feedback.html")
@@ -118,9 +118,9 @@ flowchart TD
     CREATE --> SERVER[啟動 FastAPI 伺服器<br/>尚未啟動時]
     SERVER --> MODE{桌面模式?}
     MODE -->|是| DESKTOP[launch_desktop_app<br/>失敗時改走瀏覽器]
-    MODE -->|否| BROWSER[智能開啟瀏覽器]
+    MODE -->|否| BROWSER[智慧開啟瀏覽器]
 
-    BROWSER --> DETECT[檢測活躍分頁]
+    BROWSER --> DETECT[偵測活躍分頁]
     DETECT --> OPEN_DECISION{有活躍分頁?}
 
     OPEN_DECISION -->|否| OPEN[開啟新瀏覽器視窗]
@@ -148,12 +148,12 @@ flowchart TD
 
 **關鍵步驟詳解**：
 
-#### 2.1 環境檢測與適配
+#### 2.1 環境偵測與適應
 - `is_remote_environment()`（`server.py`）依序檢查：WSL 一律不算遠端；`SSH_CONNECTION`、`SSH_CLIENT`、`SSH_TTY`；`REMOTE_CONTAINERS`、`CODESPACES`；`/.dockerenv`；Windows 的 `SESSIONNAME` 含 `RDP`；Linux 沒有 `DISPLAY`。結果只寫進除錯日誌與 `get_system_info` 的輸出，不改變任何行為，也不會建立 SSH 隧道。
 - `is_wsl_environment()`（`web/utils/browser.py`）只在 Linux 上可能為真：`/proc/version` 含 `microsoft` 或 `wsl`、設了 `WSL_DISTRO_NAME`／`WSL_INTEROP`／`WSLENV`、或存在 `/mnt/c` 等 WSL 路徑。
 - 開啟瀏覽器（`smart_browser_open()`）：桌面模式不開；WSL 依序試 `cmd.exe /c start`、`powershell.exe Start-Process`、`wslview`；其他環境用 Python 的 `webbrowser.open`。開不了時在 stderr 印出網址，請使用者手動開啟。
 
-#### 2.2 智能會話管理
+#### 2.2 智慧會話管理
 `WebUIManager.create_session(project_directory, summary)` 每次呼叫都建立新的 `WebFeedbackSession` 並設為目前會話：
 - 舊會話若是「已提交」，推進為「已完成」，並留在 `sessions` 字典供 `/api/all-sessions` 查詢
 - 舊會話有 WebSocket 連線時，把連線直接轉給新會話，之後由 `smart_open_browser()` 送出 `session_updated`
@@ -201,7 +201,7 @@ sequenceDiagram
         WS-->>-Browser: 目前會話狀態
     end
 
-    Note over Browser,Session: 心跳檢測啟動
+    Note over Browser,Session: 心跳檢查啟動
     Browser->>Browser: 啟動心跳定時器
     loop 每 60 秒
         Browser->>WS: heartbeat
@@ -264,7 +264,7 @@ result = await interactive_feedback(
 )
 ```
 
-#### 2. 智能會話切換
+#### 2. 智慧會話切換
 ```mermaid
 flowchart TD
     CALL[AI 再次呼叫] --> CREATE[create_session<br/>建立新會話]
@@ -286,7 +286,7 @@ flowchart TD
 
 WebSocket 連線不會重建。
 
-## 🚀 新功能交互流程
+## 🚀 新功能互動流程
 
 ### 自動提交功能流程
 
@@ -474,7 +474,7 @@ sequenceDiagram
     ASU->>User: 顯示上傳成功
 ```
 
-### 智能記憶功能流程（v2.4.3 新增）
+### 智慧記憶功能流程（v2.4.3 新增）
 
 ```mermaid
 sequenceDiagram
@@ -522,14 +522,14 @@ graph LR
         SU[session_updated<br/>會話更新<br/>🔊 觸發音效通知]
         ST[status_update<br/>狀態更新]
         HR[heartbeat_response<br/>心跳回應]
-        PI[ping<br/>連線檢測]
+        PI[ping<br/>連線檢查]
         NO[notification<br/>回饋已收到／重複提交／會話清理]
     end
 
     subgraph "用戶端 → 伺服器"
         SF[submit_feedback<br/>提交回饋]
         GS[get_status<br/>查詢狀態]
-        HB[heartbeat<br/>心跳檢測]
+        HB[heartbeat<br/>心跳檢查]
         PO[pong<br/>回應 ping]
         UT[user_timeout<br/>會話逾時]
         UTS[update_timeout_settings<br/>逾時設定]
@@ -591,7 +591,7 @@ stateDiagram-v2
 ### 連線重用
 - **WebSocket 連線保持**: 避免重複建立連線
 - **會話狀態繼承**: 新會話繼承舊會話的連線
-- **智能瀏覽器開啟**: 檢測活躍分頁，避免重複開啟
+- **智慧瀏覽器開啟**: 偵測活躍分頁，避免重複開啟
 
 ### 資源管理
 - **自動清理機制**: 逾時會話自動清理
@@ -602,7 +602,7 @@ stateDiagram-v2
 
 ### 資料安全
 - **本機綁定**: 伺服器只綁定 127.0.0.1，減少攻擊面
-- **輸入驗證**: 嚴格的參數類型檢查和資料清理
+- **輸入驗證**: 嚴格的參數型別檢查和資料清理
 - **檔案上傳安全**: 圖片格式驗證和大小限制
 - **命令執行**: 已於 v2.6.1 移除，不再提供
 
@@ -621,10 +621,10 @@ stateDiagram-v2
 - **減少網路開銷**: WebSocket 連線保持和重用
 
 ### 資源管理效率
-- **智能清理**: 自動檢測和清理過期資源
+- **智慧清理**: 自動偵測和清理過期資源
 - **動態埠分配**: 避免埠衝突，支援並行開發
 - **錯誤恢復**: 優雅的錯誤處理和自動重連
-- **跨平台適配**: WSL 中改用 Windows 瀏覽器開啟介面，其他環境用 Python 的 `webbrowser`
+- **跨平台支援**: WSL 中改用 Windows 瀏覽器開啟介面，其他環境用 Python 的 `webbrowser`
 
 ---
 
