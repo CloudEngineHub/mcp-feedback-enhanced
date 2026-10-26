@@ -406,9 +406,14 @@
      * 檢查音效名稱是否已存在
      */
     AudioManager.prototype.isAudioNameExists = function(name) {
-        // 檢查預設音效
-        const defaultExists = Object.values(this.defaultAudios).some(audio => audio.name === name);
-        if (defaultExists) return true;
+        // 檢查預設音效：介面顯示的是翻譯後的名稱，所以每個語言的預設音效名稱都算重名
+        const reservedNames = Object.values(this.defaultAudios).map(audio => audio.name);
+        const translations = (window.i18nManager && window.i18nManager.translations) || {};
+        Object.values(translations).forEach(lang => {
+            const names = (lang.audio && lang.audio.notification) || {};
+            reservedNames.push(names.defaultBeep, names.notificationDing, names.softChime);
+        });
+        if (reservedNames.includes(name)) return true;
 
         // 檢查自訂音效
         return this.currentAudioSettings.customAudios.some(audio => audio.name === name);
