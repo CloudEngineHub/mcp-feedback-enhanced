@@ -192,7 +192,7 @@ mcp-feedback-enhanced [server | test (--web | --desktop) | version]
 | `MCP_WEB_HOST` | Web 服務綁定的主機 | `127.0.0.1` |
 | `MCP_WEB_PORT` | Web 服務埠，`1024`-`65535`；`0` 表示由系統分配 | `8765` |
 | `MCP_DESKTOP_MODE` | `true` 時改用桌面應用程式 | 關閉 |
-| `MCP_LANGUAGE` | 強制指定介面語言（`zh-TW`、`zh-CN`、`en`） | 自動偵測 |
+| `MCP_LANGUAGE` | 強制指定網頁介面語言與回給 AI 的錯誤訊息語言；只接受 `zh-TW`、`zh-CN`、`en`，其他值視同未設定。設定後介面的語言切換只在目前頁面有效，不寫進 `ui_settings.json` | 未設定 |
 | `MCP_GZIP_MIN_SIZE` | 回應超過此位元組數才 Gzip 壓縮 | `1000` |
 | `MCP_GZIP_LEVEL` | Gzip 壓縮等級 | `6` |
 | `MCP_STATIC_CACHE_AGE` | `/static/` 的快取秒數 | `3600` |
@@ -202,7 +202,7 @@ mcp-feedback-enhanced [server | test (--web | --desktop) | version]
 # 範例
 export MCP_WEB_PORT=9000
 export MCP_DEBUG=true
-export MCP_LANGUAGE=en
+export MCP_LANGUAGE=en   # 只接受 zh-TW、zh-CN、en
 ```
 
 ### 設定檔
@@ -213,9 +213,10 @@ export MCP_LANGUAGE=en
 |------|------|----------|
 | `ui_settings.json` | 介面設定，包含提示詞（`promptSettings`）、音效與自訂音效（`audioNotificationEnabled`、`audioNotificationVolume`、`selectedAudioId`、`customAudios`）、會話歷史儲存期限（`sessionHistoryRetentionHours`）、使用者訊息記錄（`userMessageRecordingEnabled`、`userMessagePrivacyLevel`）、輸入框高度（`combinedFeedbackTextHeight`）、會話逾時（`sessionTimeoutEnabled`、`sessionTimeoutSeconds`）、日誌等級（`logLevel`） | `GET /api/load-settings`、`POST /api/save-settings`、`POST /api/clear-settings`、`POST /api/log-level` |
 | `session_history.json` | 會話歷史 | `GET /api/load-session-history`、`POST /api/save-session-history` |
-| `language.json` | 伺服器端語言設定 | Python `I18nManager` |
 
-瀏覽器 localStorage 只存介面語言（`language`）與瀏覽器通知設定（`notificationsEnabled`、`notificationTriggerMode`）。
+介面語言存在 `ui_settings.json` 的 `language`，只有使用者在介面切換語言時才寫入（第一次開頁不會把瀏覽器語言寫進去）：沒有設定 `MCP_LANGUAGE` 時，切換結果寫進這裡，「重設設定」會把它從檔案移除；設定 `MCP_LANGUAGE` 時，任何操作都不改這個值（改其他設定或重設設定時保留檔案原本的 `language`）。舊版留下的 `language.json` 已不再讀取，不需要手動刪除。
+
+瀏覽器 localStorage 只存瀏覽器通知設定（`notificationsEnabled`、`notificationTriggerMode`，見 `notification-manager.js`），介面語言不在 localStorage。
 
 ## 🆕 v2.4.3 版本部署考慮
 

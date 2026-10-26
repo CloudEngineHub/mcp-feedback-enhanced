@@ -205,24 +205,28 @@ follow mcp-feedback-enhanced instructions
 | `MCP_WEB_HOST` | Web UI host binding | IP address or hostname | `127.0.0.1` |
 | `MCP_WEB_PORT` | Web UI port (`0` lets the OS pick a free port, which can change on every start) | `0`, `1024-65535` | `8765` |
 | `MCP_DESKTOP_MODE` | Desktop application mode | `true`/`false` | `false` |
-| `MCP_LANGUAGE` | Force UI language | `zh-TW`/`zh-CN`/`en` | Auto-detect |
+| `MCP_LANGUAGE` | Force the Web UI language (also used for error messages returned to the AI) | `zh-TW`/`zh-CN`/`en` | Not set |
 
 **`MCP_WEB_HOST` Explanation**:
 - `127.0.0.1` (default): Local access only — **keep this setting**
 - `0.0.0.0`: Binds all interfaces. ⚠️ **Not recommended**: the Web UI and `/ws` endpoint have **no authentication**, so anyone who can reach the port can read session content (including project paths and AI summaries) and submit feedback. Use SSH port forwarding instead (see Common Issues).
 
 **`MCP_LANGUAGE` Explanation**:
-- Used to force the interface language, overriding automatic system detection
-- Supported language codes:
-  - `zh-TW`: Traditional Chinese
-  - `zh-CN`: Simplified Chinese
-  - `en`: English
-- Language detection priority:
-  1. `MCP_LANGUAGE` environment variable (highest priority; when set, the language picker in the UI only applies to the current session)
-  2. User-saved language settings in the interface
-  3. System environment variables (LANG, LC_ALL, etc.)
-  4. System default language
-  5. Fallback to default language (Traditional Chinese)
+- Accepted values are exactly `zh-TW` (Traditional Chinese), `zh-CN` (Simplified Chinese) and `en` (English); surrounding spaces are ignored. Any other value (such as `ja`, `EN`, `zh_TW` or an empty string) is ignored and treated as not set
+- Web UI language (feedback page and waiting page):
+  1. `MCP_LANGUAGE`: the page opens in this language. The language picker still works, but only for the current page — the choice is not saved, and refreshing or reopening the page goes back to `MCP_LANGUAGE`. While it is set, the language saved in `ui_settings.json` is neither used nor changed
+  2. Language saved from the UI (`language` in `~/.config/mcp-feedback-enhanced/ui_settings.json`)
+  3. Browser language
+  4. Traditional Chinese (`zh-TW`)
+
+  Without `MCP_LANGUAGE`, switching the language in the UI is saved to `ui_settings.json`.
+- Language of error messages returned to the AI:
+  1. `MCP_LANGUAGE`
+  2. System environment variables (`LANG`, `LC_ALL`, `LC_MESSAGES`, `LANGUAGE`)
+  3. System locale
+  4. Traditional Chinese (`zh-TW`)
+
+  The language picked in the Web UI does not affect error messages.
 
 ### Testing Options
 ```bash
@@ -236,7 +240,7 @@ uvx mcp-feedback-enhanced@latest test --desktop # Test desktop application (v2.5
 # Debug mode (the test subcommand sets MCP_DEBUG=true itself; debug logs go to stderr)
 uvx mcp-feedback-enhanced@latest test --web
 
-# Specify language for testing
+# Specify language for testing (the language picker only applies to the current page and is not saved)
 MCP_LANGUAGE=en uvx mcp-feedback-enhanced@latest test --web    # Force English interface
 MCP_LANGUAGE=zh-TW uvx mcp-feedback-enhanced@latest test --web  # Force Traditional Chinese
 MCP_LANGUAGE=zh-CN uvx mcp-feedback-enhanced@latest test --web  # Force Simplified Chinese

@@ -10,7 +10,7 @@
 > - [API 參考文件](./api-reference.md)：MCP 工具、HTTP、WebSocket、內部 API、狀態碼與安全限制
 > - [互動流程文件](./interaction-flows.md)：呼叫流程、環境偵測、埠管理、連線建立、自動提交、提示詞、會話管理、音效、WebSocket 訊息、前端回饋狀態、連線斷線處理與逾時處理
 > - [元件詳細說明](./component-details.md)：各層的類別、方法、狀態、檔案路徑與流程圖，含重連、連線監控與會話統計，以及測試架構（含效能測試）與開發工具鏈
-> - [系統架構總覽](./system-overview.md)：全文；但「國際化與本地化」的多語言支援（語言偵測與偏好保存）與「技術棧」中 localStorage 保存介面語言的說法尚待確認
+> - [系統架構總覽](./system-overview.md)：全文
 >
 > 文中標示的「v2.4.3 新增」等字樣是功能最初加入的版本，不代表文件內容的版本。
 
@@ -49,7 +49,7 @@ MCP Feedback Enhanced 採用**單一活躍會話 + 持久化 Web UI**的創新�
 - **後端**: Python 3.11+, FastAPI, FastMCP
 - **前端**: HTML5, JavaScript ES6+, WebSocket, Web Audio API（v2.4.3）
 - **通訊**: WebSocket, HTTP REST API
-- **存儲**: 伺服器端 `~/.config/mcp-feedback-enhanced/`：`ui_settings.json`（設定、提示詞、自訂音效、輸入框高度）、`session_history.json`（會話歷史）；瀏覽器 localStorage 只存介面語言與通知設定
+- **儲存**: 伺服器端 `~/.config/mcp-feedback-enhanced/`：`ui_settings.json`（設定、介面語言、提示詞、自訂音效、輸入框高度）、`session_history.json`（會話歷史）；瀏覽器 localStorage 只存通知設定
 - **部署**: uvicorn, 跨平台支援
 - **桌面模式**: `MCP_DESKTOP_MODE=true` 時以 Tauri 桌面殼載入同一個 Web 介面
 

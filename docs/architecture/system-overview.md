@@ -26,7 +26,7 @@ MCP Feedback Enhanced 採用**單一活躍會話 + 持久化 Web UI**的創新�
 - JavaScript ES6+ (模組化架構)
 - WebSocket API (雙向通訊)
 - HTML5 Audio（`new Audio()`，音效通知系統）
-- localStorage API (介面語言與通知設定)
+- localStorage API (瀏覽器通知設定)
 - ResizeObserver API (元素尺寸監控)
 - 響應式設計 (多裝置支援)
 
@@ -222,9 +222,9 @@ stateDiagram-v2
 
 **多語言支援**：
 - 繁體中文、簡體中文、英文
-- 系統語言自動檢測
-- 用戶偏好設定保存
-- 動態語言切換
+- 網頁介面語言：`MCP_LANGUAGE` > `ui_settings.json` 的 `language` > 瀏覽器語言 > `zh-TW`；回饋頁與等待頁相同
+- `MCP_LANGUAGE` 只接受 `zh-TW`、`zh-CN`、`en`；設定時介面切換語言只在目前頁面有效，不存檔；沒設定時切換結果存進 `ui_settings.json`
+- 動態語言切換，不需重新載入頁面；回給 AI 的錯誤訊息語言另由後端 `i18n.py` 決定（`MCP_LANGUAGE` > `LANG` 等環境變數 > 系統 locale > `zh-TW`）
 
 **本地化特性**：
 - 會話卡片與列表的時間、提示詞的建立／使用時間、自訂音效的建立日期，以 `toLocaleTimeString`／`toLocaleDateString` 依介面語言格式化（`TimeUtils.formatTimestamp()`）；其中提示詞與音效的日期經 `timestampHTML()` 產生，切換語言時重新格式化；會話詳情彈出視窗的時間用固定的 `YYYY/MM/DD HH:mm:ss` 格式，不分語言

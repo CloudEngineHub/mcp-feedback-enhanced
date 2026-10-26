@@ -202,24 +202,28 @@ pip install uv
 | `MCP_WEB_HOST` | Web UI 主機綁定 | IP 位址或主機名稱 | `127.0.0.1` |
 | `MCP_WEB_PORT` | Web UI 連接埠（`0` 表示由系統分配可用連接埠，每次啟動可能不同） | `0`、`1024-65535` | `8765` |
 | `MCP_DESKTOP_MODE` | 桌面應用程式模式 | `true`/`false` | `false` |
-| `MCP_LANGUAGE` | 強制指定介面語言 | `zh-TW`/`zh-CN`/`en` | 自動偵測 |
+| `MCP_LANGUAGE` | 強制指定網頁介面語言（也用於回給 AI 的錯誤訊息） | `zh-TW`/`zh-CN`/`en` | 未設定 |
 
 **`MCP_WEB_HOST` 說明**：
 - `127.0.0.1`（預設）：僅本機存取，**建議維持此設定**
 - `0.0.0.0`：綁定所有網路介面。⚠️ **不建議**：Web UI 與 `/ws` 端點**沒有任何認證機制**，任何能連到該連接埠的人都能讀取會話內容（含專案路徑與 AI 摘要）並提交回饋。遠端開發請改用 SSH 連接埠轉送（見常見問題）。
 
 **`MCP_LANGUAGE` 說明**：
-- 用於強制指定介面語言，覆蓋系統自動偵測
-- 支援的語言代碼：
-  - `zh-TW`：繁體中文
-  - `zh-CN`：簡體中文  
-  - `en`：英文
-- 語言偵測優先順序：
-  1. `MCP_LANGUAGE` 環境變數（最高優先級；設定後，介面中的語言選擇只在當次會話生效）
-  2. 用戶在介面中保存的語言設定
-  3. 系統環境變數（LANG、LC_ALL 等）
-  4. 系統預設語言
-  5. 回退到預設語言（繁體中文）
+- 只接受 `zh-TW`（繁體中文）、`zh-CN`（簡體中文）、`en`（英文）這三個值，前後空白會忽略；其他值（例如 `ja`、`EN`、`zh_TW` 或空字串）一律忽略，視同未設定
+- 網頁介面語言（回饋頁與等待頁相同）：
+  1. `MCP_LANGUAGE`：開頁就是指定的語言。語言選單仍可切換，但只在目前頁面有效，不會存檔，重新整理或重開頁面就回到 `MCP_LANGUAGE`；設定期間不讀也不改 `ui_settings.json` 裡存的語言
+  2. 在介面中儲存的語言（`~/.config/mcp-feedback-enhanced/ui_settings.json` 的 `language`）
+  3. 瀏覽器語言
+  4. 繁體中文（`zh-TW`）
+
+  沒有設定 `MCP_LANGUAGE` 時，在介面切換語言會存進 `ui_settings.json`。
+- 回給 AI 的錯誤訊息語言：
+  1. `MCP_LANGUAGE`
+  2. 系統環境變數（`LANG`、`LC_ALL`、`LC_MESSAGES`、`LANGUAGE`）
+  3. 系統 locale
+  4. 繁體中文（`zh-TW`）
+
+  在網頁介面選的語言不影響錯誤訊息。
 
 ### 測試選項
 ```bash
@@ -233,7 +237,7 @@ uvx mcp-feedback-enhanced@latest test --desktop # 測試桌面應用程式 (v2.5
 # 除錯模式（test 子命令會自動設定 MCP_DEBUG=true，除錯日誌寫到 stderr）
 uvx mcp-feedback-enhanced@latest test --web
 
-# 指定語言測試
+# 指定語言測試（語言選單切換只在目前頁面有效，不會存檔）
 MCP_LANGUAGE=en uvx mcp-feedback-enhanced@latest test --web    # 強制使用英文介面
 MCP_LANGUAGE=zh-TW uvx mcp-feedback-enhanced@latest test --web  # 強制使用繁體中文
 MCP_LANGUAGE=zh-CN uvx mcp-feedback-enhanced@latest test --web  # 強制使用簡體中文

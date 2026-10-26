@@ -190,21 +190,23 @@ flowchart TD
 ```python
 class I18nManager:
     def __init__(self):
-        self._supported_languages = ["zh-CN", "zh-TW", "en"]
+        self._supported_languages = list(SUPPORTED_LANGUAGES)  # ("zh-CN", "zh-TW", "en")
         self._fallback_language = "zh-TW"
-        self._config_file = self._get_config_file_path()  # ~/.config/mcp-feedback-enhanced/language.json
         self._locales_dir = Path(__file__).parent / "web" / "locales"
 
     def t(self, key: str, **kwargs) -> str:
-        """翻譯函數，支援巢狀鍵值與 str.format 參數替換；找不到時改查回退語言，再找不到回傳鍵本身"""
+        """翻譯函式，支援巢狀鍵值與 str.format 參數替換；找不到時改查回退語言，再找不到回傳鍵本身"""
+
+def get_forced_language() -> str | None:
+    """MCP_LANGUAGE 去掉前後空白後完全等於 zh-TW、zh-CN、en 才回傳，否則 None；後端偵測、頁面模板與 ErrorHandler 都用它"""
 
 def get_i18n_manager() -> I18nManager: ...
 ```
 
 **核心功能**：
 - **三語支援**: 繁體中文、簡體中文、英文
-- **語言偵測**: `MCP_LANGUAGE` > 介面儲存的 `language.json` > `LANG`、`LC_ALL` 等環境變數 > 系統 locale > `zh-TW`
-- **使用範圍**: 後端只有 `ErrorHandler` 用它決定錯誤訊息語言；Web 介面文字由前端 `i18n.js` 透過 `GET /api/translations` 載入同一批 `translation.json`，切換語言不需重啟
+- **語言偵測**: `MCP_LANGUAGE`（只接受 `zh-TW`、`zh-CN`、`en`）> `LANG`、`LC_ALL`、`LC_MESSAGES`、`LANGUAGE` 環境變數 > 系統 locale（`MCP_TEST_MODE` 時跳過）> `zh-TW`；不讀網頁介面選的語言，也不寫任何檔案
+- **使用範圍**: 後端只有 `ErrorHandler` 用它決定回給 AI 的錯誤訊息語言；Web 介面文字由前端 `i18n.js` 透過 `GET /api/translations` 載入同一批 `translation.json`，切換語言不需重啟。介面語言的順序是 `MCP_LANGUAGE`（伺服器帶進頁面模板）> `ui_settings.json` 的 `language` > 瀏覽器語言 > `zh-TW`；設定 `MCP_LANGUAGE` 時，介面的語言切換只在目前頁面有效，不寫進 `ui_settings.json`
 - **巢狀翻譯**: 支援 `buttons.submit` 格式的鍵值
 - **參數替換**: 支援 `{name}` 格式的動態內容
 - **回退機制**: 翻譯缺失時改用回退語言 `zh-TW`，仍找不到就回傳鍵本身
@@ -474,7 +476,8 @@ async def index(request: Request):
     if not current_session:
         return manager.templates.TemplateResponse(
             request, "index.html",
-            context={"title": "MCP Feedback Enhanced", "has_session": False, "version": __version__},
+            context={"title": "MCP Feedback Enhanced", "has_session": False, "version": __version__,
+                     "forced_language": get_forced_language()},
         )
     return manager.templates.TemplateResponse(
         request, "feedback.html",
@@ -486,6 +489,7 @@ async def index(request: Request):
             "version": __version__,
             "has_session": True,
             "layout_mode": load_user_layout_settings(),
+            "forced_language": get_forced_language(),  # MCP_LANGUAGE 合法時模板輸出 data-forced-language
         },
     )
 ```
@@ -983,7 +987,7 @@ class ErrorHandler:
 
     @staticmethod
     def get_current_language() -> str:
-        """取 I18nManager 目前語言，失敗時用 MCP_LANGUAGE，預設 zh-TW"""
+        """取 I18nManager 目前語言；失敗時改用 MCP_LANGUAGE（只接受 zh-TW、zh-CN、en），都沒有就用 zh-TW"""
 
     @staticmethod
     def get_error_message(error_type: ErrorType) -> str:

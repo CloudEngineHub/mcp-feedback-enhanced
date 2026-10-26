@@ -212,7 +212,7 @@ sequenceDiagram
 **連線建立關鍵步驟**：
 
 #### 3.1 頁面渲染
-`GET /`（`web/routes/main_routes.py` 的 `index()`）沒有活躍會話時渲染 `index.html`；有活躍會話時讀取使用者的版面設定（`load_user_layout_settings()`），以 `session_id`、`project_directory`、`summary`、`title`、`version`、`has_session`、`layout_mode` 渲染 `feedback.html`。翻譯不在伺服器端套用，由前端的 `i18n.js` 從 `/api/translations` 載入。
+`GET /`（`web/routes/main_routes.py` 的 `index()`）沒有活躍會話時渲染 `index.html`；有活躍會話時讀取使用者的版面設定（`load_user_layout_settings()`），以 `session_id`、`project_directory`、`summary`、`title`、`version`、`has_session`、`layout_mode` 渲染 `feedback.html`。兩個模板都會收到 `forced_language`（`i18n.get_forced_language()` 的結果）：有指定時輸出 `<html lang="xx" data-forced-language="xx">`，沒有時是 `lang="zh-TW"`。翻譯不在伺服器端套用，由前端的 `i18n.js` 從 `/api/translations` 載入；`i18n.js` 讀到 `data-forced-language` 時就用該語言，否則先用瀏覽器語言，`SettingsManager.loadSettings()` 再套用 `ui_settings.json` 的 `language`。
 
 #### 3.2 WebSocket 連線處理
 `/ws`（`websocket_endpoint()`）的處理順序：
