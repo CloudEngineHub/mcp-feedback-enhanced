@@ -330,31 +330,6 @@
             }
 
             return true;
-        },
-
-        /**
-         * 檢查狀態轉換是否有效
-         */
-        isValidStatusTransition: function(fromStatus, toStatus) {
-            // 定義有效的狀態轉換規則
-            const validTransitions = {
-                'waiting': ['active', 'processing', 'timeout', 'error', 'connected'],
-                'waiting_for_feedback': ['active', 'processing', 'timeout', 'error', 'feedback_submitted'],
-                'active': ['processing', 'feedback_submitted', 'completed', 'timeout', 'error'],
-                'processing': ['completed', 'feedback_submitted', 'error', 'timeout'],
-                'connecting': ['connected', 'error', 'disconnected', 'timeout'],
-                'connected': ['disconnected', 'error', 'reconnecting'],
-                'disconnected': ['connecting', 'reconnecting'],
-                'reconnecting': ['connected', 'error', 'disconnected'],
-                'feedback_submitted': ['completed', 'closed'],
-                'completed': ['closed'],
-                'error': ['connecting', 'waiting', 'closed'],
-                'timeout': ['closed', 'waiting'],
-                'ready': ['active', 'waiting', 'processing']
-            };
-
-            const allowedTransitions = validTransitions[fromStatus];
-            return allowedTransitions ? allowedTransitions.includes(toStatus) : true;
         }
     };
 
