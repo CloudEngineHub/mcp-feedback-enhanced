@@ -2,7 +2,7 @@
 
 This document records all version updates for **MCP Feedback Enhanced**.
 
-## [v2.8.5] - Unreleased - Statistics Panel, UI Language and Traditional Chinese Wording Fixes
+## [v2.8.5] - 2026-10-26 - Statistics Panel, UI Language and Traditional Chinese Wording Fixes
 
 ### 🌟 Highlights
 - The Detailed Statistics panel now shows the real status, session count, today's average duration, reconnect count and connection time, and the top-right reconnect status shows the actual attempt number.
