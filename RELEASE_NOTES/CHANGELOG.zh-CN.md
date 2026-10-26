@@ -67,6 +67,7 @@
 - 函数内的 import 能移到文件开头的都移上去，刻意延迟的导入（循环导入、只在 Windows 存在的模块、运行时才加入 sys.path 的开发环境桌面模块等）保留并注明理由；未使用的解包变量改名。
 - 后端不再读写 `~/.config/mcp-feedback-enhanced/language.json`：写入它的 `set_language()` 自 2025-06 起就没有调用者，文件只会残留旧值。后端错误消息的语言改为 `MCP_LANGUAGE` → `LANG`／`LC_ALL`／`LC_MESSAGES`／`LANGUAGE` → 系统语言 → 繁中；原本依赖该文件决定 AI 收到的错误消息语言的用户，会改为依据上述环境变量或系统语言，需要固定语言请设置 `MCP_LANGUAGE`。已有的 `language.json` 不会被删除，只是不再读取；启动时也不再创建 `~/.config/mcp-feedback-enhanced` 目录。
 - 删除前端读取 localStorage `language` 的无效路径（全项目没有写入方）。
+- 删除前端没有调用者的工具函数：`StatusUtils.formatStatusChangeLog`、`getStatusDescription`、`isValidStatusTransition` 与 `TimeUtils.formatRelativeTime`；其中几个还带着写死的繁中字符串。删除前以全仓库文本搜索确认没有调用或字符串引用。
 
 ### 🔧 其他变更
 - `highlights.txt`、`release_body.md` 移出版本控制并加入 `.gitignore`：两者每次发布都由 publish.yml 重新生成，之前只是被发布 commit 的 `git add .` 一起带进来。
