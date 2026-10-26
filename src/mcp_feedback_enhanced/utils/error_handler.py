@@ -11,14 +11,13 @@
 注意：此模組不會影響 JSON RPC 通信，所有錯誤處理都在應用層進行。
 """
 
-import os
 import time
 import traceback
 from enum import Enum
 from typing import Any
 
 from ..debug import debug_log
-from ..i18n import get_i18n_manager
+from ..i18n import get_forced_language, get_i18n_manager
 
 
 class ErrorType(Enum):
@@ -120,8 +119,8 @@ class ErrorHandler:
             # 嘗試從 i18n 模組獲取當前語言
             return get_i18n_manager().get_current_language()
         except Exception:
-            # 回退到環境變數或默認語言
-            return os.getenv("MCP_LANGUAGE", "zh-TW")
+            # 回退到 MCP_LANGUAGE 或默認語言
+            return get_forced_language() or "zh-TW"
 
     @staticmethod
     def get_error_message(error_type: ErrorType) -> str:

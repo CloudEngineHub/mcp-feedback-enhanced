@@ -3,8 +3,8 @@
 國際化支援模組
 ===============
 
-提供統一的多語系支援功能，支援繁體中文、英文等語言。
-自動偵測系統語言，並提供語言切換功能。
+提供統一的多語系支援功能，支援繁體中文、簡體中文與英文。
+後端語言只由環境變數與系統語言決定，不讀寫任何設定檔。
 
 新架構：
 - 使用分離的 JSON 翻譯檔案
@@ -24,15 +24,23 @@ from typing import Any
 from .debug import i18n_debug_log as debug_log
 
 
+SUPPORTED_LANGUAGES = ("zh-CN", "zh-TW", "en")
+
+
+def get_forced_language() -> str | None:
+    """MCP_LANGUAGE 指定的語言；去掉前後空白後不是支援的語言代碼就當作沒設"""
+    value = os.getenv("MCP_LANGUAGE", "").strip()
+    return value if value in SUPPORTED_LANGUAGES else None
+
+
 class I18nManager:
     """國際化管理器 - 新架構版本"""
 
     def __init__(self):
         self._current_language = None
         self._translations = {}
-        self._supported_languages = ["zh-CN", "zh-TW", "en"]
+        self._supported_languages = list(SUPPORTED_LANGUAGES)
         self._fallback_language = "zh-TW"
-        self._config_file = self._get_config_file_path()
         self._locales_dir = Path(__file__).parent / "web" / "locales"
 
         # 載入翻譯
@@ -40,12 +48,6 @@ class I18nManager:
 
         # 設定語言
         self._current_language = self._detect_language()
-
-    def _get_config_file_path(self) -> Path:
-        """獲取配置文件路徑"""
-        config_dir = Path.home() / ".config" / "mcp-feedback-enhanced"
-        config_dir.mkdir(parents=True, exist_ok=True)
-        return config_dir / "language.json"
 
     def _load_all_translations(self) -> None:
         """載入所有語言的翻譯檔案"""
@@ -73,17 +75,12 @@ class I18nManager:
 
     def _detect_language(self) -> str:
         """自動偵測語言"""
-        # 1. MCP_LANGUAGE 是「強制指定」，優先於介面中保存的設定（見 #189）
-        env_lang = os.getenv("MCP_LANGUAGE", "").strip()
-        if env_lang and env_lang in self._supported_languages:
-            return env_lang
+        # 1. MCP_LANGUAGE 是「強制指定」（見 #189）
+        forced = get_forced_language()
+        if forced:
+            return forced
 
-        # 2. 用戶在介面中保存的語言設定
-        saved_lang = self._load_saved_language()
-        if saved_lang and saved_lang in self._supported_languages:
-            return saved_lang
-
-        # 3. 檢查其他環境變數（LANG, LC_ALL 等）
+        # 2. 檢查其他環境變數（LANG, LC_ALL 等）
         for env_var in ["LANG", "LC_ALL", "LC_MESSAGES", "LANGUAGE"]:
             env_value = os.getenv(env_var, "").strip()
             if env_value:
@@ -94,7 +91,7 @@ class I18nManager:
                 if env_value.startswith("en"):
                     return "en"
 
-        # 4. 自動偵測系統語言（僅在非測試模式下）
+        # 3. 自動偵測系統語言（僅在非測試模式下）
         if not os.getenv("MCP_TEST_MODE"):
             try:
                 # 獲取系統語言
@@ -113,41 +110,12 @@ class I18nManager:
             except Exception:
                 pass
 
-        # 5. 回退到默認語言
+        # 4. 回退到默認語言
         return self._fallback_language
-
-    def _load_saved_language(self) -> str | None:
-        """載入保存的語言設定"""
-        try:
-            if self._config_file.exists():
-                with open(self._config_file, encoding="utf-8") as f:
-                    config = json.load(f)
-                    language = config.get("language")
-                    return language if isinstance(language, str) else None
-        except Exception:
-            pass
-        return None
-
-    def save_language(self, language: str) -> None:
-        """保存語言設定"""
-        try:
-            config = {"language": language}
-            with open(self._config_file, "w", encoding="utf-8") as f:
-                json.dump(config, f, ensure_ascii=False, indent=2)
-        except Exception:
-            pass
 
     def get_current_language(self) -> str:
         """獲取當前語言"""
         return self._current_language or "zh-TW"
-
-    def set_language(self, language: str) -> bool:
-        """設定語言"""
-        if language in self._supported_languages:
-            self._current_language = language
-            self.save_language(language)
-            return True
-        return False
 
     def get_supported_languages(self) -> list[str]:
         """獲取支援的語言列表"""
@@ -210,11 +178,6 @@ def get_i18n_manager() -> I18nManager:
 def t(key: str, **kwargs) -> str:
     """便捷的翻譯函數"""
     return get_i18n_manager().t(key, **kwargs)
-
-
-def set_language(language: str) -> bool:
-    """設定語言"""
-    return get_i18n_manager().set_language(language)
 
 
 def get_current_language() -> str:

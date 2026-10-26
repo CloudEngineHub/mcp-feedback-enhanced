@@ -31,44 +31,15 @@ class TestI18NManager:
         # 驗證至少有基本語言支援
         assert len(supported_languages) >= 2
 
-    def test_language_switching(self, i18n_manager):
-        """測試語言切換"""
-        original_language = i18n_manager.get_current_language()
-
-        # 測試切換到不同語言
-        for lang in TestData.SUPPORTED_LANGUAGES:
-            if lang != original_language:
-                success = i18n_manager.set_language(lang)
-                assert success == True
-                assert i18n_manager.get_current_language() == lang
-                break
-
-        # 恢復原始語言
-        i18n_manager.set_language(original_language)
-
-    def test_invalid_language_switching(self, i18n_manager):
-        """測試無效語言切換"""
-        original_language = i18n_manager.get_current_language()
-
-        # 嘗試切換到不存在的語言
-        success = i18n_manager.set_language("invalid-lang")
-        assert success == False
-        assert i18n_manager.get_current_language() == original_language
-
-    def test_translation_function(self, i18n_manager):
+    def test_translation_function(self, i18n_manager, monkeypatch):
         """每個語系都能翻出 I18N_TEST_KEYS，且不是回傳 key 本身"""
-        original_language = i18n_manager.get_current_language()
-
-        try:
-            for lang in TestData.SUPPORTED_LANGUAGES:
-                i18n_manager.set_language(lang)
-                for key in TestData.I18N_TEST_KEYS:
-                    translation = i18n_manager.t(key)
-                    assert isinstance(translation, str)
-                    assert translation.strip()
-                    assert translation != key, f"{lang} 缺少翻譯 {key}"
-        finally:
-            i18n_manager.set_language(original_language)
+        for lang in TestData.SUPPORTED_LANGUAGES:
+            monkeypatch.setattr(i18n_manager, "_current_language", lang)
+            for key in TestData.I18N_TEST_KEYS:
+                translation = i18n_manager.t(key)
+                assert isinstance(translation, str)
+                assert translation.strip()
+                assert translation != key, f"{lang} 缺少翻譯 {key}"
 
     def test_translation_with_parameters(self, i18n_manager):
         """帶參數的翻譯會替換 {placeholder}"""
@@ -77,19 +48,56 @@ class TestI18NManager:
         assert "連線中斷" in translation
         assert "{error}" not in translation
 
-    def test_fallback_mechanism(self, i18n_manager):
+    def test_fallback_mechanism(self, i18n_manager, monkeypatch):
         """當前語言與回退語言都沒有的 key 回傳 key 本身"""
-        original_language = i18n_manager.get_current_language()
+        monkeypatch.setattr(i18n_manager, "_current_language", "en")
 
-        try:
-            i18n_manager.set_language("en")
+        non_existent_key = "non.existent.key.for.testing"
+        assert i18n_manager.t(non_existent_key) == non_existent_key
 
-            non_existent_key = "non.existent.key.for.testing"
-            assert i18n_manager.t(non_existent_key) == non_existent_key
 
-        finally:
-            # 恢復原始語言
-            i18n_manager.set_language(original_language)
+class TestLanguageSource:
+    """後端語言只看 MCP_LANGUAGE、LANG 等環境變數與系統語言"""
+
+    @pytest.mark.parametrize(
+        ("value", "expected"),
+        [
+            ("zh-TW", "zh-TW"),
+            ("zh-CN", "zh-CN"),
+            (" en ", "en"),
+            ("ja", None),
+            ("EN", None),
+            ("zh_TW", None),
+            ("", None),
+        ],
+    )
+    def test_get_forced_language(self, monkeypatch, value, expected):
+        from mcp_feedback_enhanced.i18n import get_forced_language
+
+        monkeypatch.setenv("MCP_LANGUAGE", value)
+        assert get_forced_language() == expected
+
+    def test_ignores_language_json_and_creates_no_config_dir(
+        self, monkeypatch, tmp_path
+    ):
+        """舊的 language.json 不再生效，建構時也不在家目錄建資料夾"""
+        from mcp_feedback_enhanced.i18n import I18nManager
+
+        home = tmp_path / "home"
+        home.mkdir()
+        monkeypatch.setenv("HOME", str(home))
+        monkeypatch.setenv("USERPROFILE", str(home))
+        for var in ("MCP_LANGUAGE", "LC_ALL", "LC_MESSAGES", "LANGUAGE"):
+            monkeypatch.delenv(var, raising=False)
+        monkeypatch.setenv("LANG", "zh_TW.UTF-8")
+
+        I18nManager()
+        assert list(home.iterdir()) == []
+
+        old_file = home / ".config" / "mcp-feedback-enhanced" / "language.json"
+        old_file.parent.mkdir(parents=True)
+        old_file.write_text('{"language": "en"}', encoding="utf-8")
+        assert I18nManager().get_current_language() == "zh-TW"
 
 
 class TestI18NTranslationCompleteness:
@@ -146,21 +154,17 @@ class TestI18NTranslationCompleteness:
             # 這裡我們記錄警告而不是失敗測試，因為某些 key 可能是特定語言的
             print("\n".join(report_lines))
 
-    def test_common_keys_exist(self, i18n_manager):
+    def test_common_keys_exist(self, i18n_manager, monkeypatch):
         """常用按鈕在每個語系都有翻譯"""
         common_keys = ["buttons.ok", "buttons.cancel", "buttons.close"]
-        original_language = i18n_manager.get_current_language()
 
-        try:
-            for lang in i18n_manager.get_supported_languages():
-                i18n_manager.set_language(lang)
+        for lang in i18n_manager.get_supported_languages():
+            monkeypatch.setattr(i18n_manager, "_current_language", lang)
 
-                for key in common_keys:
-                    translation = i18n_manager.t(key)
-                    assert translation.strip()
-                    assert translation != key, f"{lang} 缺少翻譯 {key}"
-        finally:
-            i18n_manager.set_language(original_language)
+            for key in common_keys:
+                translation = i18n_manager.t(key)
+                assert translation.strip()
+                assert translation != key, f"{lang} 缺少翻譯 {key}"
 
     def _get_all_keys(self, translations: dict, prefix: str = "") -> set:
         """遞歸獲取所有翻譯 key"""

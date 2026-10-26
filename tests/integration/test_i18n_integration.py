@@ -15,9 +15,7 @@ class TestI18NWebIntegration:
     """I18N 與 Web UI 集成測試"""
 
     @pytest.mark.asyncio
-    async def test_i18n_in_web_templates(
-        self, web_ui_manager, i18n_manager, test_project_dir
-    ):
+    async def test_i18n_in_web_templates(self, web_ui_manager, test_project_dir):
         """測試 Web 模板中的 I18N 功能"""
         # 創建會話
         web_ui_manager.create_session(
@@ -32,22 +30,11 @@ class TestI18NWebIntegration:
 
         base_url = f"http://{web_ui_manager.host}:{web_ui_manager.port}"
 
-        # 測試不同語言的頁面渲染
-        for lang in TestData.SUPPORTED_LANGUAGES:
-            i18n_manager.set_language(lang)
-
-            async with aiohttp.ClientSession() as session:
-                # 測試主頁
-                async with session.get(f"{base_url}/") as response:
-                    assert response.status == 200
-                    text = await response.text()
-
-                    # 頁面應該包含當前語言的內容
-                    assert len(text) > 0
-
-                    # 檢查是否包含基本的 UI 元素
-                    # 這些元素應該根據語言進行本地化
-                    assert "MCP Feedback" in text
+        async with aiohttp.ClientSession() as session:
+            async with session.get(f"{base_url}/") as response:
+                assert response.status == 200
+                text = await response.text()
+                assert "MCP Feedback" in text
 
     def test_i18n_api_endpoints(self, web_ui_manager, i18n_manager):
         """測試 I18N API 端點"""
@@ -71,21 +58,17 @@ class TestI18NWebIntegration:
 class TestI18NMCPIntegration:
     """I18N 與 MCP 集成測試"""
 
-    def test_i18n_in_mcp_responses(self, i18n_manager):
+    def test_i18n_in_mcp_responses(self, i18n_manager, monkeypatch):
         """錯誤訊息在三個語系都有各自的翻譯"""
         error_keys = ["error.network", "error.timeout", "error.invalidInput"]
-        original_language = i18n_manager.get_current_language()
         messages: dict[str, dict[str, str]] = {key: {} for key in error_keys}
 
-        try:
-            for lang in TestData.SUPPORTED_LANGUAGES:
-                i18n_manager.set_language(lang)
-                for key in error_keys:
-                    message = i18n_manager.t(key)
-                    assert message != key, f"{lang} 缺少翻譯 {key}"
-                    messages[key][lang] = message
-        finally:
-            i18n_manager.set_language(original_language)
+        for lang in TestData.SUPPORTED_LANGUAGES:
+            monkeypatch.setattr(i18n_manager, "_current_language", lang)
+            for key in error_keys:
+                message = i18n_manager.t(key)
+                assert message != key, f"{lang} 缺少翻譯 {key}"
+                messages[key][lang] = message
 
         # 各語系的文字不同，代表不是回退到同一個語系
         for key, per_lang in messages.items():
@@ -180,10 +163,13 @@ class TestI18NEnvironmentIntegration:
                     "LANG": "ja_JP.UTF-8",
                     "expected": "zh-TW",
                 },  # 不支援的語言回退到預設（繁中）
-                # MCP_LANGUAGE 是強制指定，必須壓過介面保存的設定（#189）
-                {"saved": "zh-TW", "MCP_LANGUAGE": "zh-CN", "expected": "zh-CN"},
-                # 沒有 MCP_LANGUAGE 時，介面保存的設定仍高於 LANG
-                {"saved": "en", "LANG": "zh_TW.UTF-8", "expected": "en"},
+                # 不合法的 MCP_LANGUAGE 當作沒設，改看 LANG
+                {"MCP_LANGUAGE": "ja", "LANG": "en_US.UTF-8", "expected": "en"},
+                {"MCP_LANGUAGE": "EN", "LANG": "zh_CN.UTF-8", "expected": "zh-CN"},
+                {"MCP_LANGUAGE": "zh_TW", "expected": "zh-TW"},
+                {"MCP_LANGUAGE": "", "LANG": "en_US.UTF-8", "expected": "en"},
+                # 合法的 MCP_LANGUAGE 優先於 LANG（#189）
+                {"MCP_LANGUAGE": "zh-CN", "LANG": "en_US.UTF-8", "expected": "zh-CN"},
             ]
 
             for test_case in test_cases:
@@ -196,28 +182,14 @@ class TestI18NEnvironmentIntegration:
 
                 # 設置測試環境
                 for key, value in test_case.items():
-                    if key not in ("expected", "saved"):
+                    if key != "expected":
                         os.environ[key] = value
 
-                # 創建新的管理器實例，並清理可能的保存設定
-                import tempfile
-                from pathlib import Path
-
-                with tempfile.TemporaryDirectory() as temp_dir:
-                    # 臨時修改配置文件路徑，避免使用真實的用戶配置
-                    manager = I18nManager()
-                    manager._config_file = Path(temp_dir) / "test_language.json"
-                    if "saved" in test_case:
-                        manager.save_language(test_case["saved"])
-
-                    # 修復 attr-defined 錯誤 - 使用正確的方法名
-                    detected = manager._detect_language()
-
-                    # 驗證檢測結果
-                    expected = test_case["expected"]
-                    assert detected == expected, (
-                        f"環境 {test_case} 檢測到 {detected}，預期 {expected}"
-                    )
+                detected = I18nManager()._detect_language()
+                expected = test_case["expected"]
+                assert detected == expected, (
+                    f"環境 {test_case} 檢測到 {detected}，預期 {expected}"
+                )
 
         finally:
             # 恢復原始環境變數

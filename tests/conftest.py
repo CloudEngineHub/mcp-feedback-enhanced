@@ -13,8 +13,8 @@ from typing import TYPE_CHECKING, Any
 import pytest
 
 
-# 產品程式會在匯入或建構時就算好家目錄底下的路徑（feedback_session.TEMP_DIR、
-# I18nManager._config_file），所以這裡不在模組層匯入 mcp_feedback_enhanced，
+# 產品程式會在匯入時就算好家目錄底下的路徑（feedback_session.TEMP_DIR），
+# 所以這裡不在模組層匯入 mcp_feedback_enhanced，
 # 讓家目錄在任何測試模組匯入產品程式之前就導走。
 if TYPE_CHECKING:
     from mcp_feedback_enhanced.web.main import WebUIManager
@@ -36,13 +36,13 @@ def pytest_unconfigure(config: pytest.Config) -> None:
 
 
 def _assert_home_isolated() -> None:
-    from mcp_feedback_enhanced.i18n import get_i18n_manager
     from mcp_feedback_enhanced.web.models import feedback_session
 
     assert Path.home() != _REAL_HOME, f"Path.home() 仍指向真的家目錄 {_REAL_HOME}"
-    for path in (get_i18n_manager()._config_file, feedback_session.TEMP_DIR):
-        for real_dir in (_REAL_HOME / ".config", _REAL_HOME / ".cache"):
-            assert not path.is_relative_to(real_dir), f"{path} 仍在真的家目錄底下"
+    for real_dir in (_REAL_HOME / ".config", _REAL_HOME / ".cache"):
+        assert not feedback_session.TEMP_DIR.is_relative_to(real_dir), (
+            f"{feedback_session.TEMP_DIR} 仍在真的家目錄底下"
+        )
 
 
 @pytest.fixture(scope="session", autouse=True)
