@@ -27,6 +27,12 @@
         return session;
     }
 
+    // 匯出檔名用本地日期 YYYY-MM-DD；toISOString 是 UTC，台灣 00:00–08:00 會少一天
+    function localDateStamp() {
+        const now = new Date();
+        return now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
+    }
+
     /**
      * 會話數據管理器
      */
@@ -924,7 +930,7 @@
             })
         };
 
-        const filename = 'session-history-' + new Date().toISOString().split('T')[0] + '.json';
+        const filename = 'session-history-' + localDateStamp() + '.json';
         this.downloadJSON(exportData, filename);
 
         console.log('📊 匯出了', this.sessionHistory.length, '個會話');
@@ -967,7 +973,7 @@
         };
 
         const shortId = sessionId.substring(0, 8);
-        const filename = 'session-' + shortId + '-' + new Date().toISOString().split('T')[0] + '.json';
+        const filename = 'session-' + shortId + '-' + localDateStamp() + '.json';
         this.downloadJSON(exportData, filename);
 
         console.log('📊 匯出會話:', sessionId);
