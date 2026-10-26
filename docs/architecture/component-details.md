@@ -108,7 +108,7 @@ graph TB
 
 **架構實作**：
 ```python
-# 基於 FastMCP 的服務器實現
+# 基於 FastMCP 的伺服器實作
 SERVER_NAME = "互動式回饋收集 MCP"
 mcp: Any = FastMCP(SERVER_NAME)
 
@@ -171,7 +171,7 @@ flowchart TD
 
 **回傳格式**：
 ```python
-# 成功返回
+# 成功回傳
 [
     TextContent(type="text", text="=== 使用者回饋 ===\n..."),             # create_feedback_text()
     ImageContent(type="image", data="<base64>", mime_type="image/png"),  # process_images()，可選
@@ -180,7 +180,7 @@ flowchart TD
 # 使用者未回應（逾時或關閉介面）
 [TextContent(type="text", text="使用者未回應（...）。請視為使用者已離開...")]  # no_response_text()
 
-# 錯誤返回
+# 錯誤回傳
 [TextContent(type="text", text=ErrorHandler.format_user_error(e, include_technical=False))]
 ```
 
@@ -278,7 +278,7 @@ def start_server(self):
     """在 daemon 執行緒以 uvicorn 啟動，埠被占用時換埠重試"""
 
 async def smart_open_browser(self, url: str) -> bool:
-    """有活躍標籤頁就送 session_updated 通知，否則呼叫 open_browser()"""
+    """有活躍分頁就送 session_updated 通知，否則呼叫 open_browser()"""
 
 def open_browser(self, url: str) -> bool:
     """呼叫 smart_browser_open()；開不了時用 user_notice() 在 stderr 印出網址"""
@@ -693,8 +693,8 @@ graph LR
     <!-- 另載 session-management / prompt-management / audio-management / notification-settings.css -->
 </head>
 <body class="layout-{{ layout_mode }}">
-    <!-- 頂部狀態列：專案路徑 projectPathDisplay、會話 ID currentSessionId（皆可點擊複製）、
-         自動提交倒數 countdownDisplay、會話超時倒數 sessionTimeoutDisplay、連線狀態 connectionStatusMinimal -->
+    <!-- 頂部狀態列：專案路徑 projectPathDisplay、會話 ID currentSessionId（皆可點選複製）、
+         自動提交倒數 countdownDisplay、會話逾時倒數 sessionTimeoutDisplay、連線狀態 connectionStatusMinimal -->
     <div class="connection-monitor-bar compact">...</div>
 
     <div class="container">
@@ -827,7 +827,7 @@ function WebSocketManager(options) {
     this.maxReconnectAttempts = options.maxReconnectAttempts || Utils.CONSTANTS.MAX_RECONNECT_ATTEMPTS; // 5
     this.reconnectDelay = options.reconnectDelay || Utils.CONSTANTS.DEFAULT_RECONNECT_DELAY;         // 1000 毫秒
     this.connectionMonitor = options.connectionMonitor || null;
-    // 另有會話超時相關欄位
+    // 另有會話逾時相關欄位
 }
 
 WebSocketManager.prototype.connect = function() {
@@ -878,7 +878,7 @@ WebSocketManager.prototype.send = function(data) {
 **樣式檔案結構**：
 ```
 static/css/
-├── styles.css                  # 主樣式文件（:root 色彩變數）
+├── styles.css                  # 主樣式檔案（:root 色彩變數）
 ├── prompt-management.css       # 提示詞管理樣式
 ├── session-management.css      # 會話管理樣式
 ├── audio-management.css        # 音效管理樣式（v2.4.3 新增）
@@ -968,7 +968,7 @@ class ErrorSeverity(Enum):
 class ErrorHandler:
     @staticmethod
     def classify_error(error: Exception) -> ErrorType:
-        """依例外類型與訊息自動分類"""
+        """依例外型別與訊息自動分類"""
 
     @staticmethod
     def log_error_with_context(error, context=None, error_type=None,
@@ -1004,7 +1004,7 @@ class MemoryMonitor:
     def start_monitoring(self) -> bool: ...
     def stop_monitoring(self) -> bool: ...
     def get_current_memory_info(self) -> dict[str, Any]:
-        """系統與本程序的記憶體用量（GB/MB 與百分比）"""
+        """系統與本處理程序的記憶體用量（GB/MB 與百分比）"""
     def get_memory_stats(self) -> MemoryStats: ...
     def add_cleanup_callback(self, callback: Callable): ...
     def add_alert_callback(self, callback: Callable[[MemoryAlert], None]): ...
@@ -1024,7 +1024,7 @@ def get_memory_monitor() -> MemoryMonitor:
 class ResourceManager:
     def create_temp_file(self, suffix: str = "", prefix: str = "mcp_",
                          dir: str | None = None, text: bool = True) -> str:
-        """建立並追蹤臨時文件"""
+        """建立並追蹤臨時檔案"""
 
     def create_temp_dir(self, suffix: str = "", prefix: str = "mcp_",
                         dir: str | None = None) -> str: ...
@@ -1034,7 +1034,7 @@ class ResourceManager:
     def cleanup_file_handles(self) -> int: ...
 
     def cleanup_all(self, force: bool = False) -> dict[str, int]:
-        """依序清理文件句柄、全部臨時文件、臨時目錄，回傳各類清理數量"""
+        """依序清理檔案控制代碼、全部臨時檔案、臨時目錄，回傳各類清理數量"""
 ```
 
 **運作方式**：
@@ -1075,13 +1075,13 @@ def get_browser_opener() -> Callable[[str], bool]:
 class PortManager:
     @staticmethod
     def is_port_available(host: str, port: int) -> bool:
-        """先嘗試 bind；失敗時再用 psutil 確認是否真的有程序在 LISTEN"""
+        """先嘗試 bind；失敗時再用 psutil 確認是否真的有處理程序在 LISTEN"""
 
     @staticmethod
     def find_free_port_enhanced(preferred_port: int = 8765, auto_cleanup: bool = True,
                                 host: str = "127.0.0.1", max_attempts: int = 100) -> int:
         """偏好埠可用就用；被占用且 auto_cleanup 時，只終止本專案或 uvicorn/fastapi 的
-        Python 程序；仍不可用就往上找 max_attempts 個，再往下找（不低於 1024），
+        Python 處理程序；仍不可用就往上找 max_attempts 個，再往下找（不低於 1024），
         都找不到拋 RuntimeError"""
 
     @staticmethod
@@ -1154,7 +1154,7 @@ tests/
 │   ├── test_web_ui.py
 │   ├── test_websocket_origin.py
 │   └── test_wsl_detection.py
-├── integration/             # 集成測試
+├── integration/             # 整合測試
 │   ├── test_mcp_workflow.py
 │   ├── test_web_integration.py
 │   ├── test_web_ui_boot.py
@@ -1163,9 +1163,9 @@ tests/
 │   ├── mcp_client.py
 │   ├── test_utils.py
 │   └── manual_tooltip_test.html
-├── fixtures/                # 測試數據
+├── fixtures/                # 測試資料
 │   └── test_data.py
-└── conftest.py             # pytest 配置
+└── conftest.py             # pytest 設定
 ```
 
 ### 測試策略
