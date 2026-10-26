@@ -2,22 +2,22 @@
 
 ## 🚀 部署架構概覽
 
-MCP Feedback Enhanced 支援本地、SSH 遠端、WSL 與桌面應用程式等使用方式；程式只依環境決定怎麼開啟介面，遠端存取需要自行設定埠轉發。
+MCP Feedback Enhanced 支援本機、SSH 遠端、WSL 與桌面應用程式等使用方式；程式只依環境決定怎麼開啟介面，遠端存取需要自行設定埠轉發。
 
 ### 部署拓撲圖
 
 ```mermaid
 graph TB
-    subgraph "本地開發環境"
-        LOCAL[本地機器]
-        LOCAL_BROWSER[本地瀏覽器]
+    subgraph "本機開發環境"
+        LOCAL[本機]
+        LOCAL_BROWSER[本機瀏覽器]
         LOCAL --> LOCAL_BROWSER
     end
 
-    subgraph "SSH 遠程環境"
-        REMOTE[遠程服務器]
+    subgraph "SSH 遠端環境"
+        REMOTE[遠端伺服器]
         SSH_TUNNEL[SSH 埠轉發<br/>需手動設定]
-        LOCAL_CLIENT[本地客戶端]
+        LOCAL_CLIENT[本機用戶端]
         REMOTE --> SSH_TUNNEL
         SSH_TUNNEL --> LOCAL_CLIENT
     end
@@ -29,21 +29,21 @@ graph TB
     end
 ```
 
-## 🛠️ 安裝和配置
+## 🛠️ 安裝和設定
 
 ### 系統要求
 
 #### 最低要求
 - **Python**: 3.11 或更高版本
-- **內存**: 512MB 可用內存
-- **磁盤**: 100MB 可用空間
-- **網路**: 可訪問的網路連接
+- **記憶體**: 512MB 可用記憶體
+- **磁碟**: 100MB 可用空間
+- **網路**: 可用的網路連線
 - **瀏覽器**: 支援 Web Audio API 的現代瀏覽器（v2.4.3 音效功能）
 
-#### 推薦配置
+#### 建議配備
 - **Python**: 3.12+
-- **內存**: 1GB+ 可用內存
-- **磁盤**: 500MB+ 可用空間（包含音效文件存儲）
+- **記憶體**: 1GB+ 可用記憶體
+- **磁碟**: 500MB+ 可用空間（包含音效檔案儲存）
 - **CPU**: 2 核心或更多
 - **瀏覽器**: Chrome 90+, Firefox 88+, Safari 14+（完整功能支援）
 
@@ -51,7 +51,7 @@ graph TB
 
 套件提供 `mcp-feedback-enhanced` 指令（另有相容別名 `interactive-feedback-mcp`）。不帶子命令時啟動 MCP 伺服器（stdio），通常由 IDE 依 MCP 設定啟動，不需要手動常駐；Web 服務在 AI 第一次呼叫 `interactive_feedback` 時才啟動。
 
-#### 1. 使用 uvx（推薦）
+#### 1. 使用 uvx（建議）
 ```bash
 # 啟動 MCP 伺服器（等同 `server` 子命令）
 uvx mcp-feedback-enhanced@latest
@@ -72,7 +72,7 @@ pip install mcp-feedback-enhanced
 mcp-feedback-enhanced
 ```
 
-#### 3. 從源碼安裝
+#### 3. 從原始碼安裝
 ```bash
 # 克隆倉庫
 git clone https://github.com/Minidoracat/mcp-feedback-enhanced.git
@@ -85,7 +85,7 @@ uv sync
 uv run python -m mcp_feedback_enhanced
 ```
 
-## 🌍 環境配置
+## 🌍 環境設定
 
 ### 環境檢測機制
 
@@ -106,14 +106,14 @@ flowchart TD
 
 SSH、Codespaces、Remote Containers、Docker、Windows 遠端桌面、沒有 `DISPLAY` 的 Linux 會被 `is_remote_environment()` 判定為遠端，但這個結果只寫進除錯日誌與 `get_system_info` 的輸出，不影響上面的開啟流程，也不會建立 SSH 隧道。
 
-### 1. 本地環境部署
+### 1. 本機環境部署
 
 **特點**:
-- 直接在本地機器運行
-- AI 呼叫 `interactive_feedback` 時開啟本地瀏覽器；已有連線中的回饋分頁時改為通知該分頁更新內容，不另開新分頁
+- 直接在本機執行
+- AI 呼叫 `interactive_feedback` 時開啟本機瀏覽器；已有連線中的回饋分頁時改為通知該分頁更新內容，不另開新分頁
 - 最簡單的部署方式
 
-**配置**:
+**設定**:
 ```bash
 # 由 IDE 依 MCP 設定啟動，或手動運行
 uvx mcp-feedback-enhanced@latest
@@ -122,16 +122,16 @@ uvx mcp-feedback-enhanced@latest
 # 可用 MCP_WEB_HOST、MCP_WEB_PORT 調整；埠被佔用時會改用附近的可用埠
 ```
 
-### 2. SSH 遠程環境部署
+### 2. SSH 遠端環境部署
 
 **特點**:
-- 在遠程服務器運行 MCP 伺服器與 Web 服務
-- 不會自動建立 SSH 隧道，需自行設定埠轉發，再用本地瀏覽器訪問
+- 在遠端伺服器執行 MCP 伺服器與 Web 服務
+- 不會自動建立 SSH 隧道，需自行設定埠轉發，再用本機瀏覽器開啟
 - 遠端無法開啟瀏覽器時，伺服器會在 stderr 印出網址，供手動開啟
 
-**配置步驟**:
+**設定步驟**:
 
-1. **在遠程服務器安裝**:
+1. **在遠端伺服器安裝**:
 ```bash
 # SSH 連接到遠程服務器
 ssh user@remote-server
@@ -157,19 +157,19 @@ ssh -L 8765:127.0.0.1:8765 user@remote-server
 ### 3. WSL 環境部署
 
 **特點**:
-- 在 WSL 中運行 MCP 伺服器與 Web 服務
+- 在 WSL 中執行 MCP 伺服器與 Web 服務
 - 只在 Linux 上判斷是否為 WSL：`/proc/version` 含 `microsoft` 或 `wsl`、設了 `WSL_DISTRO_NAME`／`WSL_INTEROP`／`WSLENV`，或存在 `/mnt/c`、`/mnt/d`、`/proc/sys/fs/binfmt_misc/WSLInterop`；原生 Windows 即使設了 `WSLENV` 也不算 WSL
 - 偵測到 WSL 時依序用 `cmd.exe /c start`、`powershell.exe Start-Process`、`wslview` 開啟 Windows 瀏覽器；三種都失敗時在 stderr 印出網址
 
-**配置**:
+**設定**:
 ```bash
 # 在 WSL 中運行（通常由 IDE 依 MCP 設定啟動）
 uvx mcp-feedback-enhanced@latest
 ```
 
-## ⚙️ 配置選項
+## ⚙️ 設定選項
 
-### 命令行參數
+### 命令列參數
 
 ```bash
 mcp-feedback-enhanced [server | test (--web | --desktop) | version]
@@ -178,11 +178,11 @@ mcp-feedback-enhanced [server | test (--web | --desktop) | version]
 | 子命令／參數 | 描述 |
 |------|------|
 | （無）或 `server` | 啟動 MCP 伺服器（stdio） |
-| `test --web` | 啟動 Web UI 測試並持續運行 |
+| `test --web` | 啟動 Web UI 測試並持續執行 |
 | `test --desktop` | 啟動桌面應用程式 |
 | `version` | 顯示版本資訊 |
 
-`test` 不帶 `--web` 或 `--desktop` 時只印出說明並以狀態碼 1 結束。主機、埠、除錯模式沒有命令行參數，一律用下方環境變數設定。
+`test` 不帶 `--web` 或 `--desktop` 時只印出說明並以狀態碼 1 結束。主機、埠、除錯模式沒有命令列參數，一律用下方環境變數設定。
 
 ### 環境變數
 
@@ -211,7 +211,7 @@ export MCP_LANGUAGE=en
 
 | 檔案 | 內容 | 讀寫方式 |
 |------|------|----------|
-| `ui_settings.json` | 介面設定，包含提示詞（`promptSettings`）、音效與自訂音效（`audioNotificationEnabled`、`audioNotificationVolume`、`selectedAudioId`、`customAudios`）、會話歷史保存期限（`sessionHistoryRetentionHours`）、用戶訊息記錄（`userMessageRecordingEnabled`、`userMessagePrivacyLevel`）、輸入框高度（`combinedFeedbackTextHeight`）、會話超時（`sessionTimeoutEnabled`、`sessionTimeoutSeconds`）、日誌等級（`logLevel`） | `GET /api/load-settings`、`POST /api/save-settings`、`POST /api/clear-settings`、`POST /api/log-level` |
+| `ui_settings.json` | 介面設定，包含提示詞（`promptSettings`）、音效與自訂音效（`audioNotificationEnabled`、`audioNotificationVolume`、`selectedAudioId`、`customAudios`）、會話歷史儲存期限（`sessionHistoryRetentionHours`）、使用者訊息記錄（`userMessageRecordingEnabled`、`userMessagePrivacyLevel`）、輸入框高度（`combinedFeedbackTextHeight`）、會話逾時（`sessionTimeoutEnabled`、`sessionTimeoutSeconds`）、日誌等級（`logLevel`） | `GET /api/load-settings`、`POST /api/save-settings`、`POST /api/clear-settings`、`POST /api/log-level` |
 | `session_history.json` | 會話歷史 | `GET /api/load-session-history`、`POST /api/save-session-history` |
 | `language.json` | 伺服器端語言設定 | Python `I18nManager` |
 
@@ -233,7 +233,7 @@ function checkAudioSupport() {
 }
 ```
 
-#### 音效文件存儲
+#### 音效檔案儲存
 沒有獨立的音效儲存設定。自訂音效轉成 Base64 後存在 `ui_settings.json` 的 `customAudios`，接受 `audio/mp3`、`audio/mpeg`、`audio/wav`、`audio/ogg`。程式沒有檔案大小或數量上限，上傳大檔會讓 `ui_settings.json` 跟著變大。
 
 #### 自動播放政策處理
@@ -246,8 +246,8 @@ function checkAudioSupport() {
 
 ### 會話管理重構部署
 
-#### 會話歷史存儲
-會話歷史存在伺服器端的 `~/.config/mcp-feedback-enhanced/session_history.json`，由前端經 `POST /api/save-session-history` 寫入、`GET /api/load-session-history` 讀取，不佔用瀏覽器 localStorage。載入時會移除超過保存期限的會話；保存期限是設定 `sessionHistoryRetentionHours`，介面可選 24、72、168、720 小時，預設 72。
+#### 會話歷史儲存
+會話歷史存在伺服器端的 `~/.config/mcp-feedback-enhanced/session_history.json`，由前端經 `POST /api/save-session-history` 寫入、`GET /api/load-session-history` 讀取，不佔用瀏覽器 localStorage。載入時會移除超過儲存期限的會話；儲存期限是設定 `sessionHistoryRetentionHours`，介面可選 24、72、168、720 小時，預設 72。
 
 #### 隱私設定
 隱私相關設定都存在 `ui_settings.json`：
@@ -268,10 +268,10 @@ if (typeof ResizeObserver === 'undefined') {
 }
 ```
 
-#### 設定存儲
+#### 設定儲存
 輸入框高度在調整後延遲 500 毫秒（debounce）寫入 `ui_settings.json` 的 `combinedFeedbackTextHeight`，預設 150 像素；沒有其他可調整的記憶設定。
 
-## 🔧 運維管理
+## 🔧 維運管理
 
 ### 服務監控
 
@@ -299,7 +299,7 @@ curl http://127.0.0.1:8765/api/session-status
 #### 日誌監控
 程式沒有寫日誌檔。設定 `MCP_DEBUG=true` 時，除錯訊息寫到 stderr；預設不輸出，避免干擾 MCP 的 stdio 通訊。
 
-### 性能調優
+### 效能調優
 
 會話清理與 WebSocket 連線沒有可調整的設定；可用環境變數調整的只有 Gzip 門檻、Gzip 壓縮等級與快取時間（`MCP_GZIP_MIN_SIZE`、`MCP_GZIP_LEVEL`、`MCP_STATIC_CACHE_AGE`、`MCP_API_CACHE_AGE`，見上方環境變數表）。
 
@@ -365,22 +365,22 @@ ssh -L 8765:127.0.0.1:8765 user@remote-server
 ssh -L 8766:127.0.0.1:8765 user@remote-server
 ```
 
-#### 調試模式
+#### 除錯模式
 ```bash
 # 啟用詳細日誌（寫到 stderr）
 MCP_DEBUG=true uvx mcp-feedback-enhanced@latest test --web
 ```
 
-### 安全配置
+### 安全設定
 
 #### 存取控制
 程式沒有 CORS 設定，也沒有認證機制。目前的防護只擋跨站的瀏覽器請求：
-- `/ws` 與 `/api/*` 的非 GET/HEAD/OPTIONS 請求會檢查 Origin：瀏覽器帶來的 Origin 必須指向本服務（或是桌面應用程式的來源），否則 `/ws` 以代碼 4003 關閉、`/api/*` 回 403；沒有帶 Origin 的非瀏覽器客戶端直接放行
+- `/ws` 與 `/api/*` 的非 GET/HEAD/OPTIONS 請求會檢查 Origin：瀏覽器帶來的 Origin 必須指向本服務（或是桌面應用程式的來源），否則 `/ws` 以代碼 4003 關閉、`/api/*` 回 403；沒有帶 Origin 的非瀏覽器用戶端直接放行
 - `/api/*` 的非 GET/HEAD/OPTIONS 請求還要求 `Content-Type: application/json`，不符回 415
 
 因此 `MCP_WEB_HOST` 請維持預設的 `127.0.0.1`。
 
-#### 防火牆配置
+#### 防火牆設定
 預設只綁定 `127.0.0.1`，不需要也不應該在防火牆開放 Web 服務埠；遠端使用請改用 SSH 埠轉發。
 
 ## 📊 監控和指標
@@ -389,24 +389,24 @@ MCP_DEBUG=true uvx mcp-feedback-enhanced@latest test --web
 
 ### 系統指標
 - CPU 使用率
-- 內存使用量
-- 網路連接數
+- 記憶體使用量
+- 網路連線數
 - 活躍會話數
 
 ### 業務指標
-- 會話創建率
+- 會話建立率
 - 回饋提交率
 - 平均回應時間
 - 錯誤率
 
 ### v2.4.3 新增指標
 - 音效播放成功率
-- 會話歷史存儲使用量
+- 會話歷史儲存使用量
 - 自訂音效上傳數量
 - 輸入框高度調整頻率
 - `session_history.json`、`ui_settings.json` 的檔案大小
 
-### 監控工具集成
+### 監控工具整合
 程式沒有 Prometheus 或其他監控工具的整合。
 
 ---
@@ -415,7 +415,7 @@ MCP_DEBUG=true uvx mcp-feedback-enhanced@latest test --web
 
 ### 升級到新版本
 
-#### 1. 備份現有數據
+#### 1. 備份現有資料
 ```bash
 # 介面設定（含提示詞、音效、自訂音效）與會話歷史都在這個資料夾
 cp ~/.config/mcp-feedback-enhanced/ui_settings.json ~/.config/mcp-feedback-enhanced/ui_settings.json.backup
@@ -435,7 +435,7 @@ pip install --upgrade mcp-feedback-enhanced
 uvx mcp-feedback-enhanced@latest version
 ```
 
-#### 4. 配置遷移
+#### 4. 設定遷移
 不需要手動遷移。前端載入 `ui_settings.json` 時會與預設值合併，檔案裡沒有的設定鍵直接使用預設值，例如：
 
 ```json
