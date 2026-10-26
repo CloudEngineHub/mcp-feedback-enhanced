@@ -59,7 +59,7 @@ uvx mcp-feedback-enhanced@latest
 # 指定版本
 uvx mcp-feedback-enhanced@2.8.4
 
-# 不經 MCP 客戶端，單獨測試 Web UI
+# 不經 MCP 用戶端，單獨測試 Web UI
 uvx mcp-feedback-enhanced@latest test --web
 ```
 
@@ -68,20 +68,20 @@ uvx mcp-feedback-enhanced@latest test --web
 # 安裝
 pip install mcp-feedback-enhanced
 
-# 運行
+# 執行
 mcp-feedback-enhanced
 ```
 
 #### 3. 從原始碼安裝
 ```bash
-# 克隆倉庫
+# 複製儲存庫
 git clone https://github.com/Minidoracat/mcp-feedback-enhanced.git
 cd mcp-feedback-enhanced
 
 # 使用 uv 安裝
 uv sync
 
-# 運行
+# 執行
 uv run python -m mcp_feedback_enhanced
 ```
 
@@ -115,10 +115,10 @@ SSH、Codespaces、Remote Containers、Docker、Windows 遠端桌面、沒有 `D
 
 **設定**:
 ```bash
-# 由 IDE 依 MCP 設定啟動，或手動運行
+# 由 IDE 依 MCP 設定啟動，或手動執行
 uvx mcp-feedback-enhanced@latest
 
-# 預設地址: http://127.0.0.1:8765
+# 預設網址: http://127.0.0.1:8765
 # 可用 MCP_WEB_HOST、MCP_WEB_PORT 調整；埠被佔用時會改用附近的可用埠
 ```
 
@@ -133,7 +133,7 @@ uvx mcp-feedback-enhanced@latest
 
 1. **在遠端伺服器安裝**:
 ```bash
-# SSH 連接到遠程服務器
+# SSH 連線到遠端伺服器
 ssh user@remote-server
 
 # 安裝服務
@@ -163,7 +163,7 @@ ssh -L 8765:127.0.0.1:8765 user@remote-server
 
 **設定**:
 ```bash
-# 在 WSL 中運行（通常由 IDE 依 MCP 設定啟動）
+# 在 WSL 中執行（通常由 IDE 依 MCP 設定啟動）
 uvx mcp-feedback-enhanced@latest
 ```
 
@@ -239,9 +239,9 @@ function checkAudioSupport() {
 #### 自動播放政策處理
 ```bash
 # 部署時需要考慮瀏覽器自動播放限制
-# Chrome: 需要用戶交互後才能播放音效
+# Chrome: 需要使用者互動後才能播放音效
 # Firefox: 預設允許音效播放
-# Safari: 需要用戶手勢觸發
+# Safari: 需要使用者手勢觸發
 ```
 
 ### 會話管理重構部署
@@ -288,7 +288,7 @@ curl http://127.0.0.1:8765/api/session-status
     "status": "active",
     "session_info": {
         "project_directory": "/path/to/project",
-        "summary": "代碼審查完成",
+        "summary": "程式碼審查完成",
         "feedback_completed": false
     }
 }
@@ -312,10 +312,10 @@ curl http://127.0.0.1:8765/api/session-status
 1. **音效無法播放**
 ```bash
 # 檢查瀏覽器自動播放政策
-# 解決方案：用戶需要先與頁面交互
-console.log('請點擊頁面任意位置以啟用音效功能');
+# 解決方案：使用者需要先與頁面互動
+console.log('請點選頁面任意位置以啟用音效功能');
 
-# 檢查音效文件格式
+# 檢查音效檔案格式
 # 支援格式：MP3, WAV, OGG
 # 程式沒有限制檔案大小
 ```
@@ -325,8 +325,8 @@ console.log('請點擊頁面任意位置以啟用音效功能');
 # 會話歷史存在伺服器端，不在 localStorage
 cat ~/.config/mcp-feedback-enhanced/session_history.json
 
-# 檢查保存期限：超過 ui_settings.json 的 sessionHistoryRetentionHours（預設 72 小時）的會話會在載入時被移除
-# 檢查隱私設定：userMessageRecordingEnabled 為 false 或 userMessagePrivacyLevel 為 disabled 時不記錄用戶訊息
+# 檢查儲存期限：超過 ui_settings.json 的 sessionHistoryRetentionHours（預設 72 小時）的會話會在載入時被移除
+# 檢查隱私設定：userMessageRecordingEnabled 為 false 或 userMessagePrivacyLevel 為 disabled 時不記錄使用者訊息
 ```
 
 3. **輸入框高度不記憶**
@@ -336,7 +336,7 @@ if (typeof ResizeObserver === 'undefined') {
     console.warn('瀏覽器不支援 ResizeObserver');
 }
 
-# 檢查設定存儲（高度存在 ui_settings.json，不在 localStorage）
+# 檢查設定儲存（高度存在 ui_settings.json，不在 localStorage）
 grep combinedFeedbackTextHeight ~/.config/mcp-feedback-enhanced/ui_settings.json
 ```
 
@@ -361,7 +361,7 @@ MCP_WEB_PORT=8766 uvx mcp-feedback-enhanced@latest
 # 手動建立埠轉發
 ssh -L 8765:127.0.0.1:8765 user@remote-server
 
-# 本地 8765 已被佔用時，改用其他本地埠
+# 本機 8765 已被佔用時，改用其他本機埠
 ssh -L 8766:127.0.0.1:8765 user@remote-server
 ```
 
