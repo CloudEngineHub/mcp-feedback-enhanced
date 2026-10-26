@@ -1,14 +1,14 @@
 # API 參考文件
 
-本文件提供 MCP Feedback Enhanced 的完整 API 參考，包括 MCP 工具、Web API、WebSocket 通信協定和內部 API。
+本文件提供 MCP Feedback Enhanced 的完整 API 參考，包括 MCP 工具、Web API、WebSocket 通訊協定和內部 API。
 
 ## 📡 MCP 工具 API
 
-MCP Feedback Enhanced 基於 FastMCP 框架實現，提供標準的 MCP 協定支援。
+MCP Feedback Enhanced 基於 FastMCP 框架實作，提供標準的 MCP 協定支援。
 
 ### interactive_feedback
 
-AI 助手與使用者進行交互式回饋的核心 MCP 工具。
+AI 助手與使用者進行互動式回饋的核心 MCP 工具。
 
 #### 函式簽名
 ```python
@@ -21,19 +21,19 @@ async def interactive_feedback(
 
 #### 參數說明
 
-| 參數 | 類型 | 必需 | 預設值 | 描述 |
+| 參數 | 型別 | 必需 | 預設值 | 描述 |
 |------|------|------|--------|------|
 | `project_directory` | `str` | ❌ | `"."` | 專案目錄路徑，用於上下文顯示；路徑不存在時改用伺服器的工作目錄 |
 | `summary` | `str` | ❌ | `"我已完成了您請求的任務。"` | AI 助手的工作摘要，向使用者說明目前狀態 |
 | `timeout` | `int` | ❌ | `600` | 等待使用者回饋的逾時時間（秒），伺服器端鉗制在 60–86400，無法解析時用 600 |
 
-#### 返回值
+#### 回傳值
 MCP 內容列表：
 - 有回饋時：第一項是彙整文字回饋與圖片資訊的 `TextContent`，之後每張圖片一個 `ImageContent`
 - 等待逾時或使用者關閉介面：一個 `TextContent`，說明使用者未回應並要求 AI 結束任務、不要再呼叫本工具
 - 使用者送出空白回饋：`TextContent("使用者未提供任何回饋內容。")`
 
-#### 使用示例
+#### 使用範例
 ```python
 # 基本調用
 result = await interactive_feedback(
@@ -50,7 +50,7 @@ result = await interactive_feedback(
 ```
 
 #### 錯誤處理
-工具不會把例外拋給 MCP 客戶端：逾時、使用者關閉介面與其他錯誤都轉成 `TextContent` 說明後回傳。
+工具不會把例外拋給 MCP 用戶端：逾時、使用者關閉介面與其他錯誤都轉成 `TextContent` 說明後回傳。
 
 ### get_system_info
 
@@ -175,7 +175,7 @@ ws://127.0.0.1:{port}/ws
 }
 ```
 
-### 📤 客戶端 → 伺服器訊息
+### 📤 用戶端 → 伺服器訊息
 
 | `type` | 其他欄位 | 伺服器處理 |
 |--------|----------|------------|
@@ -210,21 +210,21 @@ ws://127.0.0.1:{port}/ws
 }
 ```
 
-**字段說明**:
+**欄位說明**:
 - `feedback`: 使用者回饋文字內容
 - `images`: 圖片物件陣列；`data` 是不含 `data:` 前綴的 Base64。缺少 `name`、`data` 或 `size` 的項目會被略過
 - `settings.image_size_limit`: 圖片大小上限（位元組），`0` 表示不限制；超過上限的圖片會被略過
 - `settings.enable_base64_detail`: 是否在回給 AI 的文字中附上圖片的完整 Base64
 
-### 📥 伺服器 → 客戶端訊息
+### 📥 伺服器 → 用戶端訊息
 
 | `type` | 欄位 | 何時傳送 |
 |--------|------|----------|
 | `connection_established` | `messageCode` | WebSocket 連線建立後 |
 | `session_updated` | `action`（`"new_session_created"`）、`messageCode`、`session_info` | AI 再次呼叫 `interactive_feedback` 時通知既有分頁；連線時若有待送的會話更新也會送出 |
 | `status_update` | `status_info` | 連線建立且沒有待送的會話更新時，或回應 `get_status` |
-| `heartbeat_response` | `timestamp`（原樣回傳客戶端送來的值） | 回應 `heartbeat` |
-| `ping` | `timestamp` | 伺服器檢查分頁是否仍連線時；客戶端回 `pong` |
+| `heartbeat_response` | `timestamp`（原樣回傳用戶端送來的值） | 回應 `heartbeat` |
+| `ping` | `timestamp` | 伺服器檢查分頁是否仍連線時；用戶端回 `pong` |
 | `notification` | `code`、`severity`，以及 `status` 或 `reason` | 回饋已收到（`severity: "success"`）、重複提交被忽略（`"warning"`）、會話被清理（`"warning"`，`reason` 為清理原因） |
 
 #### session_updated
@@ -281,10 +281,10 @@ def create_session(self, project_directory: str, summary: str) -> str
 async def smart_open_browser(self, url: str) -> bool
 ```
 
-智能開啟瀏覽器，避免重複開啟。
+智慧開啟瀏覽器，避免重複開啟。
 
-**返回值**:
-- `True`: 桌面模式，或檢測到活躍標籤頁（已送 `session_updated` 通知該分頁），未開啟新視窗
+**回傳值**:
+- `True`: 桌面模式，或偵測到活躍分頁（已送 `session_updated` 通知該分頁），未開啟新視窗
 - `False`: 開啟了新瀏覽器視窗
 
 ### WebFeedbackSession API
@@ -324,7 +324,7 @@ PromptManager.prototype.addPrompt = function(name, content) // => Object
 - `name`: 提示詞名稱（必須唯一）
 - `content`: 提示詞內容
 
-**返回值**: 新建的提示詞物件。名稱或內容為空、名稱重複時拋出 `Error`。
+**回傳值**: 新建的提示詞物件。名稱或內容為空、名稱重複時拋出 `Error`。
 
 #### updatePrompt()
 ```javascript
@@ -391,7 +391,7 @@ SessionDataManager.prototype.cleanupExpiredSessions = function() // => number
 
 移除超過儲存期限的會話。儲存期限讀取設定 `sessionHistoryRetentionHours`（預設 72 小時），以秒比較；會話時間依序取 `saved_at`、`completed_at`、`created_at`（毫秒會先換成秒）。有清掉會話時立即呼叫 `saveToServer()` 存回 `/api/save-session-history`。`loadFromServer()` 合併存檔與即時會話後會呼叫它。
 
-**返回值**: 清理的會話數量
+**回傳值**: 清理的會話數量
 
 ### AudioManager API（v2.4.3 新增）
 
@@ -422,7 +422,7 @@ AudioManager.prototype.addCustomAudio = function(name, file) // => Promise<Objec
 - `name`: 音效名稱（不可重複）
 - `file`: 瀏覽器的 `File` 物件，類型須為 `audio/mp3`、`audio/mpeg`、`audio/wav` 或 `audio/ogg`；會轉成 Base64 存進設定
 
-**返回值**: resolve 為新增的音效物件（`id`、`name`、`data`、`mimeType`、`createdAt`、`isDefault: false`）；名稱或檔案為空、格式不支援、名稱重複時 reject。
+**回傳值**: resolve 為新增的音效物件（`id`、`name`、`data`、`mimeType`、`createdAt`、`isDefault: false`）；名稱或檔案為空、格式不支援、名稱重複時 reject。
 
 #### removeCustomAudio()
 ```javascript
@@ -542,7 +542,7 @@ class SessionStatus(Enum):
 ### 資源保護
 - WebSocket 連線：每個會話只保留最新的一條連線
 - 會話逾時自動清理
-- 內存使用監控
+- 記憶體使用監控
 
 ### 跨域設定
 沒有 CORS 中介層，伺服器不核准任何跨來源請求。非 GET/HEAD/OPTIONS 的 `/api/*` 與 `/ws` 會檢查 Origin，詳見 [部署指南的安全設定](./deployment-guide.md#安全設定)。
@@ -552,6 +552,6 @@ class SessionStatus(Enum):
 ## 📚 相關文件
 
 - **[系統架構總覽](./system-overview.md)** - 了解整體架構設計理念和技術棧
-- **[元件詳細說明](./component-details.md)** - 深入了解各層元件的具體實現
-- **[交互流程文件](./interaction-flows.md)** - 詳細的使用者交互和系統流程
+- **[元件詳細說明](./component-details.md)** - 深入了解各層元件的具體實作
+- **[互動流程文件](./interaction-flows.md)** - 詳細的使用者互動和系統流程
 - **[部署指南](./deployment-guide.md)** - 環境設定和部署最佳實踐
