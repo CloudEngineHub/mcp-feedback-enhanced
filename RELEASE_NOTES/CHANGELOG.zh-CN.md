@@ -47,7 +47,7 @@
 - **三语 README**：环境检测描述改成实际行为，`test` 示例补上 `--web`（不带参数只会打印说明），并注明 `MCP_WEB_PORT=0` 由系统分配端口；删除不存在的「总是在主屏幕中心显示窗口」设置问答。
 - **`MCP_LANGUAGE` 与界面语言的说明**：三语 README 与 `docs/architecture/` 的部署指南、组件详细说明、交互流程文档、系统架构总览，把语言分成两条顺序：网页界面语言是 `MCP_LANGUAGE` → `ui_settings.json` 的 `language` → 浏览器语言 → 繁中，返回给 AI 的错误信息语言是 `MCP_LANGUAGE` → `LANG` 等环境变量 → 系统 locale → 繁中；注明只接受 `zh-TW`、`zh-CN`、`en`，其他值会被忽略，指定时界面切换只在当前页面有效、不保存，刷新后回到指定语言。配置文件表格删去 `language.json`，并更正「localStorage 保存界面语言」的说法（localStorage 只保存通知设置）。
 - **繁体中文文档改用台湾用语**：README.zh-TW、`docs/architecture/` 全部架构文档（索引、系统架构总览、组件详细说明、交互流程、API 参考、部署指南）、繁体中文 Cache 管理与 SSH Remote 指南、桌面构建与 GitHub Actions 工作流程说明、发布说明管理文档与模板，叙述、图表，以及代码块里的中文注释与示例字符串，都改用台湾用语（例如使用者、资料、设定、逾时、呼叫、互动、智慧、侦测、通讯、连接埠、建置）；繁体中文的「交互流程文档」改名为「互動流程文件」。与源码或 workflow 逐字相同的代码行保持不变。
-- **桌面构建指南故障排除示例对齐实际输出**：`docs/DESKTOP_BUILD.md` 的错误信息示例改为 `scripts/build_desktop.py` 实际打印的内容；修正 `make clean-desktop`（清理后会接着重新构建 Debug 版本）与 `make dev-setup`（安装开发依赖与 pre-commit hooks）的说明。
+- **桌面构建指南故障排除示例对齐实际输出**：`docs/DESKTOP_BUILD.md` 的错误信息示例改为 `scripts/build_desktop.py` 实际打印的内容；构建失败的解决步骤改为 `make clean-desktop` 清理后再 `make build-desktop`；修正 `make dev-setup`（安装开发依赖与 pre-commit hooks）的说明。
 
 ### 🧹 代码清理
 - 删除 app.js 中没有调用者的会话更新与状态更新防抖包装，以及服务器从不发送的 feedback_received、desktop_close_request 消息处理（含测试数据里没有测试使用的 feedback_received fixture）。
@@ -75,6 +75,7 @@
 - pre-commit 的 ruff 改用 v0.17.2（hook 名称随之改为 `ruff-check`），与 `uv run ruff`、CI 的结果一致。
 - 开发依赖的 ruff、mypy 固定为 `ruff==0.17.2`、`mypy==2.4.0`：`uv.lock` 不纳入版本控制，CI 每次都重新解析版本，原本的 `>=` 会让 lint 工具发布新版时 CI 在代码没变的情况下失败，本地与 CI 的结果也可能不同。升级 ruff 时，`pyproject.toml` 与 `.pre-commit-config.yaml` 要一起改。
 - Tests workflow 在 ubuntu 加上 `ruff check`、`ruff format --check` 与 `mypy`；原有的 mypy 错误已修正。
+- `make clean-desktop`（`scripts/build_desktop.py --clean`）只清理、不构建：原本清理完会接着检查 Rust 并构建桌面应用。`*.egg-info` 原本写成字面路径，一直清不到；现在改为清理 `src-tauri/src/` 下的 egg-info，也就是用 setuptools 构建 `src-tauri` 时生成的位置（根目录用 hatchling，不会生成 egg-info）。
 
 ### ✅ 测试
 - 桌面启动测试不再把整个进程的 `asyncio.sleep` 换成立即返回：之前会让前面测试留下的 uvicorn 服务器线程变成忙循环抢 GIL，CI 的 ubuntu job 偶尔因此超时 60 秒；现在只替换 `desktop_app` 模块自己的 `asyncio` 引用。

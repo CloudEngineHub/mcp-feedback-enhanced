@@ -165,11 +165,12 @@ def clean_build_artifacts(project_root: Path):
         print(f"清理 Rust target 目錄: {rust_target}")
         shutil.rmtree(rust_target)
 
-    # 清理 Python 構建產物
+    # 清理 Python 構建產物；egg-info 只會在 src-tauri 以 setuptools 建置時出現在 src-tauri/src/
+    # （根目錄用 hatchling，不產生 egg-info）
     python_build_dirs = [
         project_root / "build",
         project_root / "dist",
-        project_root / "*.egg-info",
+        *(project_root / "src-tauri" / "src").glob("*.egg-info"),
     ]
 
     for build_dir in python_build_dirs:
@@ -379,9 +380,11 @@ def main():
     print(f"專案根目錄: {project_root}")
 
     try:
-        # 清理構建產物（如果需要）
+        # 只清理，不建置
         if args.clean:
             clean_build_artifacts(project_root)
+            print("✅ 構建產物清理完成")
+            return
 
         # 檢查 Rust 環境
         if not check_rust_environment():

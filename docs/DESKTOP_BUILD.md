@@ -153,9 +153,10 @@ make test-desktop
    ❌ 所有平台構建都失敗了
    ❌ 沒有成功構建任何平台
    ```
-   解決方案: 依錯誤訊息檢查 Rust 環境，再清理後重新建置。`make clean-desktop` 執行的是 `scripts/build_desktop.py --clean`，清理完會接著重新建置 Debug 版本：
+   解決方案: 依錯誤訊息檢查 Rust 環境，再清理後重新建置：
    ```bash
    make clean-desktop
+   make build-desktop
    ```
 
 ### 檢查環境

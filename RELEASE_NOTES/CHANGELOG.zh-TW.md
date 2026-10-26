@@ -47,7 +47,7 @@
 - **三語 README**：環境偵測描述改成實際行為，`test` 範例補上 `--web`（不帶參數只會印出說明），並註明 `MCP_WEB_PORT=0` 由系統分配埠；刪除不存在的「總是在主螢幕中心顯示視窗」設定問答。
 - **`MCP_LANGUAGE` 與介面語言的說明**：三語 README 與 `docs/architecture/` 的部署指南、元件詳細說明、互動流程文件、系統架構總覽，把語言分成兩條順序：網頁介面語言是 `MCP_LANGUAGE` → `ui_settings.json` 的 `language` → 瀏覽器語言 → 繁中，回給 AI 的錯誤訊息語言是 `MCP_LANGUAGE` → `LANG` 等環境變數 → 系統 locale → 繁中；註明只接受 `zh-TW`、`zh-CN`、`en`，其他值會被忽略，指定時介面切換只在目前頁面有效、不存檔，重新整理就回到指定語言。設定檔表格刪掉 `language.json`，並更正「localStorage 存介面語言」的說法（localStorage 只存通知設定）。
 - **繁中文件改用台灣用語**：README.zh-TW、`docs/architecture/` 全部架構文件（索引、系統架構總覽、元件詳細說明、互動流程文件、API 參考文件、部署指南）、繁中 Cache 管理與 SSH Remote 指南、桌面建置與 GitHub Actions 工作流程說明、發佈說明管理文件與範本，敘述、圖表，以及程式碼區塊裡的中文註解與範例字串，都改用台灣用語（例如使用者、資料、設定、逾時、呼叫、互動、智慧、偵測、通訊、連接埠、建置）；「交互流程文件」改名為「互動流程文件」。和原始碼或 workflow 逐字相同的程式碼行維持原樣。
-- **桌面建置指南故障排除範例對齊實際輸出**：`docs/DESKTOP_BUILD.md` 的錯誤訊息範例改成 `scripts/build_desktop.py` 實際印出的內容；修正 `make clean-desktop`（清理後會接著重新建置 Debug 版本）與 `make dev-setup`（安裝開發依賴與 pre-commit hooks）的說明。
+- **桌面建置指南故障排除範例對齊實際輸出**：`docs/DESKTOP_BUILD.md` 的錯誤訊息範例改成 `scripts/build_desktop.py` 實際印出的內容；建置失敗的解決步驟改成 `make clean-desktop` 清理後再 `make build-desktop`；修正 `make dev-setup`（安裝開發依賴與 pre-commit hooks）的說明。
 
 ### 🧹 程式碼清理
 - 刪除 app.js 沒有呼叫者的會話更新與狀態更新防抖包裝，以及伺服器從不傳送的 feedback_received、desktop_close_request 訊息處理（含測試資料裡沒有測試使用的 feedback_received fixture）。
@@ -75,6 +75,7 @@
 - pre-commit 的 ruff 改用 v0.17.2（hook 名稱跟著改為 `ruff-check`），與 `uv run ruff`、CI 的結果一致。
 - 開發依賴的 ruff、mypy 釘成 `ruff==0.17.2`、`mypy==2.4.0`：`uv.lock` 不進版控，CI 每次都重新解析版本，原本的 `>=` 會讓 lint 工具出新版時 CI 在程式碼沒變的情況下失敗，本機與 CI 的結果也可能不同。升級 ruff 時，`pyproject.toml` 與 `.pre-commit-config.yaml` 要一起改。
 - Tests workflow 在 ubuntu 加上 `ruff check`、`ruff format --check` 與 `mypy`；原本既有的 mypy 錯誤已修正。
+- `make clean-desktop`（`scripts/build_desktop.py --clean`）只清理、不建置：原本清理完會接著檢查 Rust 並建置桌面應用程式。`*.egg-info` 原本寫成字面路徑，一直清不到；現在改清 `src-tauri/src/` 底下的 egg-info，也就是以 setuptools 建置 `src-tauri` 時產生的位置（根目錄用 hatchling，不會產生 egg-info）。
 
 ### ✅ 測試
 - 桌面啟動測試不再把整個行程的 `asyncio.sleep` 換成立即回傳：之前會讓前面測試留下的 uvicorn 伺服器執行緒變成忙迴圈搶 GIL，CI 的 ubuntu job 偶爾因此逾時 60 秒；現在只替換 `desktop_app` 模組自己的 `asyncio` 參照。
