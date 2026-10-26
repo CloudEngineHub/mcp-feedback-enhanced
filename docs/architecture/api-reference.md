@@ -35,13 +35,13 @@ MCP 內容列表：
 
 #### 使用範例
 ```python
-# 基本調用
+# 基本呼叫
 result = await interactive_feedback(
     project_directory="./my-web-app",
-    summary="我已完成登入功能的實現，包括表單驗證和錯誤處理。請檢查代碼品質。"
+    summary="我已完成登入功能的實作，包括表單驗證和錯誤處理。請檢查程式碼品質。"
 )
 
-# 自定義超時
+# 自訂逾時
 result = await interactive_feedback(
     project_directory="./complex-project",
     summary="重構完成，請詳細測試所有功能模組。",
@@ -111,7 +111,7 @@ def get_system_info() -> str
     "status": "active",
     "session_info": {
         "project_directory": "./my-project",
-        "summary": "代碼審查完成",
+        "summary": "程式碼審查完成",
         "feedback_completed": false
     }
 }
@@ -127,7 +127,7 @@ def get_system_info() -> str
 {
     "session_id": "550e8400-e29b-41d4-a716-446655440000",
     "project_directory": "./my-project",
-    "summary": "代碼審查完成",
+    "summary": "程式碼審查完成",
     "feedback_completed": false,
     "images_count": 0
 }
@@ -254,7 +254,7 @@ ws://127.0.0.1:{port}/ws
         "created_at": 1703123456.789,
         "last_activity": 1703123456.789,
         "project_directory": "./my-project",
-        "summary": "代碼審查完成",
+        "summary": "程式碼審查完成",
         "session_id": "550e8400-e29b-41d4-a716-446655440000"
     }
 }
