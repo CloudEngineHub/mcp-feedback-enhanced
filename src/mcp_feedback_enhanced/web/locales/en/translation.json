@@ -10,6 +10,10 @@
         "sessionIdCopyFailed": "Failed to copy session ID",
         "updateFailed": "Failed to update content, please manually refresh the page to view new AI work summary"
     },
+    "waitingPage": {
+        "description": "Interactive feedback collection tool (Web UI)",
+        "status": "Waiting for an MCP service call to create a feedback session..."
+    },
     "tabs": {
         "summary": "📋 AI Summary",
         "sessions": "📋 Session Management",

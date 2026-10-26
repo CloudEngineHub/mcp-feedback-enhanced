@@ -17,20 +17,20 @@
         new window.MCPFeedback.Logger({ moduleName: 'SettingsManager' }) :
         console;
 
+    function isLanguageForced() {
+        return Boolean(window.i18nManager && window.i18nManager.isLanguageForced());
+    }
+
     /**
      * 設定管理器建構函數
      */
     function SettingsManager(options) {
         options = options || {};
         
-        // 從 i18nManager 獲取當前語言作為預設值
-        const defaultLanguage = window.i18nManager ? window.i18nManager.getCurrentLanguage() : 'zh-TW';
-        
-        // 預設設定
+        // 預設設定；language 不給預設值，只有使用者切換語言才寫進 ui_settings.json
         this.defaultSettings = {
             layoutMode: 'combined-vertical',
             autoClose: false,
-            language: defaultLanguage,  // 使用 i18nManager 的當前語言
             imageSizeLimit: 0,
             enableBase64Detail: false,
             // 移除 activeTab - 頁籤切換無需持久化
@@ -87,15 +87,7 @@
                         self.currentSettings = Utils.deepClone(self.defaultSettings);
                     }
                     
-                    // 同步語言設定到 i18nManager
-                    if (self.currentSettings.language && window.i18nManager) {
-                        const currentI18nLanguage = window.i18nManager.getCurrentLanguage();
-                        if (self.currentSettings.language !== currentI18nLanguage) {
-                            console.log('🔧 SettingsManager.loadSettings: 同步語言設定到 i18nManager');
-                            console.log('  從:', currentI18nLanguage, '到:', self.currentSettings.language);
-                            window.i18nManager.setLanguage(self.currentSettings.language);
-                        }
-                    }
+                    self.applySavedLanguage();
                     
                     resolve(self.currentSettings);
                 })
@@ -223,6 +215,14 @@
      * 設置設定值
      */
     SettingsManager.prototype.set = function(key, value) {
+        if (key === 'language' && isLanguageForced()) {
+            // MCP_LANGUAGE 指定期間只切換目前頁面，不改也不存 ui_settings.json 的 language
+            if (value !== window.i18nManager.getCurrentLanguage()) {
+                this.handleLanguageChange(value);
+            }
+            return this;
+        }
+
         const oldValue = this.currentSettings[key];
         this.currentSettings[key] = value;
 
@@ -246,6 +246,10 @@
         
         for (const key in settings) {
             if (settings.hasOwnProperty(key)) {
+                // MCP_LANGUAGE 指定期間不改 language；目前沒有呼叫者批次設定語言
+                if (key === 'language' && isLanguageForced()) {
+                    continue;
+                }
                 this.currentSettings[key] = settings[key];
                 
                 if (key === 'language' && oldLanguage !== settings[key]) {
@@ -291,8 +295,12 @@
     SettingsManager.prototype.resetSettings = function() {
         console.log('重置所有設定');
 
-        // 重置為預設值
+        // 重置為預設值；MCP_LANGUAGE 指定期間保留檔案原本的 language
+        const savedLanguage = this.currentSettings.language;
         this.currentSettings = Utils.deepClone(this.defaultSettings);
+        if (isLanguageForced() && savedLanguage !== undefined) {
+            this.currentSettings.language = savedLanguage;
+        }
 
         // 立即保存重置後的設定到伺服器
         this.saveToServer();
@@ -455,27 +463,24 @@
      * 應用語言設定
      */
     SettingsManager.prototype.applyLanguageSettings = function() {
-        if (this.currentSettings.language && window.i18nManager) {
-            const currentI18nLanguage = window.i18nManager.getCurrentLanguage();
-            if (this.currentSettings.language !== currentI18nLanguage) {
-                console.log('應用語言設定: ' + currentI18nLanguage + ' -> ' + this.currentSettings.language);
-                window.i18nManager.setLanguage(this.currentSettings.language);
-            }
-        }
+        this.applySavedLanguage();
 
-        // 更新下拉選單選項
-        const languageSelect = Utils.safeQuerySelector('#settingsLanguageSelect');
-        if (languageSelect) {
-            console.log(`🔧 SettingsManager.applyLanguageSettings: 設置 select.value = ${this.currentSettings.language}`);
-            languageSelect.value = this.currentSettings.language;
-            console.log(`🔧 SettingsManager.applyLanguageSettings: 實際 select.value = ${languageSelect.value}`);
+        // 選單顯示目前頁面實際的語言（指定期間不一定等於檔案裡的 language）
+        if (window.i18nManager) {
+            window.i18nManager.setupLanguageSelectors();
         }
+    };
 
-        // 更新語言選項顯示（兼容舊版卡片式選擇器）
-        const languageOptions = document.querySelectorAll('.language-option');
-        languageOptions.forEach(function(option) {
-            option.classList.toggle('active', option.getAttribute('data-lang') === this.currentSettings.language);
-        }.bind(this));
+    /**
+     * 把 ui_settings.json 的 language 套到介面；MCP_LANGUAGE 指定期間不套用
+     */
+    SettingsManager.prototype.applySavedLanguage = function() {
+        const language = this.currentSettings.language;
+        if (language && window.i18nManager && !isLanguageForced() &&
+            language !== window.i18nManager.getCurrentLanguage()) {
+            console.log('🔧 套用 ui_settings.json 的語言: ' + language);
+            window.i18nManager.setLanguage(language);
+        }
     };
 
     /**

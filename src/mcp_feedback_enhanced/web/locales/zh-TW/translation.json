@@ -10,6 +10,10 @@
         "sessionIdCopyFailed": "複製會話ID失敗",
         "updateFailed": "更新內容失敗，請手動重新整理頁面以查看新的 AI 工作摘要"
     },
+    "waitingPage": {
+        "description": "Web UI 互動式回饋收集工具",
+        "status": "等待 MCP 服務呼叫以建立回饋會話..."
+    },
     "tabs": {
         "summary": "📋 AI 摘要",
         "sessions": "📋 會話管理",

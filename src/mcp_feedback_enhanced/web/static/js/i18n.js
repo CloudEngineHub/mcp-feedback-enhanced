@@ -8,38 +8,31 @@
 
 class I18nManager {
     constructor() {
-        this.currentLanguage = this.getDefaultLanguage();
+        // 伺服器在 MCP_LANGUAGE 合法時輸出 <html data-forced-language>，沒指定就沒有這個屬性
+        this.forcedLanguage = document.documentElement.getAttribute('data-forced-language');
+        this.currentLanguage = this.forcedLanguage || this.getBrowserLanguage();
         this.translations = {};
         this.loadingPromise = null;
     }
-    
-    getDefaultLanguage() {
-        // 1. 先檢查本地儲存的設定
-        const savedLanguage = localStorage.getItem('language');
-        if (savedLanguage && ['zh-TW', 'zh-CN', 'en'].includes(savedLanguage)) {
-            console.log('🌐 使用儲存的語言設定:', savedLanguage);
-            return savedLanguage;
-        }
-        
-        // 2. 檢查瀏覽器語言
+
+    // MCP_LANGUAGE 指定期間，ui_settings.json 的 language 不覆蓋介面語言，也不被改寫
+    isLanguageForced() {
+        return Boolean(this.forcedLanguage);
+    }
+
+    getBrowserLanguage() {
         const browserLang = navigator.language || navigator.userLanguage;
         console.log('🌐 瀏覽器語言:', browserLang);
-        
+
         if (browserLang.startsWith('zh-TW') || browserLang.includes('Hant')) {
-            console.log('🌐 偵測到繁體中文環境');
             return 'zh-TW';
         }
         if (browserLang.startsWith('zh') || browserLang.includes('Hans')) {
-            console.log('🌐 偵測到簡體中文環境');
             return 'zh-CN';
         }
         if (browserLang.startsWith('en')) {
-            console.log('🌐 偵測到英文環境');
             return 'en';
         }
-        
-        // 3. 預設使用繁體中文
-        console.log('🌐 使用預設語言: zh-TW');
         return 'zh-TW';
     }
 

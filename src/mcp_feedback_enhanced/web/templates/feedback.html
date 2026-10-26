@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-TW" id="html-root">
+<html lang="{{ forced_language or 'zh-TW' }}"{% if forced_language %} data-forced-language="{{ forced_language }}"{% endif %} id="html-root">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">

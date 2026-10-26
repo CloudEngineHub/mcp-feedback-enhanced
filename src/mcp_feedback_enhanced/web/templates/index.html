@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-TW" id="html-root">
+<html lang="{{ forced_language or 'zh-TW' }}"{% if forced_language %} data-forced-language="{{ forced_language }}"{% endif %} id="html-root">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -271,17 +271,17 @@
     <!-- 連接狀態指示器 -->
     <div class="connection-status">
         <div class="connection-indicator" id="connectionIndicator"></div>
-        <span id="connectionText">連線中...</span>
+        <span id="connectionText" data-i18n="connectionMonitor.connecting">連線中...</span>
     </div>
 
     <!-- 等待會話的頁面 -->
     <div class="waiting-container" id="waitingContainer">
         <div class="waiting-content">
             <h1 class="waiting-title">MCP Feedback Enhanced</h1>
-            <p class="waiting-description">
+            <p class="waiting-description" data-i18n="waitingPage.description">
                 Web UI 互動式回饋收集工具
             </p>
-            <div class="waiting-status">
+            <div class="waiting-status" data-i18n="waitingPage.status">
                 等待 MCP 服務呼叫以建立回饋會話...
             </div>
         </div>
@@ -303,5 +303,11 @@
     <script src="/static/js/modules/ui-manager.js?v=2026102601"></script>
     <!-- 主應用程式 -->
     <script src="/static/js/app.js?v=2026102601"></script>
+    <script>
+        // 等待頁不啟動 FeedbackApp，只套用介面語言，順序與回饋頁相同
+        window.i18nManager.init().then(function() {
+            return new window.MCPFeedback.SettingsManager().loadSettings();
+        });
+    </script>
 </body>
 </html>

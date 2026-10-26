@@ -17,6 +17,7 @@ from fastapi.responses import HTMLResponse, JSONResponse
 
 from ... import __version__
 from ...debug import web_debug_log as debug_log
+from ...i18n import get_forced_language
 from ..constants import get_message_code as get_msg_code
 
 
@@ -165,6 +166,7 @@ def setup_routes(manager: "WebUIManager"):
                     "title": "MCP Feedback Enhanced",
                     "has_session": False,
                     "version": __version__,
+                    "forced_language": get_forced_language(),
                 },
             )
 
@@ -183,6 +185,7 @@ def setup_routes(manager: "WebUIManager"):
                 "version": __version__,
                 "has_session": True,
                 "layout_mode": layout_mode,
+                "forced_language": get_forced_language(),
             },
         )
 
