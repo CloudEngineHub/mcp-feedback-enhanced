@@ -2,14 +2,14 @@
 
 ## 🏗️ 四層架構元件
 
-MCP Feedback Enhanced 採用清晰的四層架構設計，每層負責特定的功能領域。本文件詳細說明各層元件的實現細節、職責分工和交互機制。
+MCP Feedback Enhanced 採用清晰的四層架構設計，每層負責特定的功能領域。本文件詳細說明各層元件的實作細節、職責分工和互動機制。
 
 ### 架構設計原則
 
 - **單一職責**: 每個元件專注於特定功能領域
-- **低耦合**: 層間透過明確的介面通信
+- **低耦合**: 層間透過明確的介面通訊
 - **高內聚**: 相關功能集中在同一層內
-- **可擴展**: 支援新功能的無縫集成
+- **可擴充**: 支援新功能的無縫整合
 - **可測試**: 每層都可獨立進行單元測試
 
 ### 詳細元件關係圖
@@ -17,7 +17,7 @@ MCP Feedback Enhanced 採用清晰的四層架構設計，每層負責特定的�
 ```mermaid
 graph TB
     subgraph "第一層：MCP 服務層"
-        SERVER[server.py<br/>MCP 伺服器<br/>FastMCP 實現]
+        SERVER[server.py<br/>MCP 伺服器<br/>FastMCP 實作]
         TOOL[interactive_feedback<br/>核心工具<br/>參數驗證]
         I18N[i18n.py<br/>國際化支援<br/>多語言管理]
         DEBUG[debug.py<br/>統一除錯<br/>日誌輸出]
@@ -26,16 +26,16 @@ graph TB
     subgraph "第二層：Web UI 管理層"
         MANAGER[WebUIManager<br/>全域單一實例<br/>會話控制]
         SESSION[WebFeedbackSession<br/>會話模型<br/>狀態管理]
-        MODELS[models/<br/>資料模型<br/>類型定義]
+        MODELS[models/<br/>資料模型<br/>型別定義]
     end
 
     subgraph "第三層：Web 服務層"
         MAIN[main.py<br/>FastAPI 應用<br/>HTTP 服務]
         ROUTES[routes/main_routes.py<br/>路由處理<br/>API 端點]
-        WS[WebSocket<br/>即時通信<br/>雙向資料流]
+        WS[WebSocket<br/>即時通訊<br/>雙向資料流]
     end
 
-    subgraph "第四層：前端交互層"
+    subgraph "第四層：前端互動層"
         HTML[templates/<br/>HTML 範本<br/>Jinja2 渲染]
         JS[static/js/<br/>JavaScript 模組<br/>ES6+ 架構]
         CSS[static/css/<br/>樣式系統<br/>響應式設計]
@@ -45,7 +45,7 @@ graph TB
     end
 
     subgraph "工具層 - 核心工具"
-        ERROR[utils/error_handler.py<br/>錯誤處理<br/>統一異常管理]
+        ERROR[utils/error_handler.py<br/>錯誤處理<br/>統一例外管理]
         MEMORY[utils/memory_monitor.py<br/>記憶體監控<br/>資源追蹤]
         RESOURCE[utils/resource_manager.py<br/>資源管理<br/>生命週期控制]
     end
@@ -106,7 +106,7 @@ graph TB
 
 ### server.py - MCP 伺服器核心
 
-**架構實現**：
+**架構實作**：
 ```python
 # 基於 FastMCP 的服務器實現
 SERVER_NAME = "互動式回饋收集 MCP"
@@ -126,16 +126,16 @@ async def interactive_feedback(
 ```
 
 **主要職責**：
-- **MCP 協定實現**: 基於 FastMCP 框架的標準實現
+- **MCP 協定實作**: 基於 FastMCP 框架的標準實作
 - **工具註冊**: 註冊 `interactive_feedback` 和 `get_system_info` 工具
 - **環境偵測**: `is_remote_environment()` 與 `is_wsl_environment()` 的結果只寫進 debug log 與 `get_system_info` 的回傳，不改變流程；WSL 判斷另用於選擇瀏覽器開啟方式（見 `web/utils/browser.py`）
 - **生命週期管理**: 控制 Web UI 的啟動、執行和清理
-- **介面層**: 作為 AI 助手與系統的主要通信介面
+- **介面層**: 作為 AI 助手與系統的主要通訊介面
 
 **核心特性**：
 - 非同步處理提升效能
 - 完整的錯誤處理和日誌記錄
-- 參數類型驗證和文件生成
+- 參數型別驗證和文件生成
 
 ### interactive_feedback 工具
 
@@ -156,7 +156,7 @@ flowchart TD
     RESULT -->|收到回饋| SAVE[save_feedback_to_file<br/>存成臨時 JSON]
     RESULT -->|逾時或介面關閉| NORESP[回傳使用者未回應<br/>請 AI 結束任務]
     SAVE --> PROCESS[create_feedback_text<br/>process_images]
-    PROCESS --> RETURN[返回結果給 AI]
+    PROCESS --> RETURN[回傳結果給 AI]
     NORESP --> RETURN
 
     style START fill:#e3f2fd
@@ -169,7 +169,7 @@ flowchart TD
 - `summary`: AI 工作摘要，顯示給使用者確認
 - `timeout`: 等待逾時時間，預設 600 秒（10 分鐘），伺服器端鉗制在 60–86400 秒
 
-**返回格式**：
+**回傳格式**：
 ```python
 # 成功返回
 [
@@ -228,7 +228,7 @@ def get_i18n_manager() -> I18nManager: ...
 **除錯功能**：
 - **條件輸出**: 只在 `MCP_DEBUG` 為 `true`、`1`、`yes`、`on` 時輸出
 - **分類日誌**: 不同模組使用不同前綴
-- **安全輸出**: 輸出到 stderr 避免干擾 MCP 通信
+- **安全輸出**: 輸出到 stderr 避免干擾 MCP 通訊
 - **編碼處理**: stderr 無法編碼時改以 ASCII 替代字元輸出，stderr 不存在時靜默略過
 - **使用者提示**: `user_notice()` 不受 `MCP_DEBUG` 控制，用於「請手動開啟網址」這類必須讓使用者看到的訊息
 
@@ -265,9 +265,9 @@ def get_web_ui_manager() -> WebUIManager:
 **核心職責**：
 - **會話管理**: 單一活躍會話的建立、更新、清理
 - **伺服器控制**: 在背景執行緒啟動 uvicorn（`start_server`），以及停止服務（`stop`）
-- **瀏覽器控制**: 智能開啟瀏覽器，避免重複視窗
+- **瀏覽器控制**: 智慧開啟瀏覽器，避免重複視窗
 - **資源管理**: 自動清理過期資源和錯誤處理
-- **活躍標籤頁偵測**: `_check_active_tabs()` 以目前會話 WebSocket 的心跳或 ping 判斷是否已有開著的頁面
+- **活躍分頁偵測**: `_check_active_tabs()` 以目前會話 WebSocket 的心跳或 ping 判斷是否已有開著的頁面
 
 **關鍵方法**：
 ```python
@@ -298,7 +298,7 @@ def cleanup_sessions_by_memory_pressure(self, force: bool = False) -> int: ...
 flowchart TD
     START[smart_open_browser] --> DESKTOP{MCP_DESKTOP_MODE?}
     DESKTOP -->|是| SKIP[不開瀏覽器]
-    DESKTOP -->|否| CHECK[_check_active_tabs<br/>心跳或 ping 檢測]
+    DESKTOP -->|否| CHECK[_check_active_tabs<br/>心跳或 ping 偵測]
     CHECK --> ACTIVE{有活躍標籤?}
     ACTIVE -->|是| NOTIFY[notify_existing_tab_to_refresh<br/>送出 session_updated]
     ACTIVE -->|否| OPEN[open_browser]
@@ -399,7 +399,7 @@ class CleanupReason(Enum):
     SHUTDOWN = "shutdown"                # 系統關閉清理
 ```
 
-**WebSocket 消息**：沒有獨立的模型類別，直接以 dict 經 `send_json()` 傳送，類型見下方 routes 段。
+**WebSocket 訊息**：沒有獨立的模型類別，直接以 dict 經 `send_json()` 傳送，類型見下方 routes 段。
 
 ## 🌐 第三層：Web 服務層
 
@@ -424,7 +424,7 @@ self._init_basic_components()
 
 **核心功能**：
 - **HTTP 路由處理**: 頁面與 JSON API 端點
-- **WebSocket 連線管理**: 即時雙向通信
+- **WebSocket 連線管理**: 即時雙向通訊
 - **靜態資源服務**: CSS、JS、圖片等資源
 - **範本渲染**: Jinja2 範本引擎
 - **伺服器執行**: `start_server()` 在 daemon 執行緒內以 uvicorn 啟動，同時執行 `_init_async_components()`
@@ -498,7 +498,7 @@ async def index(request: Request):
 - `status_update`: 會話狀態（`status_info`）
 - `notification`: 以 `code` 帶訊息代碼、`severity` 區分等級；回饋已收到（`FEEDBACK_SUBMITTED`，`severity: "success"`）、重複提交（`warning`）、會話清理（`warning`）都走這個類型，沒有獨立的 `feedback_received` 訊息
 - `heartbeat_response`: 心跳回應
-- `ping`: 活躍標籤頁檢測，前端回 `pong`
+- `ping`: 活躍分頁偵測，前端回 `pong`
 
 前端 → 伺服器（`handle_websocket_message()`）：
 - `submit_feedback`: 提交回饋（`feedback`、`images`、`settings`）
@@ -533,7 +533,7 @@ async def websocket_endpoint(websocket: WebSocket, lang: str = "zh-TW"):
         current_session.on_client_disconnected()
 ```
 
-## 🎨 第四層：前端交互層
+## 🎨 第四層：前端互動層
 
 ### 新功能模組架構
 
@@ -633,7 +633,7 @@ graph TB
 - **音量控制**: 0-100% 可調節音量
 - **瀏覽器相容性**: 處理自動播放政策限制
 
-#### 智能記憶功能 - v2.4.3 新增
+#### 智慧記憶功能 - v2.4.3 新增
 
 **輸入框高度管理**：
 ```mermaid
@@ -661,7 +661,7 @@ graph TB
 **一鍵複製功能**：
 - **專案路徑複製**: 點選路徑文字即可複製到剪貼簿
 - **會話ID複製**: 點選會話ID即可複製
-- **複製反饋**: 視覺提示複製成功狀態
+- **複製回饋**: 視覺提示複製成功狀態
 - **國際化支援**: 複製提示支援多語言
 
 #### 自動提交功能整合
@@ -757,7 +757,7 @@ graph TD
     end
 
     subgraph "功能模組"
-        WS[websocket-manager.js<br/>WebSocket 通信]
+        WS[websocket-manager.js<br/>WebSocket 通訊]
         MONITOR[connection-monitor.js<br/>連線監控]
         SESSION[session-manager.js<br/>會話控制]
         UPLOAD[file-upload-manager.js<br/>檔案上傳]
@@ -816,7 +816,7 @@ FeedbackApp.prototype.init = function() {
 
 提交回饋時，`submitFeedbackInternal()` 先以 `recordUserMessage()` 寫入會話歷史，再透過 WebSocket 送出 `{type: 'submit_feedback', feedback, images, settings}`。
 
-**websocket-manager.js - WebSocket 通信**（節錄）：
+**websocket-manager.js - WebSocket 通訊**（節錄）：
 ```javascript
 function WebSocketManager(options) {
     this.websocket = null;
@@ -865,15 +865,15 @@ WebSocketManager.prototype.send = function(data) {
 
 **前端特性總結**：
 - **模組化設計**: 清晰的職責分離和依賴管理
-- **響應式 UI**: 適配不同螢幕尺寸和設備
-- **即時通信**: WebSocket 雙向資料同步
+- **響應式 UI**: 適應不同螢幕尺寸和裝置
+- **即時通訊**: WebSocket 雙向資料同步
 - **圖片處理**: 大小與數量限制、轉成 Base64 傳送（不壓縮、不轉格式）
 - **國際化**: 動態語言切換和本地化
 - **錯誤處理**: 優雅的錯誤恢復機制
 - **效能優化**: 靜態資源快取標頭、WebSocket 訊息防抖
 - **無障礙支援**: 鍵盤導航和螢幕閱讀器支援
 
-### static/css/ - 樣式系統（v2.4.3 擴展）
+### static/css/ - 樣式系統（v2.4.3 擴充）
 
 **樣式檔案結構**：
 ```
@@ -936,9 +936,9 @@ static/css/
 ```
 
 **響應式設計增強**：
-- **移動設備優化**: 768px 以下音量、音效選擇與自訂音效項目改為垂直排列
-- **觸控友好**: 按鈕和滑桿適配觸控操作
-- **視覺反饋**: 懸停和點選狀態的視覺提示
+- **行動裝置優化**: 768px 以下音量、音效選擇與自訂音效項目改為垂直排列
+- **觸控友善**: 按鈕和滑桿支援觸控操作
+- **視覺回饋**: 滑鼠停留和點選狀態的視覺提示
 - **深色配色**: 固定使用 `styles.css` `:root` 的深色變數，沒有主題切換
 
 ## 🛠️ 工具層元件
@@ -1066,7 +1066,7 @@ def get_browser_opener() -> Callable[[str], bool]:
     return smart_browser_open
 ```
 
-**SSH 遠端**：沒有專門處理，不會建立 SSH 隧道。在無桌面的遠端主機上 `webbrowser.open` 通常回傳 False，`WebUIManager.open_browser()` 便用 `user_notice()` 在 stderr 印出網址，由使用者自行轉發埠後開啟。
+**SSH 遠端**：沒有專門處理，不會建立 SSH 隧道。在無桌面的遠端主機上 `webbrowser.open` 通常回傳 False，`WebUIManager.open_browser()` 便用 `user_notice()` 在 stderr 印出網址，由使用者自行設定連接埠轉送後開啟。
 
 ### web/utils/port_manager.py - 埠管理
 
@@ -1176,15 +1176,15 @@ tests/
 - 錯誤處理機制測試
 - 國際化功能測試
 
-**集成測試**：
+**整合測試**：
 - MCP 工具完整工作流程
-- Web UI 與後端交互
-- WebSocket 通信測試
+- Web UI 與後端互動
+- WebSocket 通訊測試
 - 多語言切換測試
 
 **效能測試**（只有少數有時間門檻的測試，沒有獨立的效能測試套件或基準）：
 - MCP 啟動與初始化時間：`TestMCPPerformance.test_startup_performance` 要求以 stdio 啟動伺服器在 30 秒內、`initialize` 在 5 秒內完成（`integration/test_mcp_workflow.py`）
-- 同時啟動兩個 MCP 客戶端：`test_concurrent_initialization` 只要求至少一個成功並能初始化，不量測時間（同上）
+- 同時啟動兩個 MCP 用戶端：`test_concurrent_initialization` 只要求至少一個成功並能初始化，不量測時間（同上）
 - Web 服務啟動時間：`TestWebUIPerformance.test_server_startup_time` 要求 `start_server()` 加上等待 3 秒總計在 10 秒內，且伺服器執行緒仍在執行（`integration/test_web_integration.py`）
 - 連續建立會話：`test_multiple_session_performance` 連續建立 10 個會話，平均每個要在 0.1 秒內，最後一個是目前活躍會話（同上）
 - Gzip 壓縮比：`test_compression_performance` 對約 5KB 的 JSON 直接呼叫 `gzip.compress`，要求壓縮比超過 50%，不經過伺服器（`unit/test_gzip_compression.py`）
@@ -1199,7 +1199,7 @@ tests/
 - `C90` 雖在規則集內，但 `C901`（函式複雜度）列在 ignore，實際不檢查
 - 本機：`make lint`（`ruff check .`）、`make format-check`（`ruff format . --check`）
 
-**mypy (類型檢查)**：設定在 `pyproject.toml` 的 `[tool.mypy]`
+**mypy (型別檢查)**：設定在 `pyproject.toml` 的 `[tool.mypy]`
 - 檢查 `src` 與 `tests`，`check_untyped_defs = true`，`disallow_untyped_defs = false`（漸進式）
 - `fastmcp`、`mcp`、`psutil`、`uvicorn` 等第三方模組設為 `ignore_missing_imports`
 - 本機：`make type-check`（`uv run mypy`）
@@ -1227,6 +1227,6 @@ tests/
 ## 📚 相關文件
 
 - **[系統架構總覽](./system-overview.md)** - 了解整體架構設計理念
-- **[交互流程文件](./interaction-flows.md)** - 詳細的使用者交互和系統流程
+- **[互動流程文件](./interaction-flows.md)** - 詳細的使用者互動和系統流程
 - **[API 參考文件](./api-reference.md)** - 完整的 API 端點和參數說明
 - **[部署指南](./deployment-guide.md)** - 環境設定和部署最佳實踐
