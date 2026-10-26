@@ -142,7 +142,7 @@
                 <div class="modal-container">
                     <div class="modal-header">
                         <h3 class="modal-title">${Utils.escapeHtml(modalData.title)}</h3>
-                        <button type="button" class="modal-close-btn" aria-label="關閉">×</button>
+                        <button type="button" class="modal-close-btn" aria-label="${Utils.escapeHtml(this.t('buttons.close', '關閉'))}" data-i18n-aria-label="buttons.close">×</button>
                     </div>
                     <div class="modal-body">
                         <form id="promptForm" class="prompt-form">
@@ -204,11 +204,11 @@
                 <div class="modal-container modal-large">
                     <div class="modal-header">
                         <h3 class="modal-title">${Utils.escapeHtml(modalData.title)}</h3>
-                        <button type="button" class="modal-close-btn" aria-label="關閉">×</button>
+                        <button type="button" class="modal-close-btn" aria-label="${Utils.escapeHtml(this.t('buttons.close', '關閉'))}" data-i18n-aria-label="buttons.close">×</button>
                     </div>
                     <div class="modal-body">
                         <div class="prompt-list">
-                            ${promptsHtml || '<div class="empty-state">尚無常用提示詞</div>'}
+                            ${promptsHtml || `<div class="empty-state" data-i18n="prompts.buttons.selectPromptTooltipEmpty">${Utils.escapeHtml(this.t('prompts.buttons.selectPromptTooltipEmpty', '尚無常用提示詞'))}</div>`}
                         </div>
                     </div>
                     <div class="modal-footer">

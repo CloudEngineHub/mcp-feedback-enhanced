@@ -61,6 +61,7 @@
         "advanced": "🔧 Advanced Settings",
         "reset": "Reset Settings",
         "resetDesc": "Clear all saved settings and restore to default state",
+        "resetConfirm": "Are you sure you want to reset all settings?",
         "autoCommitNoPrompt": "Please select a prompt as auto-submit content first",
         "sessionTimeoutTitle": "⏱️ Session Timeout Settings",
         "sessionTimeoutEnable": "Enable Session Timeout",
@@ -214,6 +215,7 @@
         },
         "noActiveSession": "No active session data",
         "sessionNotFound": "Session data not found",
+        "sessionManagerNotInit": "Session manager is not initialized",
         "currentSession": {
             "noData": "No current session data",
             "noUserMessages": "Current session has no user message records",
@@ -284,6 +286,7 @@
             "autoSubmitSet": "Set as auto submit prompt: ",
             "autoSubmitCancelled": "Auto submit setting cancelled",
             "notFound": "Prompt not found",
+            "nameExists": "A prompt with this name already exists",
             "addSuccess": "Prompt added successfully",
             "updateSuccess": "Prompt updated successfully",
             "deleteSuccess": "Prompt deleted successfully"
@@ -357,11 +360,16 @@
         "status": "Current Status",
         "enabled": "Enabled",
         "disabled": "Disabled",
+        "enabledWithTimeout": "Enabled ({seconds}s)",
         "executing": "Executing auto submit...",
         "countdownLabel": "Submit Countdown",
         "pauseCountdown": "Pause Countdown",
         "resumeCountdown": "Resume Countdown",
-        "paused": "Auto submit paused"
+        "paused": "Auto submit paused: {reason}",
+        "promptIdMismatch": "Prompt ID mismatch",
+        "promptNotAutoSubmit": "The prompt is not set for auto submit",
+        "timeoutTooShort": "Auto submit time must be at least 1 second",
+        "timeoutTooLong": "Auto submit time cannot exceed 24 hours"
     },
     "audio": {
         "notification": {
@@ -396,6 +404,9 @@
             "audioSelected": "Audio selected",
             "testPlaying": "Playing test audio",
             "audioNotFound": "Selected audio not found",
+            "unsupportedFormat": "Unsupported audio file format",
+            "nameExists": "An audio with this name already exists",
+            "invalidVolume": "Volume must be between 0 and 100",
             "play": "Play",
             "delete": "Delete"
         }
@@ -434,6 +445,7 @@
             "testBody": "This is a test notification, it will close automatically in 5 seconds",
             "notSupported": "Your browser does not support notifications",
             "permissionRequired": "Please grant notification permission first",
+            "testFailed": "Failed to send test notification",
             "criticalTitle": "MCP Feedback - Warning"
         }
     },
@@ -511,7 +523,8 @@
     "fileUpload": {
         "fileSizeExceeded": "Image size exceeds limit ({limit}): {filename}",
         "maxFilesExceeded": "Maximum {maxFiles} files can be uploaded",
-        "processingFailed": "File processing failed, please retry"
+        "processingFailed": "File processing failed, please retry",
+        "removeImage": "Remove image"
     },
     "aria": {
         "toggleAutoSubmit": "Toggle auto submit",

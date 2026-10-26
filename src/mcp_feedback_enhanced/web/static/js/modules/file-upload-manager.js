@@ -404,6 +404,9 @@
     FileUploadManager.prototype.createPreviewElement = function(file, index) {
         const preview = document.createElement('div');
         preview.className = 'image-preview-item';
+        // 群組名稱帶檔名，移除按鈕只放可翻譯的「移除圖片」，螢幕閱讀器仍知道是哪張
+        preview.setAttribute('role', 'group');
+        preview.setAttribute('aria-label', file.name);
 
         // 圖片元素
         const img = document.createElement('img');
@@ -427,9 +430,12 @@
         const removeBtn = document.createElement('button');
         removeBtn.className = 'image-remove-btn';
         removeBtn.textContent = '×';
-        removeBtn.title = '移除圖片';
+        const removeLabel = window.i18nManager ? window.i18nManager.t('fileUpload.removeImage') : '移除圖片';
+        removeBtn.title = removeLabel;
         removeBtn.dataset.index = index;
-        removeBtn.setAttribute('aria-label', '移除圖片 ' + file.name);
+        removeBtn.setAttribute('aria-label', removeLabel);
+        removeBtn.setAttribute('data-i18n-title', 'fileUpload.removeImage');
+        removeBtn.setAttribute('data-i18n-aria-label', 'fileUpload.removeImage');
 
         // 組裝元素
         info.appendChild(name);

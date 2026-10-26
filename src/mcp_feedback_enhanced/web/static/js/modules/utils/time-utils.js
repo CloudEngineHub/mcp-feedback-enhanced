@@ -12,6 +12,11 @@
     window.MCPFeedback = window.MCPFeedback || {};
     window.MCPFeedback.Utils = window.MCPFeedback.Utils || {};
 
+    // 沒有時間或時間無法解析時顯示「未知」（依介面語言）
+    function unknownText() {
+        return window.i18nManager ? window.i18nManager.t('sessionManagement.sessionDetails.unknown') : '未知';
+    }
+
     /**
      * 時間工具類
      */
@@ -22,7 +27,7 @@
         formatTimestamp: function(timestamp, options) {
             options = options || {};
             
-            if (!timestamp) return '未知';
+            if (!timestamp) return unknownText();
 
             try {
                 // 處理時間戳格式（毫秒轉秒）
@@ -33,7 +38,7 @@
 
                 const date = new Date(normalizedTimestamp * 1000);
                 if (isNaN(date.getTime())) {
-                    return '無效時間';
+                    return unknownText();
                 }
 
                 // 時間與日期跟介面語言（zh-TW、zh-CN、en），不跟瀏覽器語系
@@ -63,7 +68,7 @@
                 }
             } catch (error) {
                 console.warn('時間格式化失敗:', timestamp, error);
-                return '格式錯誤';
+                return unknownText();
             }
         },
 
@@ -139,45 +144,6 @@
             };
 
             return fallbackUnits[unit] || unit;
-        },
-
-        /**
-         * 格式化相對時間（多久之前）- 支援國際化
-         */
-        formatRelativeTime: function(timestamp) {
-            if (!timestamp) return '未知';
-
-            try {
-                let normalizedTimestamp = timestamp;
-                if (timestamp > 1e12) {
-                    normalizedTimestamp = timestamp / 1000;
-                }
-
-                const now = Date.now() / 1000;
-                const diff = now - normalizedTimestamp;
-
-                const minutesText = this.getTimeUnitText('minutes');
-                const hoursText = this.getTimeUnitText('hours');
-                const daysText = this.getTimeUnitText('days');
-                const agoText = this.getTimeUnitText('ago');
-                const justNowText = this.getTimeUnitText('justNow');
-
-                if (diff < 60) {
-                    return justNowText;
-                } else if (diff < 3600) {
-                    const minutes = Math.floor(diff / 60);
-                    return `${minutes}${minutesText}${agoText}`;
-                } else if (diff < 86400) {
-                    const hours = Math.floor(diff / 3600);
-                    return `${hours}${hoursText}${agoText}`;
-                } else {
-                    const days = Math.floor(diff / 86400);
-                    return `${days}${daysText}${agoText}`;
-                }
-            } catch (error) {
-                console.warn('相對時間計算失敗:', timestamp, error);
-                return '計算錯誤';
-            }
         },
 
         /**

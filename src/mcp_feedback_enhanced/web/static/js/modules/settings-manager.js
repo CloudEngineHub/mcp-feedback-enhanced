@@ -21,6 +21,11 @@
         return Boolean(window.i18nManager && window.i18nManager.isLanguageForced());
     }
 
+    // 翻譯；i18n 還沒載入或缺 key 時用繁中預設字串
+    function t(key, fallback) {
+        return window.i18nManager ? window.i18nManager.t(key, fallback) : fallback;
+    }
+
     /**
      * 設定管理器建構函數
      */
@@ -323,15 +328,15 @@
         if (settings.autoSubmitTimeout !== undefined) {
             const timeout = parseInt(settings.autoSubmitTimeout);
             if (isNaN(timeout) || timeout < 1) {
-                errors.push('自動提交時間必須大於等於 1 秒');
+                errors.push(t('autoSubmit.timeoutTooShort', '自動提交時間必須大於等於 1 秒'));
             } else if (timeout > 86400) { // 24 小時
-                errors.push('自動提交時間不能超過 24 小時');
+                errors.push(t('autoSubmit.timeoutTooLong', '自動提交時間不能超過 24 小時'));
             }
         }
 
         // 驗證提示詞 ID
         if (settings.autoSubmitEnabled && !settings.autoSubmitPromptId) {
-            errors.push('啟用自動提交時必須選擇一個提示詞');
+            errors.push(t('settingsUI.autoCommitNoPrompt', '請先選擇一個提示詞作為自動提交內容'));
         }
 
         return errors;
@@ -551,10 +556,9 @@
             // 直接設定 HTML 內容，就像提示詞按鈕一樣
             if (statusIcon) statusIcon.innerHTML = '⏰';
             if (statusText) {
-                const enabledText = window.i18nManager ?
-                    window.i18nManager.t('autoSubmit.enabled', '已啟用') :
-                    '已啟用';
-                statusText.textContent = `${enabledText} (${this.currentSettings.autoSubmitTimeout}秒)`;
+                statusText.textContent = window.i18nManager ?
+                    window.i18nManager.t('autoSubmit.enabledWithTimeout', { seconds: this.currentSettings.autoSubmitTimeout }) :
+                    '已啟用 (' + this.currentSettings.autoSubmitTimeout + '秒)';
             }
             statusElement.className = 'auto-submit-status-btn enabled';
         } else {
@@ -986,7 +990,7 @@
         const resetBtn = Utils.safeQuerySelector('#resetSettingsBtn');
         if (resetBtn) {
             resetBtn.addEventListener('click', function() {
-                if (confirm('確定要重設所有設定嗎？')) {
+                if (confirm(t('settingsUI.resetConfirm', '確定要重設所有設定嗎？'))) {
                     self.resetSettings();
                     self.applyToUI();
                 }

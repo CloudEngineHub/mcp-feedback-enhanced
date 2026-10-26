@@ -61,6 +61,7 @@
         "advanced": "🔧 进阶设定",
         "reset": "重置设定",
         "resetDesc": "清除所有已保存的设定，恢复到预设状态",
+        "resetConfirm": "确定要重置所有设定吗？",
         "autoCommitNoPrompt": "请先选择一个提示词作为自动提交内容",
         "sessionTimeoutTitle": "⏱️ 会话超时设置",
         "sessionTimeoutEnable": "启用会话超时",
@@ -214,6 +215,7 @@
         },
         "noActiveSession": "目前没有活跃的会话数据",
         "sessionNotFound": "找不到会话资料",
+        "sessionManagerNotInit": "会话管理器未初始化",
         "currentSession": {
             "noData": "没有当前会话数据",
             "noUserMessages": "当前会话没有用户消息记录",
@@ -281,6 +283,7 @@
             "autoSubmitSet": "已设定为自动提交提示词：",
             "autoSubmitCancelled": "已取消自动提交设定",
             "notFound": "找不到指定的提示词",
+            "nameExists": "提示词名称已存在",
             "addSuccess": "提示词已新增",
             "updateSuccess": "提示词已更新",
             "deleteSuccess": "提示词已删除"
@@ -354,11 +357,16 @@
         "status": "当前状态",
         "enabled": "已启用",
         "disabled": "已停用",
+        "enabledWithTimeout": "已启用 ({seconds}秒)",
         "executing": "正在执行自动提交...",
         "countdownLabel": "提交倒数",
         "pauseCountdown": "暂停倒数",
         "resumeCountdown": "恢复倒数",
-        "paused": "自动提交已暂停"
+        "paused": "自动提交已暂停：{reason}",
+        "promptIdMismatch": "提示词 ID 不一致",
+        "promptNotAutoSubmit": "提示词不是自动提交状态",
+        "timeoutTooShort": "自动提交时间必须大于等于 1 秒",
+        "timeoutTooLong": "自动提交时间不能超过 24 小时"
     },
     "audio": {
         "notification": {
@@ -393,6 +401,9 @@
             "audioSelected": "音效已选择",
             "testPlaying": "正在播放测试音效",
             "audioNotFound": "找不到选择的音效",
+            "unsupportedFormat": "不支持的音效文件格式",
+            "nameExists": "音效名称已存在",
+            "invalidVolume": "音量必须在 0-100 之间",
             "play": "播放",
             "delete": "删除"
         }
@@ -434,6 +445,7 @@
             "testBody": "这是一个测试通知，5秒后将自动关闭",
             "notSupported": "您的浏览器不支持通知功能",
             "permissionRequired": "请先授权通知权限",
+            "testFailed": "发送测试通知失败",
             "criticalTitle": "MCP Feedback - 警告"
         }
     },
@@ -511,7 +523,8 @@
     "fileUpload": {
         "fileSizeExceeded": "图片大小超过限制 ({limit}): {filename}",
         "maxFilesExceeded": "最多只能上传 {maxFiles} 个文件",
-        "processingFailed": "文件处理失败，请重试"
+        "processingFailed": "文件处理失败，请重试",
+        "removeImage": "移除图片"
     },
     "aria": {
         "toggleAutoSubmit": "切换自动提交",

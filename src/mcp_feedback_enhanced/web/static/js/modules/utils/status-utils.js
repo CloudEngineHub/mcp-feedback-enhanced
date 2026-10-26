@@ -333,17 +333,6 @@
         },
 
         /**
-         * 格式化狀態變更日誌
-         */
-        formatStatusChangeLog: function(oldStatus, newStatus, timestamp) {
-            const oldText = this.getStatusText(oldStatus);
-            const newText = this.getStatusText(newStatus);
-            const timeStr = timestamp ? new Date(timestamp).toLocaleTimeString() : '現在';
-            
-            return `${timeStr}: ${oldText} → ${newText}`;
-        },
-
-        /**
          * 檢查狀態轉換是否有效
          */
         isValidStatusTransition: function(fromStatus, toStatus) {
@@ -366,31 +355,6 @@
 
             const allowedTransitions = validTransitions[fromStatus];
             return allowedTransitions ? allowedTransitions.includes(toStatus) : true;
-        },
-
-        /**
-         * 獲取狀態描述
-         */
-        getStatusDescription: function(status) {
-            const descriptions = {
-                'waiting': '系統正在等待使用者提供回饋',
-                'waiting_for_feedback': '系統正在等待使用者提供回饋',
-                'active': '會話正在進行中',
-                'processing': '系統正在處理使用者的回饋',
-                'feedback_submitted': '使用者已提交回饋',
-                'completed': '會話已成功完成',
-                'timeout': '會話因逾時而結束',
-                'error': '會話遇到錯誤',
-                'expired': '會話已過期',
-                'connecting': '正在建立連線',
-                'connected': '連線已建立',
-                'disconnected': '連線已中斷',
-                'reconnecting': '正在嘗試重新連線',
-                'ready': '系統已就緒',
-                'closed': '會話已關閉'
-            };
-
-            return descriptions[status] || '未知狀態';
         }
     };
 

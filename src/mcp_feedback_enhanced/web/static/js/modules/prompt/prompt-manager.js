@@ -13,6 +13,11 @@
     window.MCPFeedback.Prompt = window.MCPFeedback.Prompt || {};
     const Utils = window.MCPFeedback.Utils;
 
+    // 翻譯；丟出的錯誤會被設定介面直接顯示，所以這裡就依介面語言產生訊息
+    function t(key, fallback) {
+        return window.i18nManager ? window.i18nManager.t(key, fallback) : fallback;
+    }
+
     /**
      * 提示詞管理器建構函數
      */
@@ -166,12 +171,12 @@
      */
     PromptManager.prototype.addPrompt = function(name, content) {
         if (!name || !content) {
-            throw new Error('提示詞名稱和內容不能為空');
+            throw new Error(t('prompts.modal.emptyFields', '請填寫所有必填欄位'));
         }
 
         // 檢查名稱是否重複
         if (this.getPromptByName(name)) {
-            throw new Error('提示詞名稱已存在');
+            throw new Error(t('prompts.management.nameExists', '提示詞名稱已存在'));
         }
 
         const prompt = {
@@ -198,18 +203,18 @@
      */
     PromptManager.prototype.updatePrompt = function(id, name, content) {
         if (!name || !content) {
-            throw new Error('提示詞名稱和內容不能為空');
+            throw new Error(t('prompts.modal.emptyFields', '請填寫所有必填欄位'));
         }
 
         const prompt = this.getPromptById(id);
         if (!prompt) {
-            throw new Error('找不到指定的提示詞');
+            throw new Error(t('prompts.management.notFound', '找不到指定的提示詞'));
         }
 
         // 檢查名稱是否與其他提示詞重複
         const existingPrompt = this.getPromptByName(name);
         if (existingPrompt && existingPrompt.id !== id) {
-            throw new Error('提示詞名稱已存在');
+            throw new Error(t('prompts.management.nameExists', '提示詞名稱已存在'));
         }
 
         prompt.name = name.trim();
@@ -230,7 +235,7 @@
     PromptManager.prototype.deletePrompt = function(id) {
         const index = this.currentPromptSettings.prompts.findIndex(p => p.id === id);
         if (index === -1) {
-            throw new Error('找不到指定的提示詞');
+            throw new Error(t('prompts.management.notFound', '找不到指定的提示詞'));
         }
 
         const prompt = this.currentPromptSettings.prompts[index];
@@ -256,7 +261,7 @@
     PromptManager.prototype.usePrompt = function(id) {
         const prompt = this.getPromptById(id);
         if (!prompt) {
-            throw new Error('找不到指定的提示詞');
+            throw new Error(t('prompts.management.notFound', '找不到指定的提示詞'));
         }
 
         prompt.lastUsedAt = new Date().toISOString();
@@ -334,7 +339,7 @@
         // 設定指定提示詞為自動提交
         const prompt = this.getPromptById(id);
         if (!prompt) {
-            throw new Error('找不到指定的提示詞');
+            throw new Error(t('prompts.management.notFound', '找不到指定的提示詞'));
         }
 
         prompt.isAutoSubmit = true;

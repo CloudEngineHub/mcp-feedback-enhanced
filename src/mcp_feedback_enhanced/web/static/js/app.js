@@ -750,7 +750,7 @@
             if (this.notificationManager && data.session_info) {
                 this.notificationManager.notifyNewSession(
                     data.session_info.session_id,
-                    data.session_info.project_directory || data.project_directory || '未知專案'
+                    data.session_info.project_directory || data.project_directory
                 );
             }
 
@@ -810,7 +810,8 @@
         }
 
         // 顯示更新通知
-        window.MCPFeedback.Utils.showMessage(data.message || '會話已更新，正在局部更新內容...', window.MCPFeedback.Utils.CONSTANTS.MESSAGE_SUCCESS);
+        const updatedMessage = window.i18nManager ? window.i18nManager.t('session.updated') : '會話已更新';
+        window.MCPFeedback.Utils.showMessage(data.message || updatedMessage, window.MCPFeedback.Utils.CONSTANTS.MESSAGE_SUCCESS);
 
         // 更新會話信息
         if (data.session_info) {
@@ -1589,7 +1590,7 @@
                 currentPromptId: promptId,
                 settingsPromptId: autoSubmitPromptId
             });
-            this.pauseAutoSubmit('提示詞 ID 不一致');
+            this.pauseAutoSubmit('autoSubmit.promptIdMismatch', '提示詞 ID 不一致');
             return;
         }
 
@@ -1597,14 +1598,14 @@
 
         if (!prompt) {
             console.error('❌ 找不到自動提交提示詞:', promptId);
-            this.pauseAutoSubmit('找不到指定的提示詞');
+            this.pauseAutoSubmit('prompts.management.notFound', '找不到指定的提示詞');
             return;
         }
 
         // 檢查提示詞的 isAutoSubmit 狀態
         if (!prompt.isAutoSubmit) {
             console.error('❌ 提示詞不是自動提交狀態:', prompt.name);
-            this.pauseAutoSubmit('提示詞不是自動提交狀態');
+            this.pauseAutoSubmit('autoSubmit.promptNotAutoSubmit', '提示詞不是自動提交狀態');
             return;
         }
 
@@ -1631,10 +1632,10 @@
     };
 
     /**
-     * 暫停自動提交功能（當檢查失敗時）
+     * 暫停自動提交功能（當檢查失敗時）；reasonKey 是原因的翻譯 key，fallback 是 i18n 未載入時的繁中原因
      */
-    FeedbackApp.prototype.pauseAutoSubmit = function(reason) {
-        console.error('⏸️ 暫停自動提交功能，原因:', reason);
+    FeedbackApp.prototype.pauseAutoSubmit = function(reasonKey, fallback) {
+        console.error('⏸️ 暫停自動提交功能，原因:', reasonKey);
 
         // 停止倒數計時器
         if (this.autoSubmitManager) {
@@ -1657,8 +1658,8 @@
 
         // 顯示錯誤訊息
         const message = window.i18nManager ?
-            window.i18nManager.t('autoSubmit.paused', '自動提交已暫停：') + reason :
-            '自動提交已暫停：' + reason;
+            window.i18nManager.t('autoSubmit.paused', { reason: window.i18nManager.t(reasonKey, fallback) }) :
+            '自動提交已暫停：' + fallback;
         window.MCPFeedback.Utils.showMessage(message, window.MCPFeedback.Utils.CONSTANTS.MESSAGE_ERROR);
     };
 
@@ -1722,10 +1723,9 @@
             // 直接設定 HTML 內容，就像提示詞按鈕一樣
             if (statusIcon) statusIcon.innerHTML = '⏰';
             if (statusText) {
-                const enabledText = window.i18nManager ?
-                    window.i18nManager.t('autoSubmit.enabled', '已啟用') :
-                    '已啟用';
-                statusText.textContent = `${enabledText} (${timeout}秒)`;
+                statusText.textContent = window.i18nManager ?
+                    window.i18nManager.t('autoSubmit.enabledWithTimeout', { seconds: timeout }) :
+                    '已啟用 (' + timeout + '秒)';
             }
             statusElement.className = 'auto-submit-status-btn enabled';
         } else {

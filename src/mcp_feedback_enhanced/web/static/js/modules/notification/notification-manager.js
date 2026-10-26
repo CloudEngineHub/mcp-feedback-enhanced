@@ -350,7 +350,7 @@
             console.log('🔔 測試通知已發送');
         } catch (error) {
             console.error('❌ 測試通知失敗:', error);
-            alert('傳送測試通知失敗');
+            alert(this.t('notification.browser.testFailed', '傳送測試通知失敗'));
         }
     };
 

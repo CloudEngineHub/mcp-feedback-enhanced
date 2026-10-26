@@ -14,6 +14,11 @@
     window.MCPFeedback = window.MCPFeedback || {};
     const Utils = window.MCPFeedback.Utils;
 
+    // 翻譯；丟出的錯誤會被音效設定介面直接顯示，所以這裡就依介面語言產生訊息
+    function t(key, fallback) {
+        return window.i18nManager ? window.i18nManager.t(key, fallback) : fallback;
+    }
+
     /**
      * 音效管理器建構函數
      */
@@ -292,19 +297,19 @@
     AudioManager.prototype.addCustomAudio = function(name, file) {
         return new Promise((resolve, reject) => {
             if (!name || !file) {
-                reject(new Error('音效名稱和檔案不能為空'));
+                reject(new Error(t('audio.notification.nameRequired', '音效名稱不能為空')));
                 return;
             }
 
             // 檢查檔案類型
             if (!this.isValidAudioFile(file)) {
-                reject(new Error('不支援的音效檔案格式'));
+                reject(new Error(t('audio.notification.unsupportedFormat', '不支援的音效檔案格式')));
                 return;
             }
 
             // 檢查名稱是否重複
             if (this.isAudioNameExists(name)) {
-                reject(new Error('音效名稱已存在'));
+                reject(new Error(t('audio.notification.nameExists', '音效名稱已存在')));
                 return;
             }
 
@@ -338,7 +343,7 @@
     AudioManager.prototype.removeCustomAudio = function(audioId) {
         const index = this.currentAudioSettings.customAudios.findIndex(audio => audio.id === audioId);
         if (index === -1) {
-            throw new Error('找不到指定的音效');
+            throw new Error(t('audio.notification.audioNotFound', '找不到選擇的音效'));
         }
 
         const removedAudio = this.currentAudioSettings.customAudios.splice(index, 1)[0];
@@ -359,7 +364,7 @@
      */
     AudioManager.prototype.setVolume = function(volume) {
         if (volume < 0 || volume > 100) {
-            throw new Error('音量必須在 0-100 之間');
+            throw new Error(t('audio.notification.invalidVolume', '音量必須在 0-100 之間'));
         }
 
         this.currentAudioSettings.volume = volume;
@@ -381,7 +386,7 @@
      */
     AudioManager.prototype.setSelectedAudio = function(audioId) {
         if (!this.getAudioById(audioId)) {
-            throw new Error('找不到指定的音效');
+            throw new Error(t('audio.notification.audioNotFound', '找不到選擇的音效'));
         }
 
         this.currentAudioSettings.selectedAudioId = audioId;
@@ -421,7 +426,7 @@
                 resolve(base64);
             };
             reader.onerror = function() {
-                reject(new Error('檔案讀取失敗'));
+                reject(new Error(t('fileUpload.processingFailed', '檔案處理失敗，請重試')));
             };
             reader.readAsDataURL(file);
         });

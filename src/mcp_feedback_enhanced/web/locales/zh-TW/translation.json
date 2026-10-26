@@ -61,6 +61,7 @@
         "advanced": "🔧 進階設定",
         "reset": "重設設定",
         "resetDesc": "清除所有已儲存的設定，恢復到預設狀態",
+        "resetConfirm": "確定要重設所有設定嗎？",
         "autoCommitNoPrompt": "請先選擇一個提示詞作為自動提交內容",
         "sessionTimeoutTitle": "⏱️ 會話逾時設定",
         "sessionTimeoutEnable": "啟用會話逾時",
@@ -214,6 +215,7 @@
         },
         "noActiveSession": "目前沒有活躍的會話資料",
         "sessionNotFound": "找不到會話資料",
+        "sessionManagerNotInit": "會話管理器未初始化",
         "currentSession": {
             "noData": "沒有目前會話資料",
             "noUserMessages": "目前會話沒有使用者訊息記錄",
@@ -281,6 +283,7 @@
             "autoSubmitSet": "已設定為自動提交提示詞：",
             "autoSubmitCancelled": "已取消自動提交設定",
             "notFound": "找不到指定的提示詞",
+            "nameExists": "提示詞名稱已存在",
             "addSuccess": "提示詞已新增",
             "updateSuccess": "提示詞已更新",
             "deleteSuccess": "提示詞已刪除"
@@ -354,11 +357,16 @@
         "status": "目前狀態",
         "enabled": "已啟用",
         "disabled": "已停用",
+        "enabledWithTimeout": "已啟用 ({seconds}秒)",
         "executing": "正在執行自動提交...",
         "countdownLabel": "提交倒數",
         "pauseCountdown": "暫停倒數",
         "resumeCountdown": "恢復倒數",
-        "paused": "自動提交已暫停"
+        "paused": "自動提交已暫停：{reason}",
+        "promptIdMismatch": "提示詞 ID 不一致",
+        "promptNotAutoSubmit": "提示詞不是自動提交狀態",
+        "timeoutTooShort": "自動提交時間必須大於等於 1 秒",
+        "timeoutTooLong": "自動提交時間不能超過 24 小時"
     },
     "audio": {
         "notification": {
@@ -393,6 +401,9 @@
             "audioSelected": "音效已選擇",
             "testPlaying": "正在播放測試音效",
             "audioNotFound": "找不到選擇的音效",
+            "unsupportedFormat": "不支援的音效檔案格式",
+            "nameExists": "音效名稱已存在",
+            "invalidVolume": "音量必須在 0-100 之間",
             "play": "播放",
             "delete": "刪除"
         }
@@ -434,6 +445,7 @@
             "testBody": "這是一個測試通知，5秒後將自動關閉",
             "notSupported": "您的瀏覽器不支援通知功能",
             "permissionRequired": "請先授權通知權限",
+            "testFailed": "傳送測試通知失敗",
             "criticalTitle": "MCP Feedback - 警告"
         }
     },
@@ -511,7 +523,8 @@
     "fileUpload": {
         "fileSizeExceeded": "圖片大小超過限制 ({limit}): {filename}",
         "maxFilesExceeded": "最多只能上傳 {maxFiles} 個檔案",
-        "processingFailed": "檔案處理失敗，請重試"
+        "processingFailed": "檔案處理失敗，請重試",
+        "removeImage": "移除圖片"
     },
     "aria": {
         "toggleAutoSubmit": "切換自動提交",

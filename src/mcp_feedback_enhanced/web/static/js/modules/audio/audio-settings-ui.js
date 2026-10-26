@@ -300,7 +300,7 @@
 
             // 顯示上傳中狀態
             this.uploadButton.disabled = true;
-            this.uploadButton.innerHTML = '⏳ <span data-i18n="audio.notification.uploading">上傳中...</span>';
+            this.uploadButton.innerHTML = '⏳ <span data-i18n="audio.notification.uploading">' + Utils.escapeHtml(this.t('audio.notification.uploading', '上傳中...')) + '</span>';
 
             this.audioManager.addCustomAudio(audioName.trim(), file)
                 .then(audioData => {
@@ -317,7 +317,7 @@
                 .finally(() => {
                     // 恢復按鈕狀態
                     this.uploadButton.disabled = false;
-                    this.uploadButton.innerHTML = '📁 <span data-i18n="audio.notification.chooseFile">選擇檔案</span>';
+                    this.uploadButton.innerHTML = '📁 <span data-i18n="audio.notification.chooseFile">' + Utils.escapeHtml(this.t('audio.notification.chooseFile', '選擇檔案')) + '</span>';
                 });
         });
     };
@@ -431,7 +431,7 @@
             this.audioList.innerHTML = `
                 <div class="audio-empty-state">
                     <div style="font-size: 32px; margin-bottom: 8px;">🎵</div>
-                    <div data-i18n="audio.notification.noCustomAudios">尚未上傳任何自訂音效</div>
+                    <div data-i18n="audio.notification.noCustomAudios">${Utils.escapeHtml(this.t('audio.notification.noCustomAudios', '尚未上傳任何自訂音效'))}</div>
                 </div>
             `;
             return;
@@ -561,25 +561,23 @@
             <div class="audio-name-modal-overlay" id="audioNameModalOverlay">
                 <div class="audio-name-modal">
                     <div class="audio-name-modal-header">
-                        <h4 data-i18n="audio.notification.enterAudioName">輸入音效名稱</h4>
+                        <h4 data-i18n="audio.notification.enterAudioName">${Utils.escapeHtml(this.t('audio.notification.enterAudioName', '輸入音效名稱'))}</h4>
                         <button type="button" class="audio-name-modal-close" id="audioNameModalClose">×</button>
                     </div>
                     <div class="audio-name-modal-body">
-                        <label for="audioNameInput" data-i18n="audio.notification.audioName">音效名稱:</label>
+                        <label for="audioNameInput" data-i18n="audio.notification.audioName">${Utils.escapeHtml(this.t('audio.notification.audioName', '音效名稱'))}</label>
                         <input type="text" id="audioNameInput" class="audio-name-input"
                                value="${Utils.escapeHtml(defaultName)}"
                                placeholder="${this.t('audio.notification.audioNamePlaceholder', '請輸入音效名稱...')}"
                                maxlength="50">
-                        <div class="audio-name-hint" data-i18n="audio.notification.audioNameHint">
-                            留空將使用預設檔案名稱
-                        </div>
+                        <div class="audio-name-hint" data-i18n="audio.notification.audioNameHint">${Utils.escapeHtml(this.t('audio.notification.audioNameHint', '留空將使用預設檔案名稱'))}</div>
                     </div>
                     <div class="audio-name-modal-footer">
                         <button type="button" class="btn btn-secondary" id="audioNameModalCancel">
-                            <span data-i18n="buttons.cancel">取消</span>
+                            <span data-i18n="buttons.cancel">${Utils.escapeHtml(this.t('buttons.cancel', '取消'))}</span>
                         </button>
                         <button type="button" class="btn btn-primary" id="audioNameModalConfirm">
-                            <span data-i18n="buttons.ok">確定</span>
+                            <span data-i18n="buttons.ok">${Utils.escapeHtml(this.t('buttons.ok', '確定'))}</span>
                         </button>
                     </div>
                 </div>

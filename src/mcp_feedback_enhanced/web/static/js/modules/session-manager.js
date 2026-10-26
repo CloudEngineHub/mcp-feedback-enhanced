@@ -782,7 +782,7 @@
             // 如果找不到實例，顯示錯誤訊息
             console.warn('找不到 SessionManager 實例');
             if (window.MCPFeedback && window.MCPFeedback.Utils && window.MCPFeedback.Utils.showMessage) {
-                window.MCPFeedback.Utils.showMessage('會話管理器未初始化', 'error');
+                window.MCPFeedback.Utils.showMessage(t('sessionHistory.sessionManagerNotInit', '會話管理器未初始化'), 'error');
             }
         }
     };
