@@ -32,7 +32,7 @@ python scripts/cleanup_cache.py --dry-run
 # 執行清理
 python scripts/cleanup_cache.py --clean
 
-# 強制清理（會嘗試關閉相關程序）
+# 強制清理（會嘗試關閉相關處理程序）
 python scripts/cleanup_cache.py --force
 ```
 
