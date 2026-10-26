@@ -15,7 +15,7 @@
 > ```
 >
 > **v2.6.1 的重要變更：**
-> - 🔒 **移除命令執行功能**：修復 [#219](https://github.com/Minidoracat/mcp-feedback-enhanced/issues/219)（未認證 WebSocket 可執行任意程序）。原本的 blocklist 只擋 shell metacharacter，但因為使用 `shell=False`，metacharacter 本來就不是風險點——`cat`、`curl`、`wget`、`python` 等可直接執行；且自動執行命令**預設為啟用**。此功能已完全移除，不會再提供。詳見 [SECURITY.md](SECURITY.md)。
+> - 🔒 **移除命令執行功能**：修復 [#219](https://github.com/Minidoracat/mcp-feedback-enhanced/issues/219)（未認證 WebSocket 可執行任意程式）。原本的 blocklist 只擋 shell metacharacter，但因為使用 `shell=False`，metacharacter 本來就不是風險點——`cat`、`curl`、`wget`、`python` 等可直接執行；且自動執行命令**預設為啟用**。此功能已完全移除，不會再提供。詳見 [SECURITY.md](SECURITY.md)。
 > - 🔒 **修復 Cross-Site WebSocket Hijacking**（私下回報的 `GHSA-cmr5-gpm3-79vf`、`GHSA-2wx7-r4rh-f663`）：瀏覽器開啟 WebSocket 不受 same-origin policy 限制，惡意網頁可讓你的瀏覽器連上本機 `/ws`。現已在 `accept()` 前驗證 Origin，跨站連線一律以 403 拒絕。
 > - 🐛 修復新版 Starlette 造成 Web UI 直接 500 的問題（[#213](https://github.com/Minidoracat/mcp-feedback-enhanced/issues/213)、[#217](https://github.com/Minidoracat/mcp-feedback-enhanced/issues/217)、[#221](https://github.com/Minidoracat/mcp-feedback-enhanced/issues/221)、[#228](https://github.com/Minidoracat/mcp-feedback-enhanced/issues/228)）。
 > - 🐛 修復圖片序列化錯誤（[#154](https://github.com/Minidoracat/mcp-feedback-enhanced/issues/154) 等），改用標準 `mcp.types.ImageContent`。
@@ -34,19 +34,19 @@
 
 ## 🎯 核心概念
 
-這是一個 [MCP 伺服器](https://modelcontextprotocol.io/)，建立**回饋導向的開發工作流程**，提供**Web UI 和桌面應用程式**雙重選擇，完美適配本地、**SSH 遠端開發環境**與 **WSL (Windows Subsystem for Linux) 環境**。透過引導 AI 與用戶確認而非進行推測性操作，在長任務中插入人工檢查點，降低 AI 跑偏與返工。
+這是一個 [MCP 伺服器](https://modelcontextprotocol.io/)，建立**回饋導向的開發工作流程**，提供**Web UI 和桌面應用程式**雙重選擇，完美適配本機、**SSH 遠端開發環境**與 **WSL (Windows Subsystem for Linux) 環境**。透過引導 AI 與使用者確認而非進行推測性操作，在長任務中插入人工檢查點，降低 AI 跑偏與返工。
 
 **🌐 雙重介面架構優勢：**
-- 🌐 **Web UI 介面**：無需 GUI 依賴，適合本地、遠端和 WSL 環境（主要維護的介面）
+- 🌐 **Web UI 介面**：無需 GUI 依賴，適合本機、遠端和 WSL 環境（主要維護的介面）
 - 🖥️ **桌面應用程式**：載入同一個 Web UI 的 Tauri 殼，支援 Windows、macOS、Linux（**v2.8.0 起僅維護、不再新增功能，預計 v3 移除**，見下方「桌面應用程式維護狀態」）
 - 📦 **統一功能**：兩種介面提供完全相同的功能體驗
 
 **支援平台：** [Cursor](https://www.cursor.com) | [Cline](https://cline.bot) | [Windsurf](https://windsurf.com) | [Augment](https://www.augmentcode.com) | [Trae](https://www.trae.ai)
 
 ### 🔄 工作流程
-1. **AI 調用** → `mcp-feedback-enhanced` 工具
-2. **介面啟動** → 自動開啟桌面應用程式或瀏覽器介面（根據配置）
-3. **智能互動** → 提示詞選擇、文字輸入、圖片上傳、自動提交
+1. **AI 呼叫** → `mcp-feedback-enhanced` 工具
+2. **介面啟動** → 自動開啟桌面應用程式或瀏覽器介面（根據設定）
+3. **智慧互動** → 提示詞選擇、文字輸入、圖片上傳、自動提交
 4. **即時回饋** → WebSocket 連線即時傳遞資訊給 AI
 5. **會話追蹤** → 自動記錄會話歷史與統計
 6. **流程繼續** → AI 根據回饋調整行為或結束任務
@@ -56,27 +56,27 @@
 ### 🖥️ 雙重介面支援
 - **桌面應用程式**：基於 Tauri 的跨平台原生應用，支援 Windows、macOS、Linux
 - **Web UI 介面**：輕量級瀏覽器介面，適合遠端和 WSL 環境
-- **環境適配**：WSL 中自動改用 Windows 瀏覽器開啟介面；SSH Remote 需設定端口轉發（見常見問題）
+- **環境適配**：WSL 中自動改用 Windows 瀏覽器開啟介面；SSH Remote 需設定連接埠轉送（見常見問題）
 - **統一功能體驗**：兩種介面提供完全相同的功能
 
-### 📝 智能工作流程
-- **提示詞管理**：常用提示詞的 CRUD 操作、使用統計、智能排序
+### 📝 智慧工作流程
+- **提示詞管理**：常用提示詞的 CRUD 操作、使用統計、智慧排序
 - **自動定時提交**：1-86400 秒彈性計時器，支援暫停、恢復、取消，新增暫停/開始按鈕控制
-- **會話管理追蹤**：本地檔案存儲、隱私控制、歷史匯出（支援 JSON、CSV、Markdown 格式）、即時統計、彈性超時設定
+- **會話管理追蹤**：本機檔案儲存、隱私控制、歷史匯出（支援 JSON、CSV、Markdown 格式）、即時統計、彈性逾時設定
 - **連線監控**：WebSocket 狀態監控、自動重連、品質指示
 - **AI 工作摘要 Markdown 顯示**：支援豐富的 Markdown 語法渲染，包含標題、粗體、程式碼區塊、列表、連結等格式，提升內容可讀性
 
 ### 🎨 現代化體驗
 - **響應式設計**：適配不同螢幕尺寸，模組化 JavaScript 架構
 - **音效通知**：內建多種音效、支援自訂音效上傳、音量控制
-- **系統通知**（v2.6.0）：重要事件（如自動提交、會話超時等）的系統級即時提醒
-- **智能記憶**：輸入框高度記憶、一鍵複製、設定持久化
+- **系統通知**（v2.6.0）：重要事件（如自動提交、會話逾時等）的系統級即時提醒
+- **智慧記憶**：輸入框高度記憶、一鍵複製、設定持久化
 - **多語言支援**：繁體中文、英文、簡體中文，即時切換
 
 ### 🖼️ 圖片與媒體
 - **全格式支援**：PNG、JPG、JPEG、GIF、BMP、WebP
-- **便捷上傳**：拖拽檔案、剪貼板貼上（Ctrl+V）
-- **無限制處理**：支援任意大小圖片，自動智能處理
+- **便捷上傳**：拖放檔案、剪貼簿貼上（Ctrl+V）
+- **無限制處理**：支援任意大小圖片，自動智慧處理
 
 ## 🌐 介面預覽
 
@@ -87,7 +87,7 @@
 </div>
 
 <details>
-<summary>📱 點擊查看完整介面截圖</summary>
+<summary>📱 點選查看完整介面截圖</summary>
 
 <div align="center">
   <img src="docs/zh-TW/images/web2.jpeg" width="800" alt="Web UI 完整介面 - 會話管理與設定" />
@@ -95,7 +95,7 @@
 
 </details>
 
-*Web UI 介面 - 支援桌面應用程式和 Web 介面，提供提示詞管理、自動提交、會話追蹤等智能功能*
+*Web UI 介面 - 支援桌面應用程式和 Web 介面，提供提示詞管理、自動提交、會話追蹤等智慧功能*
 
 ### 桌面應用程式介面（v2.5.0 新功能）
 
@@ -107,7 +107,7 @@
 
 **快捷鍵支援**
 - `Ctrl+Enter`（Windows/Linux）/ `Cmd+Enter`（macOS）：提交回饋（主鍵盤與數字鍵盤皆支援）
-- `Ctrl+V`（Windows/Linux）/ `Cmd+V`（macOS）：直接貼上剪貼板圖片
+- `Ctrl+V`（Windows/Linux）/ `Cmd+V`（macOS）：直接貼上剪貼簿圖片
 - `Ctrl+I`（Windows/Linux）/ `Cmd+I`（macOS）：快速聚焦輸入框 (感謝 @penn201500)
 
 ## 🚀 快速開始
@@ -118,8 +118,8 @@
 pip install uv
 ```
 
-### 2. 配置 MCP
-**基本配置**（適合大多數用戶）：
+### 2. 設定 MCP
+**基本設定**（適合大多數使用者）：
 ```json
 {
   "mcpServers": {
@@ -133,7 +133,7 @@ pip install uv
 }
 ```
 
-**進階配置**（需要自訂環境）：
+**進階設定**（需要自訂環境）：
 ```json
 {
   "mcpServers": {
@@ -153,7 +153,7 @@ pip install uv
 }
 ```
 
-**桌面應用程式配置**（v2.5.0 新功能 - 使用原生桌面應用程式）：
+**桌面應用程式設定**（v2.5.0 新功能 - 使用原生桌面應用程式）：
 ```json
 {
   "mcpServers": {
@@ -180,12 +180,12 @@ pip install uv
 > - **想繼續用桌面模式**：把 IDE 的 MCP 設定 `args` 從 `mcp-feedback-enhanced@latest` 改成固定版本（例如 `mcp-feedback-enhanced@2.8.0`），並保留 `MCP_DESKTOP_MODE=true`。2.8.0 起若桌面殼無法啟動（被防毒隔離、glibc 太舊、Gatekeeper 擋下、啟動後隨即出錯退出），該次會自動改開瀏覽器並在 stderr 印出網址，不再空等到逾時；重啟 MCP 伺服器後會再嘗試桌面。不要釘到 2.6.0 或更早（含未認證命令執行漏洞，見 [SECURITY.md](SECURITY.md)）。
 > - **改用 Web 模式**：移除 `MCP_DESKTOP_MODE` 即可，功能完全相同，提交後分頁會保留、下次呼叫自動更新內容。想要獨立視窗，可在 Chrome／Edge 開啟回饋頁後選「安裝為應用程式」——但這只是瀏覽器功能，不是桌面版的等價替代：後端仍由 MCP 呼叫啟動、關掉應用程式視窗後下次呼叫會開在一般瀏覽器分頁而非該視窗、連接埠改變時要重新安裝、通知權限需重新授權；視窗置頂請用作業系統工具。
 
-**配置檔案範例**：
+**設定檔範例**：
 - 桌面模式：[examples/mcp-config-desktop.json](examples/mcp-config-desktop.json)
 - Web 模式：[examples/mcp-config-web.json](examples/mcp-config-web.json)
 
 ### 3. 設定提示工程
-為了獲得最佳效果，請在 AI 助手中添加以下規則：
+為了取得最佳效果，請在 AI 助手中加入以下規則：
 
 ```
 # MCP Interactive Feedback 規則
@@ -198,15 +198,15 @@ pip install uv
 ### 環境變數
 | 變數 | 用途 | 值 | 預設 |
 |------|------|-----|------|
-| `MCP_DEBUG` | 調試模式 | `true`/`false` | `false` |
-| `MCP_WEB_HOST` | Web UI 主機綁定 | IP 地址或主機名 | `127.0.0.1` |
-| `MCP_WEB_PORT` | Web UI 端口（`0` 表示由系統分配可用端口，每次啟動可能不同） | `0`、`1024-65535` | `8765` |
+| `MCP_DEBUG` | 除錯模式 | `true`/`false` | `false` |
+| `MCP_WEB_HOST` | Web UI 主機綁定 | IP 位址或主機名稱 | `127.0.0.1` |
+| `MCP_WEB_PORT` | Web UI 連接埠（`0` 表示由系統分配可用連接埠，每次啟動可能不同） | `0`、`1024-65535` | `8765` |
 | `MCP_DESKTOP_MODE` | 桌面應用程式模式 | `true`/`false` | `false` |
 | `MCP_LANGUAGE` | 強制指定介面語言 | `zh-TW`/`zh-CN`/`en` | 自動偵測 |
 
 **`MCP_WEB_HOST` 說明**：
-- `127.0.0.1`（預設）：僅本地存取，**建議維持此設定**
-- `0.0.0.0`：綁定所有網路介面。⚠️ **不建議**：Web UI 與 `/ws` 端點**沒有任何認證機制**，任何能連到該連接埠的人都能讀取會話內容（含專案路徑與 AI 摘要）並提交回饋。遠端開發請改用 SSH 端口轉發（見常見問題）。
+- `127.0.0.1`（預設）：僅本機存取，**建議維持此設定**
+- `0.0.0.0`：綁定所有網路介面。⚠️ **不建議**：Web UI 與 `/ws` 端點**沒有任何認證機制**，任何能連到該連接埠的人都能讀取會話內容（含專案路徑與 AI 摘要）並提交回饋。遠端開發請改用 SSH 連接埠轉送（見常見問題）。
 
 **`MCP_LANGUAGE` 說明**：
 - 用於強制指定介面語言，覆蓋系統自動偵測
@@ -246,7 +246,7 @@ cd mcp-feedback-enhanced
 uv sync
 ```
 
-**本地測試方式**
+**本機測試方式**
 ```bash
 # 功能測試
 make test-web                                            # Web UI 測試 (持續運行)
@@ -277,7 +277,7 @@ make quick-check                                        # 快速檢查並自動�
 - **功能測試**：測試 MCP 工具的完整功能流程
 - **單元測試**：測試各個模組的獨立功能
 - **覆蓋率測試**：生成 HTML 覆蓋率報告到 `htmlcov/` 目錄
-- **品質檢查**：包含 linting、格式化、類型檢查
+- **品質檢查**：包含 linting、格式化、型別檢查
 
 
 ## 🆕 版本更新記錄
@@ -288,7 +288,7 @@ make quick-check                                        # 快速檢查並自動�
 - 📊 **會話匯出功能**: 支援將會話記錄匯出為多種格式，方便分享和存檔
 - ⏸️ **自動提交控制**: 新增暫停和開始按鈕，讓使用者更好控制自動提交時機
 - 🔔 **系統通知**: 新增系統級通知功能，重要事件即時提醒
-- ⏱️ **會話超時機制優化**: 重新設計會話管理，提供更彈性的設定選項
+- ⏱️ **會話逾時機制優化**: 重新設計會話管理，提供更彈性的設定選項
 - 🌏 **多語系強化**: 重構多語系架構，通知系統也完整支援多語言
 - 🎨 **介面簡化**: 大幅簡化使用者介面，提升使用體驗
 
@@ -296,31 +296,31 @@ make quick-check                                        # 快速檢查並自動�
 
 ### 🌐 SSH Remote 環境問題
 **Q: SSH Remote 環境下瀏覽器無法啟動或無法存取**
-A: **建議使用 SSH 端口轉發**（安全，不暴露服務）：
+A: **建議使用 SSH 連接埠轉送**（安全，不暴露服務）：
 
-1. 使用預設配置（`MCP_WEB_HOST`: `127.0.0.1`）
-2. 設定 SSH 端口轉發：
+1. 使用預設設定（`MCP_WEB_HOST`: `127.0.0.1`）
+2. 設定 SSH 連接埠轉送：
    - **VS Code Remote SSH**: 按 `Ctrl+Shift+P` → "Forward a Port" → 輸入 `8765`
-   - **Cursor SSH Remote**: 手動添加端口轉發規則（端口 8765）
-3. 在本地瀏覽器開啟：`http://localhost:8765`
+   - **Cursor SSH Remote**: 手動加入連接埠轉送規則（連接埠 8765）
+3. 在本機瀏覽器開啟：`http://localhost:8765`
 
 > ⚠️ 舊版 README 曾建議設定 `MCP_WEB_HOST=0.0.0.0` 直接對外開放。**已不再建議**：
 > Web UI 與 `/ws` 端點沒有認證機制，對外綁定等同於讓同網段任何人讀取你的會話內容並提交回饋。
 
 詳細解決方案請參考：[SSH Remote 環境使用指南](docs/zh-TW/ssh-remote/browser-launch-issues.md)
 
-**Q: 為什麼沒有接收到 MCP 新的反饋？**
-A: 可能是 WebSocket 連接問題。**解決方法**：直接重新整理瀏覽器頁面。
+**Q: 為什麼沒有接收到 MCP 新的回饋？**
+A: 可能是 WebSocket 連線問題。**解決方法**：直接重新整理瀏覽器頁面。
 
 **Q: 為什麼沒有呼叫出 MCP？**
-A: 請確認 MCP 工具狀態為綠燈。**解決方法**：反覆開關 MCP 工具，等待幾秒讓系統重新連接。
+A: 請確認 MCP 工具狀態為綠燈。**解決方法**：反覆開關 MCP 工具，等待幾秒讓系統重新連線。
 
 **Q: Augment 無法啟動 MCP**
 A: **解決方法**：完全關閉並重新啟動 VS Code 或 Cursor，重新開啟專案。
 
 ### 🔧 一般問題
 **Q: 如何使用桌面應用程式？**
-A: v2.5.0 新增跨平台桌面應用程式支援。在 MCP 配置中設定 `"MCP_DESKTOP_MODE": "true"` 即可啟用：
+A: v2.5.0 新增跨平台桌面應用程式支援。在 MCP 設定中加入 `"MCP_DESKTOP_MODE": "true"` 即可啟用：
 ```json
 {
   "mcpServers": {
@@ -337,23 +337,23 @@ A: v2.5.0 新增跨平台桌面應用程式支援。在 MCP 配置中設定 `"MC
   }
 }
 ```
-**配置檔案範例**：[examples/mcp-config-desktop.json](examples/mcp-config-desktop.json)
+**設定檔範例**：[examples/mcp-config-desktop.json](examples/mcp-config-desktop.json)
 
 **Q: 如何使用舊版 PyQt6 GUI 介面？**
 A: v2.4.0 版本已完全移除 PyQt6 GUI 依賴。如需使用舊版 GUI，請指定 v2.3.0 或更早版本：`uvx mcp-feedback-enhanced@2.3.0`
 **注意**：舊版本不包含新功能（提示詞管理、自動提交、會話管理、桌面應用程式等）。
 
 **Q: 出現 "Unexpected token 'D'" 錯誤**
-A: 調試輸出干擾。設置 `MCP_DEBUG=false` 或移除該環境變數。
+A: 除錯輸出干擾。設定 `MCP_DEBUG=false` 或移除該環境變數。
 
-**Q: 中文字符亂碼**
+**Q: 中文字元亂碼**
 A: 已在 v2.0.3 修復。更新到最新版本：`uvx mcp-feedback-enhanced@latest`
 
 **Q: 圖片上傳失敗**
 A: 檢查檔案格式（PNG/JPG/JPEG/GIF/BMP/WebP）。系統支援任意大小的圖片檔案。
 
 **Q: Web UI 無法啟動**
-A: 檢查防火牆設定或嘗試使用不同的端口。
+A: 檢查防火牆設定或嘗試使用不同的連接埠。
 
 **Q: UV Cache 佔用過多磁碟空間**
 A: 由於頻繁使用 `uvx` 命令，cache 可能會累積到數十 GB。建議定期清理：
@@ -402,10 +402,10 @@ A: 各種 AI 模型（包括 Gemini Pro 2.5、Claude 等）在圖片解析上可
 - 🌐 SSH 遠端開發支援 (`MCP_WEB_HOST` 環境變數) ([PR #113](https://github.com/Minidoracat/mcp-feedback-enhanced/pull/113))
 
 **Alsan** - [GitHub @Alsan](https://github.com/Alsan)
-- 🍎 macOS PyO3 編譯配置支援 ([PR #93](https://github.com/Minidoracat/mcp-feedback-enhanced/pull/93))
+- 🍎 macOS PyO3 編譯設定支援 ([PR #93](https://github.com/Minidoracat/mcp-feedback-enhanced/pull/93))
 
 **fireinice** - [GitHub @fireinice](https://github.com/fireinice)
-- 📝 工具文檔優化 (LLM 指令移至 docstring) ([PR #105](https://github.com/Minidoracat/mcp-feedback-enhanced/pull/105))
+- 📝 工具文件優化 (LLM 指令移至 docstring) ([PR #105](https://github.com/Minidoracat/mcp-feedback-enhanced/pull/105))
 
 ### 社群支援
 - **Discord：** [https://discord.gg/Gur2V67](https://discord.gg/Gur2V67)
