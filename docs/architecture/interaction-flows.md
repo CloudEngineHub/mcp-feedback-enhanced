@@ -93,11 +93,11 @@ sequenceDiagram
 
 **MCP 工具呼叫格式**：
 ```python
-# AI 助手通過 MCP 協議調用
+# AI 助手透過 MCP 協定呼叫
 result = await interactive_feedback(
     project_directory="./my-project",
-    summary="我已完成了功能 X 的實現，請檢查代碼品質和邏輯正確性。主要變更包括：\n1. 新增錯誤處理機制\n2. 優化性能瓶頸\n3. 增加單元測試覆蓋率",
-    timeout=600  # 10 分鐘超時
+    summary="我已完成了功能 X 的實作，請檢查程式碼品質和邏輯正確性。主要變更包括：\n1. 新增錯誤處理機制\n2. 優化效能瓶頸\n3. 增加單元測試覆蓋率",
+    timeout=600  # 10 分鐘逾時
 )
 ```
 
@@ -256,7 +256,7 @@ stateDiagram-v2
 
 #### 1. AI 助手再次呼叫
 ```python
-# AI 根據用戶回饋進行調整後再次調用
+# AI 根據使用者回饋進行調整後再次呼叫
 result = await interactive_feedback(
     project_directory="./my-project",
     summary="根據您的建議，我已修改了錯誤處理邏輯，請再次確認",
