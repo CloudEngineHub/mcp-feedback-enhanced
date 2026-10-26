@@ -5,7 +5,7 @@
 > 主要差異：**命令執行功能已於 v2.6.1 完整移除**（見 [#219](https://github.com/Minidoracat/mcp-feedback-enhanced/issues/219) 與 [SECURITY.md](../../SECURITY.md)）。
 > 文件中所有關於 `run_command`、命令輸出、自動執行命令、命令分頁、`command_logs` 欄位的敘述**皆已不適用**。
 >
-> 下列段落已在 2026-10-26 對照 main（commit `e84067b`）的程式碼修正，以該時間點的實作為準；未列出的段落是較早版本留下的描述，可能過時：
+> 下列段落已在 2026-10-26 對照 main（commit `e4422fb`）的程式碼修正，以該時間點的實作為準；未列出的段落是較早版本留下的描述，可能過時：
 > - [部署指南](./deployment-guide.md)：安裝、環境偵測、各環境部署（本機／SSH／WSL）、命令列、環境變數、設定檔、維運與升級
 > - [API 參考文件](./api-reference.md)：MCP 工具、HTTP、WebSocket、內部 API、狀態碼與安全限制
 > - [互動流程文件](./interaction-flows.md)：呼叫流程、環境偵測、埠管理、連線建立、自動提交、提示詞、會話管理、音效、WebSocket 訊息、前端回饋狀態、連線斷線處理與逾時處理
