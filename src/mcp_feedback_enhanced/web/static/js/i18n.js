@@ -235,8 +235,13 @@ class I18nManager {
             if (window.feedbackApp.uiManager && typeof window.feedbackApp.uiManager.updateStatusIndicator === 'function') {
                 window.feedbackApp.uiManager.updateStatusIndicator();
             }
+        }
 
-
+        // 自動提交狀態按鈕：上面的 data-i18n 會把文字蓋回「已停用」，依按鈕目前狀態與秒數重繪
+        const autoSubmitStatus = document.getElementById('autoSubmitStatus');
+        if (autoSubmitStatus && window.feedbackApp && typeof window.feedbackApp.updateAutoSubmitStatus === 'function') {
+            const enabled = autoSubmitStatus.classList.contains('enabled');
+            window.feedbackApp.updateAutoSubmitStatus(enabled ? 'enabled' : 'disabled', autoSubmitStatus.dataset.timeout);
         }
     }
 

@@ -1728,6 +1728,8 @@
                     '已啟用 (' + timeout + '秒)';
             }
             statusElement.className = 'auto-submit-status-btn enabled';
+            // 切換語言時 i18nManager 依 enabled／disabled 與這個秒數重繪狀態文字
+            statusElement.dataset.timeout = timeout;
         } else {
             // 直接設定 HTML 內容，就像提示詞按鈕一樣
             if (statusIcon) statusIcon.innerHTML = '⏸️';
