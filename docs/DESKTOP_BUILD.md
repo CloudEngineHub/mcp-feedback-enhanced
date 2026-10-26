@@ -41,35 +41,35 @@ pip install -e ".[dev]"
 ### 方法 1: 使用 Makefile (建議)
 
 ```bash
-# 構建 Debug 版本
+# 建置 Debug 版本
 make build-desktop
 
-# 構建 Release 版本
+# 建置 Release 版本
 make build-desktop-release
 
-# 構建並測試
+# 建置並測試
 make test-desktop
 
-# 清理構建產物
+# 清理建置產物
 make clean-desktop
 
-# 完整構建流程 (包含 PyPI 包)
+# 完整建置流程 (包含 PyPI 套件)
 make build-all
 ```
 
 ### 方法 2: 直接使用 Python 腳本
 
 ```bash
-# 構建 Debug 版本
+# 建置 Debug 版本
 python scripts/build_desktop.py
 
-# 構建 Release 版本
+# 建置 Release 版本
 python scripts/build_desktop.py --release
 
-# 清理構建產物
+# 清理建置產物
 python scripts/build_desktop.py --clean
 
-# 查看幫助
+# 查看說明
 python scripts/build_desktop.py --help
 ```
 
@@ -79,7 +79,7 @@ python scripts/build_desktop.py --help
 
 ```
 src/mcp_feedback_enhanced/
-├── desktop_release/                                   # 發佈用二進制文件
+├── desktop_release/                                   # 發佈用二進位檔案
 │   ├── __init__.py
 │   ├── mcp-feedback-enhanced-desktop.exe              # Windows
 │   ├── mcp-feedback-enhanced-desktop-macos-intel     # macOS Intel
@@ -133,7 +133,7 @@ make test-desktop
 
 1. **Rust 未安裝**
    ```
-   ❌ Rust 未安裝，請訪問 https://rustup.rs/
+   ❌ Rust 未安裝，請造訪 https://rustup.rs/
    ```
    解決方案: 安裝 Rust 工具鏈
 
@@ -145,7 +145,7 @@ make test-desktop
 
 3. **建置失敗**
    ```
-   ❌ 構建失敗
+   ❌ 建置失敗
    ```
    解決方案: 檢查 Rust 環境，清理後重新建置
    ```bash
@@ -188,15 +188,15 @@ rustup target add x86_64-unknown-linux-gnu    # Linux
 GitHub Actions 會在各自的原生平台上建置桌面應用：
 
 ```yaml
-# 多平台構建策略
+# 多平台建置策略
 strategy:
   matrix:
     include:
-      - os: windows-latest    # Windows 原生構建
+      - os: windows-latest    # Windows 原生建置
         target: x86_64-pc-windows-msvc
-      - os: macos-latest      # macOS 原生構建
+      - os: macos-latest      # macOS 原生建置
         target: x86_64-apple-darwin
-      - os: ubuntu-latest     # Linux 原生構建
+      - os: ubuntu-latest     # Linux 原生建置
         target: x86_64-unknown-linux-gnu
 ```
 
@@ -211,7 +211,7 @@ strategy:
 # 完整的開發工作流程
 make dev-setup      # 初始化環境
 make quick-check    # 程式碼檢查
-make build-all      # 構建所有組件
+make build-all      # 建置所有元件
 make test-all       # 測試所有功能
 ```
 
@@ -229,7 +229,7 @@ make test-all       # 測試所有功能
 
 3. **驗證套件內容**
    ```bash
-   # 檢查桌面應用程式是否包含在包中
+   # 檢查桌面應用程式是否包含在套件中
    tar -tf dist/*.tar.gz | grep desktop
    ```
 

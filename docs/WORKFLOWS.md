@@ -61,10 +61,10 @@
 ### 桌面應用建置
 
 ```bash
-# 本地測試桌面應用構建
+# 本機測試桌面應用建置
 python scripts/build_desktop.py --release
 
-# 檢查構建產物
+# 檢查建置產物
 ls -la src/mcp_feedback_enhanced/desktop_release/
 ls -la src/mcp_feedback_enhanced/desktop_app/
 ```

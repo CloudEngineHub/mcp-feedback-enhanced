@@ -29,7 +29,7 @@
       libgtk-3-dev \
       libayatana-appindicator3-dev
 
-# 增強的構建驗證
+# 增強的建置驗證
 - name: Verify build output
   run: |
     BINARY_PATH="src-tauri/target/${{ matrix.target }}/release/${{ matrix.binary }}"
@@ -38,7 +38,7 @@
       FILE_SIZE=$(stat -f%z "$BINARY_PATH" 2>/dev/null || stat -c%s "$BINARY_PATH" 2>/dev/null)
       echo "📏 文件大小: $FILE_SIZE bytes"
     else
-      echo "❌ 二進制文件不存在: $BINARY_PATH"
+      echo "❌ 二進位檔案不存在: $BINARY_PATH"
       exit 1
     fi
 ```
@@ -53,11 +53,11 @@
 
 #### 技術改進：
 ```yaml
-# 智能構建檢測
+# 智慧建置偵測
 - name: Check desktop build availability
   run: |
     if [ -n "${{ github.event.inputs.desktop_build_run_id }}" ]; then
-      echo "🎯 使用指定的構建 Run ID"
+      echo "🎯 使用指定的建置 Run ID"
     else
       LATEST_RUN=$(curl -s -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
         "https://api.github.com/repos/${{ github.repository }}/actions/workflows/build-desktop.yml/runs?status=success&per_page=1" \
@@ -65,7 +65,7 @@
       echo "run_id=$LATEST_RUN" >> $GITHUB_OUTPUT
     fi
 
-# 統一平台映射
+# 統一平台對應
 declare -A PLATFORM_MAP=(
   ["desktop-windows"]="mcp-feedback-enhanced-desktop.exe"
   ["desktop-macos-intel"]="mcp-feedback-enhanced-desktop-macos-intel"
